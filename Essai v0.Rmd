@@ -14,3 +14,6 @@ Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour dévelop
 Le fichier .gitignore c'est pour demander à Git de pas prendre en compte certains fichiers pour les commit. Boarf pas utile pour le moment je pense
 
 Créer une nouvelle branche avec l'icône violette. Puis on peut commit et push dedans.
+
+Quand on est satisfait de la branche et qu'on veut la merge dans le main, on fait une Pull Request sur GitHub
+Bonne pratique travail à plusieurs : ne pas valider sa propre pull request, pour faire vérifier son code par qqn ! Mais là projet solo : on valide.
