@@ -32,6 +32,14 @@ Ensuite, copier le hash et faire alt+maj+R puis : git checkout numero_du_hash
 
 Si on veut faire des modifs depuis ce comit, il faut y **créer une branche**, sinon on perd le contact entre ce qu'on est en train de développer (qui sera un genre de nouveau main) et le main de base : bourbier !
 
+# /!\ Repository public
+Maintenant je peux aller sur Insights -> Network pour voir un joli dessin de mon arborescence :)
+
+# Supprimer une branche
+Sur GitHub afficher toutes les branches et cliquer sur la poubelle en face de la branche à supprimer.
+
+Moi je supprime la branche Essai v0 parce que c'était juste pour faire des tests.
+
 # Liens & ressources utiles
 * Le site grâce auquel j'ai pu tout installer & configurer : https://thinkr.fr/travailler-avec-git-via-rstudio-et-versionner-son-code/
 * Un cheatsheet pour se rappeler des grandes étapes : https://danielkummer.github.io/git-flow-cheatsheet/index.fr_FR.html 
