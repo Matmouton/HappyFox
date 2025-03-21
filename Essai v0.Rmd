@@ -11,6 +11,9 @@ Commit = pour faire une nouvelle sauvegarde EN LOCAL Push (flèche qui monte) = 
 
 Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour développer son amélioration du code sur la dernière version du code des autres.
 
+Conseil : Commiter très régulièrement pour avoir des traces de toutes les modifs et pouvoir y revenir. Pusher dès qu'on a une version stable, pour que chaque Push soit un truc propre duquel on peut repartir.  
+-> Moi avec mon petit Rmd qui est juste de la prise de notes c'est stable tout le temps, donc je peux Push à chaque fois que je commit. 
+
 # Le fichier .gitignore
 
 Le fichier .gitignore c'est pour demander à Git de pas prendre en compte certains fichiers pour les commit. Boarf pas utile pour le moment je pense
