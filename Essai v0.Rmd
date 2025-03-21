@@ -1,0 +1,6 @@
+---
+title: "Essai code sur Git, prise en main"
+author: "Mathilda Alhamadah"
+date: "2025-03-21"
+output: html_document
+---
