@@ -1,19 +1,37 @@
 ---
-title: "Essai code sur Git, prise en main"
+title: "Prise en main de Git sur Rstudio"
 author: "Mathilda Alhamadah"
 date: "2025-03-21"
 output: html_document
 ---
+# Commit, Push et Pull
 
-Commit = pour faire une nouvelle sauvegarde EN LOCAL
-Push (flèche qui monte) = après plusieurs commit, pour les envoyer sur le remote EN CLOUD
-Pull (flèche qui descend) = pour récupérer la version qui est sur le remote
+Commit = pour faire une nouvelle sauvegarde EN LOCAL Push (flèche qui monte) = après plusieurs commit, pour les envoyer sur le remote EN CLOUD Pull (flèche qui descend) = pour récupérer la version qui est sur le remote
 
-Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour développer son amélioration du code sur la dernière version du code des autres. 
+Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour développer son amélioration du code sur la dernière version du code des autres.
+
+# Le fichier .gitignore
 
 Le fichier .gitignore c'est pour demander à Git de pas prendre en compte certains fichiers pour les commit. Boarf pas utile pour le moment je pense
 
+# Créer une nouvelle branche et merge
+
 Créer une nouvelle branche avec l'icône violette. Puis on peut commit et push dedans.
 
-Quand on est satisfait de la branche et qu'on veut la merge dans le main, on fait une Pull Request sur GitHub
-Bonne pratique travail à plusieurs : ne pas valider sa propre pull request, pour faire vérifier son code par qqn ! Mais là projet solo : on valide.
+Quand on est satisfait de la branche et qu'on veut la merge dans le main, on fait une Pull Request sur GitHub Bonne pratique travail à plusieurs : ne pas valider sa propre pull request, pour faire vérifier son code par qqn ! Mais là projet solo : on valide.
+
+Pour supprimer les changements non comités et revenir au dernier comit de la branche : alt+maj+R puis : git reset --hard
+
+Après avoir merge une branche avec le main, pour que ça apparaisse, il faut pull.
+
+# Checkout
+
+Le checkout : pour revenir à l'état du projet d'il y a quelques jours pour y développer une novuelle branche. Pour se repositionner sur un commit particulier, il faut trouver son hash. Pour ça : cliquer sur le fichier -\> history (l'horloge) -\> le numéro qui apparaît en face de chaque commit est le hash, ou SHA.
+
+Ensuite, copier le hash et faire alt+maj+R puis : git checkout numero_du_hash
+
+Si on veut faire des modifs depuis ce comit, il faut y **créer une branche**, sinon on perd le contact entre ce qu'on est en train de développer (qui sera un genre de nouveau main) et le main de base : bourbier !
+
+# Liens & ressources utiles
+* Le site grâce auquel j'ai pu tout installer & configurer : https://thinkr.fr/travailler-avec-git-via-rstudio-et-versionner-son-code/
+* Un cheatsheet pour se rappeler des grandes étapes : https://danielkummer.github.io/git-flow-cheatsheet/index.fr_FR.html 
