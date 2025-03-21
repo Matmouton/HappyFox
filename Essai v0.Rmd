@@ -4,3 +4,9 @@ author: "Mathilda Alhamadah"
 date: "2025-03-21"
 output: html_document
 ---
+
+Commit = pour faire une nouvelle sauvegarde EN LOCAL
+Push (flèche qui monte) = après plusieurs commit, pour les envoyer sur le remote EN CLOUD
+Pull (flèche qui descend) = pour récupérer la version qui est sur le remote
+
+Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour développer son amélioration du code sur la dernière version du code des autres. 
