@@ -10,3 +10,7 @@ Push (flèche qui monte) = après plusieurs commit, pour les envoyer sur le remo
 Pull (flèche qui descend) = pour récupérer la version qui est sur le remote
 
 Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour développer son amélioration du code sur la dernière version du code des autres. 
+
+Le fichier .gitignore c'est pour demander à Git de pas prendre en compte certains fichiers pour les commit. Boarf pas utile pour le moment je pense
+
+Créer une nouvelle branche avec l'icône violette. Puis on peut commit et push dedans.
