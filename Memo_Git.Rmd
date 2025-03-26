@@ -11,8 +11,8 @@ Commit = pour faire une nouvelle sauvegarde EN LOCAL Push (flèche qui monte) = 
 
 Bonne pratique travail à plusieurs : toujours Pull avant de Push, pour développer son amélioration du code sur la dernière version du code des autres.
 
-Conseil : Commiter très régulièrement pour avoir des traces de toutes les modifs et pouvoir y revenir. Pusher dès qu'on a une version stable, pour que chaque Push soit un truc propre duquel on peut repartir.  
--> Moi avec mon petit Rmd qui est juste de la prise de notes c'est stable tout le temps, donc je peux Push à chaque fois que je commit. 
+Conseil : Commiter très régulièrement pour avoir des traces de toutes les modifs et pouvoir y revenir. Pusher dès qu'on a une version stable, pour que chaque Push soit un truc propre duquel on peut repartir.\
+-\> Moi avec mon petit Rmd qui est juste de la prise de notes c'est stable tout le temps, donc je peux Push à chaque fois que je commit.
 
 # Le fichier .gitignore
 
@@ -61,8 +61,7 @@ Je pense qu'on peut le faire en clic bouton mais au moins j'ai la procédure en 
 /!\\ C'est hyper bourbier de faire des noms de fichiers avec des espaces, pcq qd on les appelle depuis le terminal ça fait tout planter ! Utiliser des underscore.\
 Sinon : faire les commandes du terminal avec des guillemets autour du nom du fichier
 
-/!\\/!\\ Ne **pas oublier l'extension** du fichier sinon c'est juste un texte et on peut plus rien en faire !
-Après avoir renommé le fichier, le **fermer immédiatement** et ouvrir le nouveau sinon on redéveloppe dans le même fichier pas renommé ! 
+/!\\/!\\ Ne **pas oublier l'extension** du fichier sinon c'est juste un texte et on peut plus rien en faire ! Après avoir renommé le fichier, le **fermer immédiatement** et ouvrir le nouveau sinon on redéveloppe dans le même fichier pas renommé !
 
 # Liens & ressources utiles
 
