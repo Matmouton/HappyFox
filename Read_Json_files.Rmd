@@ -183,7 +183,7 @@ rm(dataframe_postures, posture_most_confidence, data_json_1_test)
 On l'implémente dans une fonction. Sélection possible du seuil de confiance.
 Algo :
 
-one_line_file \<- function(json_file, threshold = 0.5){ si le max de confidence
+one_line_file \<- function(json_file, threshold = 0.6){ si le max de confidence
 sur toutes les lignes est \> threshold { garder la ligne qui a la + grande
 confiance } sinon { afficher qu'il n'y a pas de position suffisamment fiable
 pour ce threshold }
@@ -195,7 +195,7 @@ Implémentation :
 ```{r}
 #Function to keep only the most likely posture
 
-one_position_file <- function(json_file, threshold = 0.5) {
+one_position_file <- function(json_file, threshold = 0.6) {
   
   if (max(json_file$objects[[1]]$confidence) >= threshold){   #At least 1 line reliable enough
     
@@ -207,6 +207,15 @@ one_position_file <- function(json_file, threshold = 0.5) {
     data_new <- data_new %>%
       mutate(filename = json_file$filename) #get filename
     
+   #get the date and time
+    str_datetime <- substr(data_new$filename, 10, 28) #bonne partie de la string
+    date_wrong_format <- strptime(str_datetime, format = "%d_%m_%Y_%H_%M_%S") #transformé en date et heure
+    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
+    
+    data_new <- data_new %>% 
+      mutate(Date_Time = great_date)
+    
+   #output  
     return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
     
   } else {
@@ -216,10 +225,16 @@ one_position_file <- function(json_file, threshold = 0.5) {
 }
 
 #Test function
-one_position_file(data_json_1, threshold = 0.9)   #returns line 2
-one_position_file(data_json_1, threshold = 0.999) #warning : confidence < threshold
+data_json <- load_json("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_test_comme_app_marcin", "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json")
+
+one_position_file(data_json, threshold = 0.9)   #returns line 2
+one_position_file(data_json, threshold = 0.999) #warning : confidence < threshold
 
 ```
+
+Attention !! Cette fonction a été faite pour lire les noms de fichiers au format
+de ceux sortis par l'appli de Marcin ! Elle ne fonctionnera pas avec un autre
+format de nom de fichier, il faudra l'adapter !
 
 # 3. Concaténer les lignes des positions dans un seul dataframe {.tabset}
 
@@ -290,7 +305,7 @@ datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/scrip
                        file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json")
 
 #Garder 1 seule ligne
-datatest_1line <- one_position_file(datatest1, threshold = 0.5)
+datatest_1line <- one_position_file(datatest1, threshold = 0.8)
 
 #Si plusieurs frames : en faire une liste
 datatest_list <- list(datatest_1line)
@@ -688,17 +703,14 @@ m'entraîner. Ils sont dans le dossier **Json_test_comme_app_marcin**.
 test <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_test_comme_app_marcin")
 
 test #on a bien ce qu'on veut = avec le filename
-
-# Récupération de la date, format f_ID4284_02_02_2023_16_08_11.jpg
-
 nom_fichier <- test$filename[1]  #ligne 1 nom fichier
-grep("_.._.._...._", nom_fichier )
-[:digit:]
-strapplyc(nom_fichier, "[_](.*)[_]", simplify = TRUE)
 
-day <- test$filename
-month <- test$filename
-year <- test$filename
+# Récupération de la date et de l'heure, format f_ID4284_02_02_2023_16_08_11.jpg
+
+file_date_time <- substr(nom_fichier, 10, 28) #récup la bonne partie de la string
+date_wrong_format <- strptime(file_date_time, format = "%d_%m_%Y_%H_%M_%S") #transformé en date et heure
+great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S")
+
 
 ```
 
