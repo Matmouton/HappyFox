@@ -1,0 +1,81 @@
+---
+title: "Test du package QCC"
+author: "Mathilda Alhamadah"
+date: "2025-03-07"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    number_sections: true #numéroter sections
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+---
+
+# Premiers pas QCC
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#install.packages("qcc")
+library(qcc)
+```
+
+## R chart vs xbar chart {.tabset}
+
+Je crois bien que ces 2 charts font partie des Standard Shewhart control charts, qui peuvent être appelés directement avec la fonction qcc().\
+On a une UCL (upper cotrol limit) et une LCL (lower control limit) avec la ligne horizontale qui représente le centre. Les limites sup et inf sont égales à ce centre +/- nsigma.
+
+```{r, echo=FALSE, results=FALSE}
+# Loading the piston rings data
+data(pistonrings)
+attach(pistonrings)
+head(pistonrings)
+
+diameter <- qcc.groups(diameter, sample)
+head(diameter)
+summary(diameter)
+```
+
+### Graphique R chart
+
+```{r , results=FALSE}
+obj <- qcc(diameter[1:30,], type="R")
+
+summary(obj)
+```
+
+### Graphique xbar Chart
+
+```{r, results=FALSE}
+obj <- qcc(diameter[1:30,], type="xbar")
+
+summary(obj)
+```
+
+## Changement du nsigma {.tabset}
+
+**Nisgma** c'est pour définir les seuils sup et inf à partir desquels la valeur est problématique. Par défaut, **nsigma = 3**.
+
+### Graphique nsigma à 2
+
+```{r}
+obj <- qcc(diameter[1:30,], type="xbar",nsigmas = 2)
+```
+
+### Graphique nsigma à 1
+
+```{r}
+obj <- qcc(diameter[1:30,], type="xbar",nsigmas = 1)
+```
+
+## Avec un autre jdd
+
+Là en plus ça a mis un point orange là où y'avait une valeur proche du seuil supérieur, jsp trop pourquoi parce que ça le faisait pas avant mais bon.
+
+```{r}
+obj <- qcc(diameter[1:30,], type="xbar",newdata=diameter[31:40,])
+```
+
+On peut normalement personnaliser les graphiques, par exemple on peut enlever les stats, pas montrer tout le graphe, mettre des normes différentes et du coup ça fait des couleurs... Mais moi j'ai pas réussi. Peut-être l'article qui est daté (il utilise une fonction qccGroups qui existe pas par exemple). Lien au cas où : <https://luca-scr.github.io/qcc/reference/qccGroups.html>
+
+Enfin bon, petite overview des graphiques possibles et intéressants en qcc :
+
+# Graphiques intéressants en QCC
