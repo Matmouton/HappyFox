@@ -1,0 +1,741 @@
+---
+title: "Extraire des infos d'un Json"
+author: "Mathilda Alhamadah"
+date: "2025-04-01"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+# 1. Chargement des packages & des données {.tabset}
+
+## 1.1 Packages
+
+Le package utile : **jsonlite**
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("jsonlite")
+#install.packages("curl")
+library(jsonlite)
+library(purrr)
+library(curl)
+```
+
+## 1.2 Données
+
+Charger le fichier
+
+```{r message=FALSE}
+#Run tout le chunk en 1 fois 
+setwd("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json")        #Set WD
+
+data_json_1 <- fromJSON("0308Efox4284-2023-02-02-16h08m11s045.png_pred.json") #Load data
+data_json_2 <- fromJSON("0308Mfox4284-2023-02-02-15h46m15s695.png_pred.json")
+data_json_3 <- fromJSON("0308Mfox4284-2023-02-02-15h46m43s354.png_pred.json")
+data_json_4 <- fromJSON("0308Mfox4284-2023-02-02-15h48m01s143.png_pred.json")
+data_json_5 <- fromJSON("0308Mfox4284-2023-02-02-15h50m05s800.png_pred.json")
+data_json_6 <- fromJSON("0308Mfox4284-2023-02-02-15h50m36s039.png_pred.json")
+
+```
+
+/!\\ Si Parse error ou Lexical error : run la ligne du setWD en même temps que
+la ligne du load data !
+
+Chaque fichier json contient des infos + un dataframe sur lequel il est écrit "2
+variables", mais il y a plus de 2 variables et 1 seul individu (le plus souvent)
+= la position du renard. Donc c'est quoi ces 2 variables ?
+
+### 1.2.1 Forme particulière des données
+
+Description des données :
+
+```{r results=FALSE}
+str(data_json_1)
+data_json_1$objects
+```
+
+Il y a un fichier json par frame. Du coup chaque frame a l'ID de frame n°1
+(c'est comme ça qu'ils sont encodés en Json). Normal ? Le premier json a 2
+positions, une qui est certaine qu'à 50% et l'autre à 98%. C'est le seul comme
+ça.
+
+Séparer les 2 objets
+
+```{r}
+data_json_1$objects      #Pour appeler le dataframe avec les 2 positions, et un [[1]] qui pop
+data_json_1$objects[[1]] #Pour appeler uniquement le dataframe avec les 2 positions
+```
+
+### 1.2.2 Automatisation du chargement des données
+
+On fait le load dans une fonction pour pouvoir l'automatiser :
+
+```{r}
+#Function to load the data
+load_json <- function(WD, file_name){
+  
+  #requirements :
+            # WD & file_name are strings. 
+  if (!is.character(WD) | !is.character(file_name)) {
+    stop("Le working directory et le fichier doivent être des chaînes de caractère.")
+  }
+            # the file extension is .json
+  if (!grepl("\\.json$", file_name)) {              #if the ending of the character is not ".json"
+    stop("Le fichier doit être un fichier json.")   #stop
+  }
+  
+  setwd(WD)                                #locate the data
+  loaded_file <- fromJSON(file_name)       #load file
+  return(loaded_file)                      #return file
+}
+
+
+#Test function
+      #right file
+datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
+                       file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json")
+datatest1[[1]] == data_json_1[[1]]  #Compare dataframes, [[1]] because there are 2 $objects in the json idk why
+
+      #wrong name_file type
+# datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
+#                        file_name = 3)
+
+      #wrong name_file extension
+# datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
+#                        file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.csv")
+
+#clean up
+rm(datatest1)
+```
+
+### -\> Astuce pour check la forme des strings : Fonctions grep et grepl
+
+Pour checker si un **pattern apparaît dans une chaîne de caractères**. *Grep()*
+donne les indices de position où le pattern apparaît, et *grepl()* donne pour
+chaque élément du vecteur de strings TRUE si le pattern est dedans et FALSE
+sinon.
+
+```{r}
+grepl("\\.json$", "blablatestblabla.json")   #bonne extension
+grepl("\\.json$", "blablatestblabla.csv")    #mauvaise extension
+```
+
+On a aussi les *expressions régulières* pour voir si un pattern particulier se
+trouve dans la string :
+
+```{r}
+#renvoie 
+a <- regexpr(pattern = "test", text = "blablatestblablatestblabla")
+a                        #a vaut 7 pcq le pattern "test" est en 7ème position de la string
+class(a)                 #c'est un entier. Par contre il a des propriétés qu'on peut appeler :
+attr(a, "match.length")  #le match (= le pattern "test") a une longueur de 4
+attr(a, "index.type")    #le match est de type chaîne de caractères
+
+a2 <- regexpr(pattern = "test", text = "blablatetblablatetblabla") 
+a2                        #a2 vaut -1 pcq le pattern se trouve pas dans le texte
+class(a2)                 #a2 est aussi un entier
+attr(a2, "match.length")  #le match a une longueur de -1 pcq y'a pas de match en fait
+attr(a2, "index.type")    #mais le match est quand même une chaîne de caracètres
+
+#clean up
+rm(a, a2)
+```
+
+# 2. Gérer les cas où YOLO donne 2 prédictions {.tabset}
+
+## 2.1 Cas particulier pour 1 frame
+
+Garder que la ligne avec la proba la plus élevée. Si confiance trop basse :
+avertissement. Test avec data_json_1 :
+
+```{r}
+#Keep only the most likely posture 
+
+if (length(data_json_1$objects[[1]]$confidence) > 1) {          #if more than 1 position in the dataframe (max = 3)
+  if (data_json_1$objects[[1]]$confidence[1] > 0.6 | 
+      data_json_1$objects[[1]]$confidence[2] > 0.6 | 
+      data_json_1$objects[[1]]$confidence[3] > 0.6) {           #if one of them more likely than 60%
+    
+    #choose the most likely
+    dataframe_postures <- data_json_1$objects[[1]]                             #remove the useless [[1]] output
+    posture_most_confidence <- which.max(data_json_1$objects[[1]]$confidence)  #select the most likely posture raw
+    data_json_1_test <- dataframe_postures[posture_most_confidence, ]          #keep only this line : only 1 posture
+  } else {                                                                     #if no posture is very likely
+    print("Human check needed")  
+  }
+} else { 
+  print("Nothing changes in the file") 
+}
+
+#clean up
+rm(dataframe_postures, posture_most_confidence, data_json_1_test)
+```
+
+## 2.2 Cas général : fonction pour garder qu'une position à chaque fois
+
+On l'implémente dans une fonction. Sélection possible du seuil de confiance.
+Algo :
+
+one_line_file \<- function(json_file, threshold = 0.5){ si le max de confidence
+sur toutes les lignes est \> threshold { garder la ligne qui a la + grande
+confiance } sinon { afficher qu'il n'y a pas de position suffisamment fiable
+pour ce threshold }
+
+}
+
+Implémentation :
+
+```{r}
+#Function to keep only the most likely posture
+
+one_position_file <- function(json_file, threshold = 0.5) {
+  
+  if (max(json_file$objects[[1]]$confidence) >= threshold){   #At least 1 line reliable enough
+    
+    dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
+    posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
+    data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
+    
+   #add the filename
+    data_new <- data_new %>%
+      mutate(filename = json_file$filename) #get filename
+    
+    return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
+    
+  } else {
+    print(paste("Confidence <", threshold*100, "%.")) #No posture reliable enough. Change threshold/ human check
+  }
+
+}
+
+#Test function
+one_position_file(data_json_1, threshold = 0.9)   #returns line 2
+one_position_file(data_json_1, threshold = 0.999) #warning : confidence < threshold
+
+```
+
+# 3. Concaténer les lignes des positions dans un seul dataframe {.tabset}
+
+Maintenant qu'on n'a bien qu'une ligne par position, on veut les concaténer dans
+un unique dataframe pour faire des analyses dessus. Pour ça, il faudra qu'on
+récup la date et l'heure exactes, qu'on range les frames selon cet ordre, qu'on
+laisse des blancs chaque 30 (ou autre gap ?) secondes, et ensuite on essaiera de
+plotter les positions pour voir ce qu'il se passe. Pour plotter les positions on
+va assigner à chacune une valeur, style 0/1/2 pour couché/assis/debout.
+
+```{r}
+#Les json de départ sont au format dataframe (pas oublier le [[1]] !)
+class(data_json_1$objects[[1]])
+
+#Les json tels qu'ils sortent de la fonction pour garder qu'une ligne au dataframe sont aussi au format dataframe
+class(one_position_file(json_file = data_json_1, threshold = 0.7))
+
+#Sauf s'ils ont une probabilité de bonne réponse inférieure au seuil, là : character
+class(one_position_file(json_file = data_json_1, threshold = 0.999))
+
+```
+
+## 3.1 Cas particulier
+
+Pour nos frames en particulier on fait :
+
+```{r}
+line1 <- one_position_file(json_file = data_json_1)
+line2 <- one_position_file(json_file = data_json_2)
+line3 <- one_position_file(json_file = data_json_3)
+line4 <- one_position_file(json_file = data_json_4)
+line5 <- one_position_file(json_file = data_json_5)
+line6 <- one_position_file(json_file = data_json_6)
+
+dplyr::bind_rows(line1, line2, line3, line4, line5, line6) #concaténer 2 dataframe avec les mêmes variables
+
+#Possible aussi depuis une liste de dataframes (pour automatisation) :
+dplyr::bind_rows(list(line1, line2, line3, line4, line5, line6))
+```
+
+## 3.2 Cas général : automatisation via une fonction
+
+```{r}
+# Fonction pour merge automatiquement toutes les lignes des dataframes en un seul dataframe
+merge_postures <- function(list_df_postures) {
+  return (dplyr::bind_rows(list_df_postures))
+}
+
+# Test 
+list_test <- list(line1, line2, line3, line4, line5, line6)
+df_final <- merge_postures(list_test)       #working
+
+# Nettoyage
+rm(list_test, line1, line2, line3, line4, line5, line6, data_json_1, data_json_2, data_json_3, data_json_4, data_json_5, data_json_6)
+```
+
+# 4. Du fichier Json au dataframe {.tabset}
+
+## 4.1 Pour des fichiers particuliers
+
+Maintenant on va tester si on peut tout utiliser d'un coup pour passer des
+fichiers qu'on charge en Json à un seul dataframe :
+
+```{r}
+
+#Chargement
+datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
+                       file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json")
+
+#Garder 1 seule ligne
+datatest_1line <- one_position_file(datatest1, threshold = 0.5)
+
+#Si plusieurs frames : en faire une liste
+datatest_list <- list(datatest_1line)
+
+#Tout fusionner dans un seul dataframe
+final_df <- merge_postures(datatest_list) 
+
+#Afficher
+final_df           #là c'est que pour 1 frame mais tout fonctionne
+
+#Nettoyage de l'environnement
+rm(datatest1, datatest_1line, datatest_list, final_df)
+```
+
+## 4.2 Pour tous les fichiers d'un dossier
+
+On souhaite automatiser cela pour que notre fonction lise tous les fichiers d'un
+dossier et leur applique cet ensemble de fonctions :
+
+```{r}
+# Récuperer tous les fichiers Json du dossier
+setwd("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json")        #Set WD
+files <- list.files(pattern = ".json")
+
+length(files) #a chargé tous les fichiers json du document (6)
+
+# Créer la liste vide de dataframes et la variable à incrémenter
+list_df1line = list()  #empty list
+i = 0
+
+# Boucle pour chaque fichier
+for (file in files) {
+  
+  # Appliquer la fonction load_json à tous les éléments du dossier
+  data_loaded <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json", file = file)
+  
+  # Appliquer one_position_file à tous les nouveaux dataframes
+  data_1line <- one_position_file(data_loaded)
+
+  # Tous les mettre dans une liste 
+  list_df1line[[i+1]] <- data_1line
+  
+  i <- i+1
+
+}
+
+list_df1line[[6]]  #working
+
+# Supprimer les éléments inutiles
+rm(files, file, i, data_1line, list_df1line)
+
+```
+
+## 4.3 Automatisation dans une fonction
+
+On automatise ça dans une fonction :
+
+```{r}
+
+from_json_to_df <- function(WD) {
+  
+  # Récuperer tous les fichiers Json du dossier
+  setwd(WD)        #Set WD
+  files <- list.files(pattern = ".json") #get Json files
+  print(paste("Chargement terminé. ",length(files), " fichiers ont été chargés."))
+  
+  # Créer la liste vide de dataframes et la variable à incrémenter
+  list_df1line = list()  #empty list
+  i = 0  #increment
+  
+  # Boucle pour chaque fichier
+  for (file in files) {
+    
+    # Appliquer la fonction load_json à tous les éléments du dossier
+    data_loaded <- load_json(WD = WD, file = file)
+    
+    # Appliquer one_position_file à tous les nouveaux dataframes
+    data_1line <- one_position_file(data_loaded)
+  
+    # Tous les mettre dans une liste 
+    list_df1line[[i+1]] <- data_1line
+    
+    i <- i+1 #next file
+  }
+  
+  # Appliquer le merge sur la liste et récup le dataframe mergé
+  df_merged <- merge_postures(list_df1line) 
+  print(paste("Extraction terminée. ", i, "fichiers ont été fusionnés."))
+  
+  return(df_merged)
+  
+}
+
+#test function
+df_test <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json")
+
+df_test  #Working !
+df_final   #Pour comparer avec ce qui avait été fait manuellement : même chose
+```
+
+# 5. Vérifier la cohérence des noms des fichiers png {.tabset}
+
+## 5.1 Manuellement
+
+Je vais essayer de voir si tous les fichiers ont des noms cohérents (même taille
+pour les dates, les identifiants, même nombre de caractères avant l'id du
+renard, etc).
+
+Je commence par charger les noms des fichiers du renard n° 4284 en position
+allongée. Je n'ai pas l'accès aux fichiers mais j'ai accès aux noms des fichiers
+donc ça suffit :
+
+F:\projet\\2024_HAPPY_FOX\donnee\Image set\Fox 4284 301-302-303_x\lying
+
+```{r}
+setwd("F:\\projet\\2024_HAPPY_FOX\\donnee\\Image set\\Fox 4284 301-302-303_x\\lying")        #Set WD
+files_img <- list.files(pattern = ".png")
+files_img          #ensemble de character 
+
+length(files_img)  #136 images position allongée pour ce renard
+```
+
+Je vais déjà tester la consistance des noms sur ça :
+
+```{r}
+library(stringr)
+library(dplyr)
+library(purrr)
+library(stringr)
+
+# Consistance du mot fox : OK
+str_detect(files_img, "fox") #le mot fox a l'air présent dans toutes les images
+any(str_detect(files_img, "fox") == F) #c'est le cas (NORMAL que ça soit FALSE)
+any(str_count(files_img, "fox") != 1) #et il y est qu'une fois
+str_locate(files_img, "fox") #ils ont tous l'air situés entre les positions 6 et 8
+any(str_locate(files_img, "fox")[,1]!=6) #effectivement aucun n'est situé ailleurs
+
+# Consistance de l'id du renard : OK
+str_detect(files_img, "4284") #le bon id a l'air présent sur toutes les images
+any(str_detect(files_img, "4284") == F) #c'est le cas
+any(str_count(files_img, "4284") != 1) #et il y est qu'une fois
+str_locate(files_img, "4284") #il a l'air toujours entre 9 et 12 donc après "fox"
+any(str_locate(files_img, "4284")[,1]!=9)  #effectivement aucun n'est situé ailleurs
+
+# Consistance de l'heure : OK
+
+    # Heure
+  str_detect(files_img, "h")  #la lettre h a l'air présente partout.
+  any(str_detect(files_img, "h") == F) #c'est le cas
+  any(str_count(files_img, "h") != 1) #et il y est qu'une fois
+  str_locate(files_img, "h")  #elle a l'air présente uniquement en position 27
+  any(str_locate(files_img, "h")[,1] != 27)  #effectivement elle est toujours en position 27
+
+    # Minutes
+  str_detect(files_img, "m")  #attention peut y avoir des "M" dans noms : confusion ?
+  any(str_detect(files_img, "m") == F) #lettre m présente partout
+  any(str_count(files_img, "m") != 1) #et qu'une fois
+  str_locate(files_img, "m")  
+  any(str_locate(files_img, "m")[,1] != 30) #pas de confusion avec M car sensible à la casse
+
+    # Secondes
+  str_detect(files_img, "s") 
+  any(str_detect(files_img, "s") == F) #lettre s présente partout
+  any(str_count(files_img, "s") != 1) #et qu'une fois
+  str_locate(files_img, "s") 
+  any(str_locate(files_img, "s")[,1] != 33) #pas de "s" dans les noms qui fasse confusion
+
+# Consistance de la date : OK
+  
+    # Année 
+  str_detect(files_img, "2023")  #l'année 2023 a l'air présente partout
+  any(str_detect(files_img, "2023") == F) #c'est le cas
+  any(str_count(files_img, "2023") != 1) #et qu'une fois
+  str_locate(files_img, "2023")  #elle a l'air présente uniquement en position 14
+  any(str_locate(files_img, "2023")[,1] != 14) #c'est le cas
+  
+    # Mois & jour : on va checker les tirets pour vérif que toujours 2 chiffres
+  
+        # 4 tirets par nom
+    str_detect(files_img, "-")   
+    any(str_detect(files_img, "-") == F) #il y a des tirets partout
+    str_locate(files_img, "-")    #ils ont l'air d'être à la position 13
+    any(str_count(files_img, "-") != 1) # MAIS pas qu'une fois ! (normal)
+    str_locate_all(files_img, "-")      #il a l'air d'y en avoir 4
+    lapply(str_locate_all(files_img, "-"), nrow) #il a toujours l'air d'y en avoir 4
+    any(lapply(str_locate_all(files_img, "-"), nrow) != 4)  #effectivement toujours 4
+  
+        # toujours à la même position
+    str_locate_all(files_img, "-")[[1]][,1] #objf : automatiser le check des positions
+    str_locate_all(files_img, "-")[[2]][,1]
+    str_locate_all(files_img, "-")[[3]][,1]
+    
+        # fonctions faites avec Copilot sinon j'y arrivais pas sans une boucle
+    positions <- map(files_img, ~ str_locate_all(.x, "-")[[1]][,1]) #toutes les pos.
+    positions                              #ça a l'air d'être les mêmes tout le temps
+    map_lgl(positions, ~ all(.x == c(13,18,21,24) )) #ça a toujours l'air
+    any(map_lgl(positions, ~ all(.x == c(13,18,21,24) )) == FALSE) #c'est le cas !
+
+
+```
+
+Donc pour le renard 4284 en position allongée on a bien :
+
+-   l'id qui se trouve en position 9 après le mot "fox"
+
+-   l'heure-minutes-secondes qui se trouvent bien en position 27-30-33
+
+-   l'année (ici 2023) qui se trouve bien en position 14
+
+-   le mois et le jour qui se trouvent bien toujours au même endroit, parce que
+    les tirets qui les délimitent sont toujours au même endroit : positions
+    c(13,18,21,24) pour les tirets délimiteurs. Donc positions 19 pour le mois
+    et 22 pour le jour.
+
+## 5.2 Automatisation
+
+Maintenant on peut vouloir faire une fonction qui prend l'id du renard, l'année
+de la vidéo, et le chemin du dossier d'images, et qui vérifie la consistance de
+l'id, de la date et de l'heure pour tous les fichiers ".png" extraits du
+dossier.
+
+```{r}
+
+library(stringr)
+library(dplyr)
+library(purrr)
+library(stringr)
+
+check_consistency <- function (file_names_str, fox_id, year){
+  
+  nb_pb = 0 #amount of checks not passed
+  if(class(fox_id) != "character" | class(year) != "character") {
+    stop("L'identifiant du renard et l'année doivent être des chaînes de caractères.")
+  }
+  
+  # Cohérence mot fox :
+  if(all(str_detect(file_names_str, "fox")) == TRUE & #si le mot fox est présent partout
+      all(str_count(file_names_str, "fox") != 1) == FALSE &  #et pas plus d'une fois
+      all(str_locate(file_names_str, "fox")[,1] != 6) == FALSE) { #et tj en position 6-8
+    
+    print("Le mot 'fox' est présent une seule fois dans tous les fichiers, entre les positions 6 et 8.")
+    
+  } else{
+    print("Le mot 'fox' est absent d'un fichier, ou présent plus d'une fois dans un fichier, ou situé ailleurs qu'entre les positions 6 et 8.")
+    nb_pb <- nb_pb +1   #there is 1 issue
+  }
+  
+  # Cohérence de l'id du renard
+  if( all(str_detect(file_names_str, fox_id)) == TRUE & #le bon id est dans tous les noms de fichiers
+      all(str_count(file_names_str, fox_id) != 1) == FALSE & #et pas plus d'une fois
+      all(str_locate(file_names_str, fox_id)[,1]!=9) == FALSE ) { #et tj en position 9-12
+  
+    print(paste("L'id de renard ", fox_id, " est présent une seule fois dans tous les fichiers, entre les positions 9 et 12"))
+    
+  } else{
+    print(paste("L'id de renard ", fox_id, " est absent d'un fichier, ou présent plus d'une fois dans un fichier, ou situé ailleurs qu'entre les positions 9 et 12."))
+    nb_pb <- nb_pb +1    #there is 1 issue
+  }
+  
+  # Cohérence de l'heure
+  if(
+      # Heure
+     all(str_detect(file_names_str, "h")) == TRUE & #la lettre h est présente partout
+     all(str_count(file_names_str, "h") != 1) == FALSE & #et elle y est qu'une fois
+     all(str_locate(file_names_str, "h")[,1] != 27) == FALSE &  #et toujours en position 27
+     
+      # Minutes
+    all(str_detect(file_names_str, "m")) == TRUE & #la lettre m est présente partout
+    all(str_count(file_names_str, "m") != 1) == FALSE & #et qu'une fois
+    all(str_locate(file_names_str, "m")[,1] != 30) == FALSE & #et toujours en position 30 
+    
+      # Secondes
+    all(str_detect(file_names_str, "s")) == TRUE & #la lettre s est présente partout
+    all(str_count(file_names_str, "s") != 1) == FALSE & #et qu'une fois
+    all(str_locate(file_names_str, "s")[,1] != 33) == FALSE #et toujours en position 33
+     
+  ){
+    print("L'heure, les minutes et les secondes sont présentes une seule fois dans les fichiers, respectivement aux positions 27, 30 et 33.")
+    
+  } else {
+    print("L'heure, les minutes ou les secondes sont absentes d'un fichier ou présentes plus d'une fois ou situées ailleurs qu'en position 27, 30 et 33.")
+    nb_pb <- nb_pb +1
+  }
+
+  # Cohérence de la date
+  if (
+        # Année 
+      all(str_detect(file_names_str, year)) == TRUE & #l'année 2023 est présente partout
+      all(str_count(file_names_str, year) != 1) == FALSE & #et qu'une seule fois
+      all(str_locate(file_names_str, year)[,1] != 14) == FALSE & #et uniquement en position 14
+      
+        # Mois & jour : on va checker les tirets pour vérif que toujours 2 chiffres
+  
+          # 4 tirets par nom
+    all(str_detect(file_names_str, "-")) == TRUE & #il y a des tirets dans chaque fichier
+    all(lapply(str_locate_all(file_names_str, "-"), nrow) != 4) == FALSE & #il y en a toujours 4
+  
+          # toujours à la même position
+    all(map_lgl(map(file_names_str,
+                    ~ str_locate_all(.x, "-")[[1]][,1]),
+                ~ all(.x == c(13,18,21,24) ))) == TRUE #toujours à la même position
+    
+  ) {
+    print("L'année, le mois et le jour sont présentes une seule fois dans les fichiers, respectivement aux positions 13, 18, 21 et 24.")
+  } else {
+    print("L'année, le mois ou le jour sont absents d'un fichier ou présents plus d'une fois ou situés ailleur qu'aux positions 13, 18, 21 et 24.")
+    nb_pb <- nb_pb +1
+  }
+  
+  # Final check
+  if(nb_pb == 0)
+    {print(paste("CONCLUSION : Il n'y a aucun problème apparent dans le nom des", length(file_names_str), "fichiers.")) #0 pb
+  } else {
+      print(paste("CONCLUSION : Il y a ", nb_pb, " problème(s) dans les noms des fichiers. Cela peut se situer au niveau du mot 'fox', de l'id du renard, de l'heure ou de la date.")) #1 or more pb
+    }
+  
+}
+
+# Test function
+check_consistency(files_img, "4284", "2023")
+#check_consistency(files_img, "4284", 2023) #error : wrong year format
+# check_consistency(list("0308fox4284--2023-02-02-1h06m25s922.png",
+#                        "0308Efox4284-2023-02-02-16h06m28s593.png"),
+#                   "4283", "2023")         #error : wrong file name
+
+```
+
+# 6. Récupérer les informations dans le nom du fichier
+
+## 6.1 Ce qu'on a déjà {.tabset}
+
+### 6.1.1 Dans les images pour entraîner YOLO et leurs sorties Json
+
+Dans les jdd Prediction_train et Prediction_test, les images png et les fichiers
+json associés ont le même nom (sauf l'extension). Le nom de l'image dans le json
+est aussi le même mais sans la partie ".png_pred" :
+
+-   Prediction_train :
+
+    -   image : 0308Efox4284-2023-02-02-16h05m37s604.png_pred.jpg
+
+    -   json : 0308Efox4284-2023-02-02-16h05m37s604.png_pred.json
+
+    -   nom de l image dans le json : 0308Efox4284-2023-02-02-16h05m37s604.png
+
+-   Prediction_test
+
+    -   image : 0308Efox4284-2023-02-02-16h08m11s045.png_pred.jpg
+
+    -   json : 0308Efox4284-2023-02-02-16h08m11s045.png_pred.json
+
+    -   nom de l image dans le json : 0308Efox4284-2023-02-02-16h08m11s045.png
+
+-   Videos post infection
+
+    -   renard4383 Video 4 03_08_2022 15_32_00 3.mp4
+
+    -   renard4306 Video 2 07_09_2022 10_43_47 1.mp4
+
+-   Video post implant pre infection
+
+    -   renard4383 Video 4 04_07_2022 10_47_16 3.mp4
+
+    -   renard4383 Video 3 04_07_2022 10_47_16 2.mp4
+
+### 6.1.2 Dans les vidéos
+
+Sinon pour les vidéos les noms des fichiers sont d'un autre format :
+***"renardxxxx Video x dd_mm_yyyy hh_mm_ss x.mp4".***
+
+## 6.2 Ce qu'on veut
+
+Il va falloir utiliser l'applicaion de Marcin pour récupérer la date. L'app de
+Marcin fait des images au format suivant : **f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg**
+
+![](images/clipboard-2878179951.png)
+
+On va déjà faire une fonction qui arrive à lire la date en la prenant dans le
+filename, s'il est en format **f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg.** Et ça pour
+chaque seconde.
+
+## 6.3 Réalisation
+
+Nous on voudrait extraire les infos directement des Json, parce que même si les
+noms des images sont exactement ceux qui seront dans la variable "filename" du
+Json, c'est plus propre de récupérer toute l'information au même endroit, et pas
+une dans le json et une dans l'image.
+
+Pour le moment on n'a pas de Json qui utilise le nom des images comme dans
+l'appli de Marcin, donc j'en ai créé quelques uns artificiellement juste pour
+m'entraîner. Ils sont dans le dossier **Json_test_comme_app_marcin**.
+
+```{r}
+# Test de l'import
+test <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_test_comme_app_marcin")
+
+test #on a bien ce qu'on veut = avec le filename
+
+# Récupération de la date, format f_ID4284_02_02_2023_16_08_11.jpg
+
+nom_fichier <- test$filename[1]  #ligne 1 nom fichier
+grep("_.._.._...._", nom_fichier )
+[:digit:]
+strapplyc(nom_fichier, "[_](.*)[_]", simplify = TRUE)
+
+day <- test$filename
+month <- test$filename
+year <- test$filename
+
+```
+
+# /!\\ À faire
+
+-   ~~Si 2 lignes dans le json, conserver que la ligne pour laquelle on a le
+    plus de certitude. Si pour aucune des lignes on est au-dessus de 60% alors
+    alerte pour human check.~~
+-   ~~Appeler les dataframe qui sont dans les json pour y avoir accès
+    directement.~~
+-   ~~Concaténer les infos des json dans un seul dataframe~~
+-   ~~Automatiser la concaténation dans une fonction~~
+-   ~~Faire une fonction qui gère toutes les étapes du chargement des fichiers à
+    la concaténation des dataframes extraits depuis les json, en prenant
+    uniquement en entrée le WD~~
+-   ~~Faire un script pour vérifier que tous les noms des fichiers suit la même
+    trame~~
+-   ~~faire une fonction pour automatiser cette vérification~~
+
+Peut-être pas besoin :
+
+-   6\. Récupérer des infos dans le nom du fichier
+-   6.1 Séparer la chaîne de caractères au bon endroit
+
+On veut pouvoir séparer la chaîne de caractères selon plusieurs instructions.
+/!\\ À vérifier avec Julie et Eric !
+
+-   <div>
+
+    -   Il y a 4 chiffres + 1 lettre + "fox" puis l'id du renard
+
+    -   L'id du renard fait 4 chiffres
+
+    </div>
+
+-   6.2 Garder les bons caractères de la str dans des variables
+
+-   6.3 Transformer ces variables en colonnes en plus pour le df
+
+-   6.4 Intégrer ça dans la fonction de la partie 4
