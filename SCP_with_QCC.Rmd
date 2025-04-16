@@ -1,5 +1,5 @@
 ---
-title: "Test du package QCC"
+title: "Contrôle stat de processus avec QCC"
 author: "Mathilda Alhamadah"
 date: "2025-03-07"
 output:
