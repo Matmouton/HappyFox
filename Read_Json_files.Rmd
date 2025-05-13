@@ -127,6 +127,8 @@ one_position_file <- function(json_file,
     
     great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
     
+    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #mettre en format datetime
+    
     data_new <- data_new %>% 
       mutate(Date_Time = great_date)
     
