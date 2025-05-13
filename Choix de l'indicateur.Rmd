@@ -19,10 +19,12 @@ editor_options:
 ```{r packages, message=FALSE, warning=FALSE}
 #install.packages("jsonlite")
 #install.packages("curl")
+#install.packages("lubridate")
 library(jsonlite)
 library(purrr)
 library(curl)
 library(dplyr)
+library(lubridate)
 ```
 
 ```{r load_json_function}
@@ -175,7 +177,6 @@ toutes ces observations sont celles du même renard.
 ## 1.1 Fréquence de mouvement du CG par unité de temps
 
 ```{r}
-
 ```
 
 ## 1.2 Intensité des mouvements
@@ -185,5 +186,36 @@ toutes ces observations sont celles du même renard.
 # 2. Alternance des positions assis/ debout/ couché
 
 ## 2.1 Fréquence de chaque position par unité de temps
+
+Pour toutes les dates de date_time
+
+Pour toutes les heures de date_time
+
+(Pour toutes les minutes de date_time ? Pour pouvoir faire tous les quarts
+d'heure par ex)
+
+ou : trier par date
+
+récup la date/l'heure/les minutes
+
+tant que la combinaison date/heure/minutes est la même : compteurs assis/
+debout/ couché/ total incrémentés
+
+Faire une ligne avec la date + l'heure + la minute, le nombre de frames qu'on a
+sur ce laps de temps, et le nombre de frames dans chaque position : assis/
+debout/ couché
+
+Ajouter la proportion associée à chaque position : nb_frames_position/
+nb_frames_total
+
+```{r}
+#library(lubridate)
+
+date("2023-02-02 16:08:11 CET")
+hour("2023-02-02 16:08:11 CET")
+minute("2023-02-02 16:08:11 CET")
+
+
+```
 
 ## 2.2 Quantification de chaque position et addition
