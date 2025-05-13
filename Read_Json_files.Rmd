@@ -275,7 +275,7 @@ Format de l'input date_time_format attendu selon le format du filename dans le
 Json :
 
 | Filename format                                  | Date_time_format    | Limits                                 | Fox_id | Datetime |
-|--------------------------------------------------|---------------------|----------------------------------------|--------|----------|
+|-----------------------|-------------|------------------|-------------|-------------|
 | 0807fox4384c.png                                 | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 0807fox4384gg.png                                | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 1408Mfox4384-1.png                               | \-                  | fox_id : c(8,11)                       | x      | \-       |
@@ -479,41 +479,3 @@ Marcin fait des images au format suivant : **f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg**
 On a fait une fonction qui arrive à lire la date en la prenant dans le filename,
 s'il est en format **f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg.** Et ça pour chaque
 seconde/ frame.
-
-# /!\\ À faire
-
--   ~~Si 2 lignes dans le json, conserver que la ligne pour laquelle on a le
-    plus de certitude. Si pour aucune des lignes on est au-dessus de 60% alors
-    alerte pour human check.~~
--   ~~Appeler les dataframe qui sont dans les json pour y avoir accès
-    directement.~~
--   ~~Concaténer les infos des json dans un seul dataframe~~
--   ~~Automatiser la concaténation dans une fonction~~
--   ~~Faire une fonction qui gère toutes les étapes du chargement des fichiers à
-    la concaténation des dataframes extraits depuis les json, en prenant
-    uniquement en entrée le WD~~
--   ~~Faire un script pour vérifier que tous les noms des fichiers suit la même
-    trame~~
--   ~~faire une fonction pour automatiser cette vérification~~
-
-Peut-être pas besoin :
-
--   ~~6. Récupérer des infos dans le nom du fichier~~
--   ~~6.1 Séparer la chaîne de caractères au bon endroit~~
-
-On veut pouvoir séparer la chaîne de caractères selon plusieurs instructions.
-/!\\ À vérifier avec Julie et Eric !
-
--   <div>
-
-    -   Il y a 4 chiffres + 1 lettre + "fox" puis l'id du renard
-
-    -   L'id du renard fait 4 chiffres
-
-    </div>
-
--   6.2 Garder les bons caractères de la str dans des variables
-
--   6.3 Transformer ces variables en colonnes en plus pour le df
-
--   6.4 Intégrer ça dans la fonction de la partie 4

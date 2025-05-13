@@ -1,0 +1,187 @@
+---
+title: "Choix de l'indicateur"
+author: "Mathilda Alhamadah"
+date: "2025-05-13"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+# 0. Recharger la fonction pour avoir les json en df
+
+```{r packages, message=FALSE, warning=FALSE}
+#install.packages("jsonlite")
+#install.packages("curl")
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+```
+
+```{r load_json_function}
+#Function to load the data
+load_json <- function(WD, file_name){
+  
+  #requirements :
+            # WD & file_name are strings. 
+  if (!is.character(WD) | !is.character(file_name)) {
+    stop("Le working directory et le fichier doivent être des chaînes de caractère.")
+  }
+            # the file extension is .json
+  if (!grepl("\\.json$", file_name)) {              #if the ending of the character is not ".json"
+    stop("Le fichier doit être un fichier json.")   #stop
+  }
+  
+  setwd(WD)                                #locate the data
+  loaded_file <- fromJSON(file_name)       #load file
+  return(loaded_file)                      #return file
+}
+```
+
+```{r one_position_file_function}
+#Function to keep only the most likely posture
+
+one_position_file <- function(json_file,
+                              threshold = 0.5,        #default = arbitrary
+                              fox_id_limits = c(5,8), #default = like in the app
+                              date_time_limits = c(10,28), #same remark
+                              date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
+  
+
+  #Get file and most reliable prediction  
+    dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
+    posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
+    data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
+    
+   #add the filename
+    data_new <- data_new %>%
+      mutate(filename = json_file$filename) #get filename
+    
+   #Check reliability
+    if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
+      print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
+    }
+    
+   #get the date and time
+    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
+    #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
+    
+    date_wrong_format <- strptime(str_datetime, format = date_time_format) #transformé en date et heure
+    
+    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
+    
+    data_new <- data_new %>% 
+      mutate(Date_Time = great_date)
+    
+   #get the fox id
+    fox_id <- substr(data_new$filename, fox_id_limits[1], fox_id_limits[2])
+    #/!\ ça aussi ça peut changer si format filenamechange
+    
+    data_new <- data_new %>% 
+      mutate(fox_id = fox_id)
+    
+   #output  
+    return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
+
+}
+```
+
+```{r merge_postures_function}
+# Fonction pour merge automatiquement toutes les lignes des dataframes en un seul dataframe
+merge_postures <- function(list_df_postures) {
+  return (dplyr::bind_rows(list_df_postures))
+}
+
+```
+
+```{r from_json_to_df_function}
+
+from_json_to_df <- function(WD,
+                            threshold = 0.6,
+                            fox_id_limits = c(5,8),   #default = for the app outputs
+                            date_time_limits = c(10,28),                #same
+                            date_time_format = "%d_%m_%Y_%H_%M_%S")  {  #same
+  
+  # Récuperer tous les fichiers Json du dossier
+  setwd(WD)        #Set WD
+  files <- list.files(pattern = ".json") #get Json files
+  print(paste("Chargement terminé. ",length(files), " fichiers ont été chargés."))
+  
+  # Créer la liste vide de dataframes et la variable à incrémenter
+  list_df1line = list()  #empty list
+  i = 0  #increment
+  
+  # Boucle pour chaque fichier
+  for (file in files) {
+    
+    # Appliquer la fonction load_json à tous les éléments du dossier
+    data_loaded <- load_json(WD = WD, file = file)
+    
+    # Appliquer one_position_file à tous les nouveaux dataframes
+    data_1line <- one_position_file(json_file = data_loaded,
+                                    threshold = threshold,
+                                    fox_id_limits = fox_id_limits,
+                                    date_time_limits = date_time_limits,
+                                    date_time_format = date_time_format)
+  
+    # Tous les mettre dans une liste 
+    list_df1line[[i+1]] <- data_1line
+    
+    i <- i+1 #next file
+  }
+  
+  # Appliquer le merge sur la liste et récup le dataframe mergé
+  df_merged <- merge_postures(list_df1line) 
+  print(paste("Extraction terminée. ", i, "fichiers ont été fusionnés."))
+  
+  return(df_merged)
+  
+}
+```
+
+```{r example_sample_to_work_on}
+# Récupérer tous les fichiers json que Julie m'a donnés
+df_not_clean <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
+                            fox_id_limits = c(9,12),
+                            date_time_limits = c(14,32),
+                            date_time_format = "%Y-%m-%d-%Hh%Mm%S")
+
+# Supprimer ceux qui ont des formats chiants (date illisible)
+data <- df_not_clean[  !is.na(df_not_clean$Date_Time) &
+                       !is.na(as.numeric(df_not_clean$fox_id)) &
+                       (df_not_clean$class_id == 0 |
+                       df_not_clean$class_id == 1 |
+                       df_not_clean$class_id == 2) ,
+                     ]
+
+rm(df_not_clean)
+```
+
+On travaillera donc sur 182 observations de différents renards. Pour simplifier,
+comme normalement on ne traite qu'un renard à la fois, on va considérer que
+toutes ces observations sont celles du même renard.
+
+# 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
+
+## 1.1 Fréquence de mouvement du CG par unité de temps
+
+```{r}
+
+```
+
+## 1.2 Intensité des mouvements
+
+## 1.3 Vitesse des mouvements
+
+# 2. Alternance des positions assis/ debout/ couché
+
+## 2.1 Fréquence de chaque position par unité de temps
+
+## 2.2 Quantification de chaque position et addition
