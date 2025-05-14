@@ -209,11 +209,38 @@ Ajouter la proportion associée à chaque position : nb_frames_position/
 nb_frames_total
 
 ```{r}
-#library(lubridate)
 
-date("2023-02-02 16:08:11 CET")
-hour("2023-02-02 16:08:11 CET")
-minute("2023-02-02 16:08:11 CET")
+# get the time interval
+
+# Fonction pour créer le nouveau dataframe
+frequency_position <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      count_0 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
+      count_1 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
+      count_2 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2)             #count sitting
+    )
+  
+  return(df_counts)
+}
+
+# Test pour 600 secondes (10 minutes)
+new_df <- frequency_position(data = data, interval_seconds = 600)
+
 
 
 ```

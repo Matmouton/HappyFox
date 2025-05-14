@@ -277,7 +277,7 @@ Format de l'input date_time_format attendu selon le format du filename dans le
 Json :
 
 | Filename format                                  | Date_time_format    | Limits                                 | Fox_id | Datetime |
-|-----------------------|-------------|------------------|-------------|-------------|
+|--------------------------------------------------|---------------------|----------------------------------------|--------|----------|
 | 0807fox4384c.png                                 | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 0807fox4384gg.png                                | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 1408Mfox4384-1.png                               | \-                  | fox_id : c(8,11)                       | x      | \-       |
