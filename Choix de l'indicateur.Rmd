@@ -166,6 +166,9 @@ data <- df_not_clean[  !is.na(df_not_clean$Date_Time) &
                      ]
 
 rm(df_not_clean)
+
+# Trier par date
+data <- data %>% arrange(Date_Time) 
 ```
 
 On travaillera donc sur 182 observations de différents renards. Pour simplifier,
@@ -187,32 +190,9 @@ toutes ces observations sont celles du même renard.
 
 ## 2.1 Fréquence de chaque position par unité de temps
 
-Pour toutes les dates de date_time
-
-Pour toutes les heures de date_time
-
-(Pour toutes les minutes de date_time ? Pour pouvoir faire tous les quarts
-d'heure par ex)
-
-ou : trier par date
-
-récup la date/l'heure/les minutes
-
-tant que la combinaison date/heure/minutes est la même : compteurs assis/
-debout/ couché/ total incrémentés
-
-Faire une ligne avec la date + l'heure + la minute, le nombre de frames qu'on a
-sur ce laps de temps, et le nombre de frames dans chaque position : assis/
-debout/ couché
-
-Ajouter la proportion associée à chaque position : nb_frames_position/
-nb_frames_total
-
 ```{r}
 
-# get the time interval
-
-# Fonction pour créer le nouveau dataframe
+# Frequency of positions lying/ sitting/ standing by timestep (chosen)
 frequency_position <- function(data, interval_seconds) {
   data <- data %>% arrange(Date_Time) #sort by date
   
@@ -241,8 +221,54 @@ frequency_position <- function(data, interval_seconds) {
 # Test pour 600 secondes (10 minutes)
 new_df <- frequency_position(data = data, interval_seconds = 600)
 
-
-
 ```
 
 ## 2.2 Quantification de chaque position et addition
+
+Pour le moment on a 0-allongé 1-debout 2-couché. On veut plutôt 0-allongé
+1-assis 2-debout pour quantifier l'activité en fonction de la posture détectée.
+
+```{r}
+#Change position code
+data <- data %>% 
+  mutate(position_code = case_when(name=="lying" ~ 0,
+                                   name=="sitting" ~ 1,
+                                   name=="standing" ~ 2,
+                                   TRUE ~ NA
+  ))
+
+# Amount of activity in positions by timestep (chosen)
+amount_activity <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      total_activity = sum(data[data$Date_Time >= start_time #sum position scores 
+                          & data$Date_Time < end_time,]$position_code),            
+      activity_proportion = ifelse(total_activity != 0, #if not always lying
+                                   total_activity/nrow(data[data$Date_Time >= start_time & data$Date_Time < end_time,]),                       #compute proportion
+                                   0)              #else : proportion = 0
+    )
+  
+  return(df_counts)
+}
+
+# Test pour 600 secondes (10 minutes)
+new_df2 <- amount_activity(data = data, interval_seconds = 600)
+
+# Test pour 24h = 86400s
+
+df_24h <- amount_activity(data = data, interval_seconds = 86400)
+```
