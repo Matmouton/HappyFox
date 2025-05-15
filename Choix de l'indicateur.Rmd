@@ -180,6 +180,86 @@ toutes ces observations sont celles du même renard.
 ## 1.1 Fréquence de mouvement du CG par unité de temps
 
 ```{r}
+# Distance walked by timestep
+
+distance_walked <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+ data <- data %>% 
+   rowwise() %>%
+   mutate(movement_x = case_when(rownames(.)== "1" ~ 0,
+                                rownames(.)!="1" ~
+                                 data[rownames(.),]$relative_coordinates$center_x - data[as.numeric(rownames(.))-1,]$relative_coordinates$center_x),
+          movement_y = case_when(rownames(.) == "1" ~ 0,
+                                 rownames(.) != "1" ~ data[rownames(.),]$relative_coordinates$center_y - data[as.numeric(rownames(.))-1,]$relative_coordinates$center_y)
+     )
+
+  # df_counts <- df_counts %>%
+  # rowwise() %>%        # Pour chaque ligne
+  #   mutate(
+  #     distance = 
+      
+
+return(df_counts)
+}
+
+df_distance <- distance_walked(data = data, interval_seconds = 3600)
+
+data[data$Date_Time == "2023-01-30 11:56:13 CET",]
+
+head(data$Date_Time)
+rownames(data)
+
+data[]
+```
+
+```{r}
+calculate_distances <- function(data, interval) {
+  
+  # Calculer la distance entre deux points
+  calculate_distance <- function(x1, y1, x2, y2) {
+    sqrt((x2 - x1)^2 + (y2 - y1)^2)
+  }
+  
+  # Ajouter une colonne pour la distance parcourue chaque seconde
+  data <- data %>%
+    arrange(Date_Time) %>%
+    mutate(
+      distance = sqrt((relative_coordinates$center_x - lag(relative_coordinates$center_x))^2 + 
+                      (relative_coordinates$center_y - lag(relative_coordinates$center_y))^2),
+      time_diff = as.numeric(difftime(Date_Time, lag(Date_Time), units = "secs"))
+    ) %>%
+    filter(!is.na(distance) & time_diff == 1)
+  
+  # Calculer la somme des distances et la vitesse moyenne pour chaque intervalle
+  result <- data %>%
+    mutate(interval_group = floor(as.numeric(difftime(Date_Time, min(Date_Time), units = "secs")) / interval)) %>%
+    group_by(interval_group) %>%
+    summarise(
+      total_distance = sum(distance, na.rm = TRUE),
+      average_speed = total_distance / interval
+    )
+  
+  return(result)
+}
+
+# Exemple d'utilisation
+# data <- read.csv("path_to_your_data.csv")
+# interval <- 60 # par exemple, 60 secondes
+# result <- calculate_distances(data, interval)
+# print(result)
+
 ```
 
 ## 1.2 Intensité des mouvements
