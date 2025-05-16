@@ -180,9 +180,9 @@ toutes ces observations sont celles du même renard.
 ## 1.1 Fréquence de mouvement du CG par unité de temps
 
 ```{r}
-# Distance walked by timestep
+# Number of movements made by time interval
 
-distance_walked <- function(data, interval_seconds) {
+movements_amount <- function(data, interval_seconds, movement_threshold = 0.01) {
   data <- data %>% arrange(Date_Time) #sort by date
   
   start_time <- min(data$Date_Time)   #oldest frame
@@ -196,35 +196,37 @@ distance_walked <- function(data, interval_seconds) {
     end_time = intervals[-1]                     #drop the first time
   )
   
- data <- data %>% 
+  #movement yes/no :
+  data <- data %>% 
+    mutate(movement_yes_no = ifelse( #if position difference between 2 times > 0,01
+     abs(data$relative_coordinates$center_x - lag(data$relative_coordinates$center_x)) > movement_threshold
+     | abs(data$relative_coordinates$center_y - lag(data$relative_coordinates$center_y)) > movement_threshold ,     
+     1,                              #then movement
+     0)                              #else : no movement)
+    )
+  
+ df_counts <- df_counts %>% 
    rowwise() %>%
-   mutate(movement_x = case_when(rownames(.)== "1" ~ 0,
-                                rownames(.)!="1" ~
-                                 data[rownames(.),]$relative_coordinates$center_x - data[as.numeric(rownames(.))-1,]$relative_coordinates$center_x),
-          movement_y = case_when(rownames(.) == "1" ~ 0,
-                                 rownames(.) != "1" ~ data[rownames(.),]$relative_coordinates$center_y - data[as.numeric(rownames(.))-1,]$relative_coordinates$center_y)
+   mutate(movement_counts = sum(data[data$Date_Time > start_time & data$Date_Time <= end_time,]$movement_yes_no, #amount of movements = sum of the 1 (= movements)
+                                na.rm = T),  #to avoid the 1st NA
+          movement_proportion = ifelse(
+            nrow(data[data$Date_Time > start_time & data$Date_Time <= end_time,])!=0, #if there is at least 1 observation for this timestep
+            movement_counts/nrow(data[data$Date_Time > start_time & data$Date_Time <= end_time,]), #proportion = n/N
+            0   #else : proportion = 0
+          )
      )
 
-  # df_counts <- df_counts %>%
-  # rowwise() %>%        # Pour chaque ligne
-  #   mutate(
-  #     distance = 
-      
 
 return(df_counts)
+
 }
 
-df_distance <- distance_walked(data = data, interval_seconds = 3600)
-
-data[data$Date_Time == "2023-01-30 11:56:13 CET",]
-
-head(data$Date_Time)
-rownames(data)
-
-data[]
+df_movement <- movements_amount(data = data, interval_seconds = 3600)
 ```
 
 ```{r}
+
+#code copilot, à voir
 calculate_distances <- function(data, interval) {
   
   # Calculer la distance entre deux points
@@ -240,7 +242,7 @@ calculate_distances <- function(data, interval) {
                       (relative_coordinates$center_y - lag(relative_coordinates$center_y))^2),
       time_diff = as.numeric(difftime(Date_Time, lag(Date_Time), units = "secs"))
     ) %>%
-    filter(!is.na(distance) & time_diff == 1)
+    filter(!is.na(distance) & time_diff == 1)  #should not happen ?
   
   # Calculer la somme des distances et la vitesse moyenne pour chaque intervalle
   result <- data %>%
@@ -259,6 +261,8 @@ calculate_distances <- function(data, interval) {
 # interval <- 60 # par exemple, 60 secondes
 # result <- calculate_distances(data, interval)
 # print(result)
+
+calculate_distances(data=data,interval=600)
 
 ```
 
