@@ -150,6 +150,47 @@ from_json_to_df <- function(WD,
 }
 ```
 
+```{r from_json_to_df_function_error_msg}
+from_json_to_df <- function(WD,
+                            threshold = 0.6,
+                            fox_id_limits = c(5,8),
+                            date_time_limits = c(10,28),
+                            date_time_format = "%d_%m_%Y_%H_%M_%S") {
+  
+  setwd(WD)
+  files <- list.files(pattern = ".json")
+  print(paste("Chargement terminé. ", length(files), " fichiers ont été chargés."))
+  
+  list_df1line <- list()
+  i <- 0
+  
+  for (file in files) {
+    if (grepl("\\.json$", file)) {
+      tryCatch({
+        data_loaded <- load_json(WD = WD, file_name = file)
+        data_1line <- one_position_file(json_file = data_loaded,
+                                        threshold = threshold,
+                                        fox_id_limits = fox_id_limits,
+                                        date_time_limits = date_time_limits,
+                                        date_time_format = date_time_format)
+        list_df1line[[i + 1]] <- data_1line
+        i <- i + 1
+      }, error = function(e) {
+        message(paste("❌ Erreur rencontrée avec le fichier :", file))
+        message("🛠️ Détail de l'erreur :", e$message)
+      })
+    }
+  }
+  
+  df_merged <- merge_postures(list_df1line)
+  print(paste("Extraction terminée. ", i, " fichiers ont été fusionnés."))
+  
+  return(df_merged)
+}
+```
+
+
+
 ```{r example_sample_to_work_on}
 # Récupérer tous les fichiers json que Julie m'a donnés
 df_not_clean <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
