@@ -182,9 +182,16 @@ rm(df_not_clean)
 data <- data %>% arrange(Date_Time) 
 ```
 
-On travaillera donc sur 182 observations de différents renards. Pour simplifier,
-comme normalement on ne traite qu'un renard à la fois, on va considérer que
-toutes ces observations sont celles du même renard.
+```{r real_sample_to_work_on}
+#renard4313 Video 1 06_07_2022 11_34_21 1 Part 1/2
+data <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
+                        threshold = 0.34,  #just to be sure we don't do worse than a random prediction
+                        fox_id_limits = c(8,11),
+                        date_time_limits = c(13,31),
+                        date_time_format = "%d_%m_%Y_%H_%M_%S")
+```
+
+On a 530 frames avec une confiance < 34% sur 21486, soit 2,47%.
 
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
 
