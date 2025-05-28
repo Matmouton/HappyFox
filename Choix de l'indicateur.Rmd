@@ -48,36 +48,45 @@ load_json <- function(WD, file_name){
 ```
 
 ```{r one_position_file_function}
-#Function to keep only the most likely posture
-
 one_position_file <- function(json_file,
                               threshold = 0.5,        #default = arbitrary
                               fox_id_limits = c(5,8), #default = like in the app
                               date_time_limits = c(10,28), #same remark
                               date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
   
-
-  #Get file and most reliable prediction  
+  #If Json file is not empty (there is a prediction)
+  if(length(json_file$objects[[1]])>0) {
+    
+    #Get file and most reliable prediction  
     dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
     posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
     data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
     
-   #add the filename
+    #Check reliability
+    if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
+      print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
+    }   
+    
+  }else{
+    data_new <- json_file    #if empty Json : no change needed
+    data_new <- data.frame(class_id = NA,
+                           name = NA,
+                           relative_coordinates = NA,
+                           confidence = NA)
+  }
+  
+  #In any situation (if Json file is/is not empty)
+    #add the filename
     data_new <- data_new %>%
       mutate(filename = json_file$filename) #get filename
     
-   #Check reliability
-    if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
-      print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
-    }
-    
-   #get the date and time
+    #get the date and time
     str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
     #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
     
     date_wrong_format <- strptime(str_datetime, format = date_time_format) #transformé en date et heure
     
-    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format en chr
+    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
     
     great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #mettre en format datetime
     
@@ -95,6 +104,7 @@ one_position_file <- function(json_file,
     return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
 
 }
+
 ```
 
 ```{r merge_postures_function}
@@ -149,46 +159,6 @@ from_json_to_df <- function(WD,
   
 }
 ```
-
-```{r from_json_to_df_function_error_msg}
-from_json_to_df <- function(WD,
-                            threshold = 0.6,
-                            fox_id_limits = c(5,8),
-                            date_time_limits = c(10,28),
-                            date_time_format = "%d_%m_%Y_%H_%M_%S") {
-  
-  setwd(WD)
-  files <- list.files(pattern = ".json")
-  print(paste("Chargement terminé. ", length(files), " fichiers ont été chargés."))
-  
-  list_df1line <- list()
-  i <- 0
-  
-  for (file in files) {
-    if (grepl("\\.json$", file)) {
-      tryCatch({
-        data_loaded <- load_json(WD = WD, file_name = file)
-        data_1line <- one_position_file(json_file = data_loaded,
-                                        threshold = threshold,
-                                        fox_id_limits = fox_id_limits,
-                                        date_time_limits = date_time_limits,
-                                        date_time_format = date_time_format)
-        list_df1line[[i + 1]] <- data_1line
-        i <- i + 1
-      }, error = function(e) {
-        message(paste("❌ Erreur rencontrée avec le fichier :", file))
-        message("🛠️ Détail de l'erreur :", e$message)
-      })
-    }
-  }
-  
-  df_merged <- merge_postures(list_df1line)
-  print(paste("Extraction terminée. ", i, " fichiers ont été fusionnés."))
-  
-  return(df_merged)
-}
-```
-
 
 
 ```{r example_sample_to_work_on}
