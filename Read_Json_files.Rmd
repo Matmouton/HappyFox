@@ -26,6 +26,7 @@ Le package utile : **jsonlite**
 library(jsonlite)
 library(purrr)
 library(curl)
+library(dplyr)
 ```
 
 ```{r data_sample, message=FALSE}
@@ -156,11 +157,97 @@ one_position_file(load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/
                   fox_id_limits = c(9,12),
                   date_time_limits = c(14,32),
                   date_time_format = "%Y-%m-%d-%Hh%Mm%S")
+
 ```
 
 Attention !! Cette fonction a été faite pour lire les noms de fichiers au format
 de ceux sortis par l'appli de Marcin ! Elle ne fonctionnera pas avec un autre
 format de nom de fichier, il faudra l'adapter !
+
+Normalement les fichiers Json qu'on charge ont un élément "objects" qui a une
+taille de 1\*4, 2\*4 ou 3\*4 selon combien il y a de prédictions pour cette
+frame. Mais si aucune prédiction n'est faite, objects est vide :
+
+```{r}
+#Chargement d'un Json vide pour voir 
+empty_json <- load_json("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_run_YOLO_10k_images", "c_f_FOX4383_06_07_2022_11_47_53_pred.json")
+
+length(empty_json$objects[[1]])
+length(data_json_1$objects[[1]])
+```
+
+Du coup on adapte la fonction one_position_file pour que si on a un json vide,
+on mette des NA partout sauf dans le filename :
+
+```{r}
+one_position_file <- function(json_file,
+                              threshold = 0.5,        #default = arbitrary
+                              fox_id_limits = c(5,8), #default = like in the app
+                              date_time_limits = c(10,28), #same remark
+                              date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
+  
+  #If Json file is not empty (there is a prediction)
+  if(length(json_file$objects[[1]])>0) {
+    
+    #Get file and most reliable prediction  
+    dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
+    posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
+    data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
+    
+    #Check reliability
+    if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
+      print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
+    }   
+    
+  }else{
+    data_new <- json_file    #if empty Json : no change needed
+    data_new <- data.frame(class_id = NA,
+                           name = NA,
+                           relative_coordinates = NA,
+                           confidence = NA)
+  }
+  
+  #In any situation (if Json file is/is not empty)
+    #add the filename
+    data_new <- data_new %>%
+      mutate(filename = json_file$filename) #get filename
+    
+    #get the date and time
+    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
+    #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
+    
+    date_wrong_format <- strptime(str_datetime, format = date_time_format) #transformé en date et heure
+    
+    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
+    
+    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #mettre en format datetime
+    
+    data_new <- data_new %>% 
+      mutate(Date_Time = great_date)
+    
+   #get the fox id
+    fox_id <- substr(data_new$filename, fox_id_limits[1], fox_id_limits[2])
+    #/!\ ça aussi ça peut changer si format filenamechange
+    
+    data_new <- data_new %>% 
+      mutate(fox_id = fox_id)
+    
+   #output  
+    return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
+
+}
+
+# Test
+one_position_file(data_json_1,
+                  fox_id_limits = c(9,12),
+                  date_time_limits = c(14,32),
+                  date_time_format = "%Y-%m-%d-%Hh%Mm%S") #still working for a non-empty file
+one_position_file(empty_json,
+                  fox_id_limits = c(8,11),
+                  date_time_limits = c(13,31),
+                  date_time_format = "%d_%m_%Y_%H_%M_%S")
+
+```
 
 # 3. Fonction pour concaténer les lignes des positions dans un seul dataframe {.tabset}
 
@@ -271,13 +358,24 @@ wrong_id <- df_test2$filename[which(is.na(df_test2$Date_Time) | is.na(df_test2$f
 wrong_id
 ```
 
+Des fois on a des Json avec les objets vides parce qu'on n'a pas de prédiction
+de la part de YOLO. Dans ces cas. On a quand même le filename donc on peut récup
+la date et l'id renard. Donc on veut juste rajouter une variable de position qui
+vaut "hidden" quand le renard n'est pas visible, et où on a quand même des
+données pour Datetime et id renard. On aura juste des NA pour les 4 variables de
+position x et y.
+
+```{r from_json_to_df_empty_json}
+
+```
+
 ### 4.1 Tableau récap
 
 Format de l'input date_time_format attendu selon le format du filename dans le
 Json :
 
 | Filename format                                  | Date_time_format    | Limits                                 | Fox_id | Datetime |
-|--------------------------------------------------|---------------------|----------------------------------------|--------|----------|
+|-----------------------|-------------|------------------|-------------|-------------|
 | 0807fox4384c.png                                 | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 0807fox4384gg.png                                | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 1408Mfox4384-1.png                               | \-                  | fox_id : c(8,11)                       | x      | \-       |
