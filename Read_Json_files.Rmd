@@ -86,79 +86,13 @@ rm(datatest1)
 
 # 2. Fonction pour garder qu'une position à chaque fois {.tabset}
 
-On l'implémente dans une fonction. Sélection possible du seuil de confiance.
+Sélection possible du seuil de confiance.
 Fox_id_limits est un vecteur de taille 2 qui prend la position de la première et
 de la dernière partie de l'identifiant du renard. Pareil pour date_time_limits.
 
 [Exemple]{.underline} : pour un filename de la forme
 "blabla_fox4352_01_07_2023_14_36_02_blabla", on aura fox_id_limits = c(11,14) et
 date_time_limits = c(16,34).
-
-```{r one_position_file_function}
-library(dplyr)
-
-#Function to keep only the most likely posture
-
-one_position_file <- function(json_file,
-                              threshold = 0.5,        #default = arbitrary
-                              fox_id_limits = c(5,8), #default = like in the app
-                              date_time_limits = c(10,28), #same remark
-                              date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
-  
-
-  #Get file and most reliable prediction  
-    dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
-    posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
-    data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
-    
-   #add the filename
-    data_new <- data_new %>%
-      mutate(filename = json_file$filename) #get filename
-    
-   #Check reliability
-    if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
-      print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
-    }
-    
-   #get the date and time
-    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
-    #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
-    
-    date_wrong_format <- strptime(str_datetime, format = date_time_format) #transformé en date et heure
-    
-    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
-    
-    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #mettre en format datetime
-    
-    data_new <- data_new %>% 
-      mutate(Date_Time = great_date)
-    
-   #get the fox id
-    fox_id <- substr(data_new$filename, fox_id_limits[1], fox_id_limits[2])
-    #/!\ ça aussi ça peut changer si format filenamechange
-    
-    data_new <- data_new %>% 
-      mutate(fox_id = fox_id)
-    
-   #output  
-    return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
-
-}
-
-#Test function with app datafile format
-data_json <- load_json("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_test_comme_app_marcin", "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json")
-
-one_position_file(data_json, threshold = 0.9)   #returns line 2
-one_position_file(data_json, threshold = 0.999) #warning : confidence < threshold
-
-#Test function with another datafile format
-one_position_file(load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
-                            file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json"),
-                  fox_id_limits = c(9,12),
-                  date_time_limits = c(14,32),
-                  date_time_format = "%Y-%m-%d-%Hh%Mm%S")
-
-```
 
 Attention !! Cette fonction a été faite pour lire les noms de fichiers au format
 de ceux sortis par l'appli de Marcin ! Elle ne fonctionnera pas avec un autre
