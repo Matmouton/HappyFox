@@ -208,6 +208,56 @@ data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_m
 data_06_07_2022 : On a 530 frames avec une confiance < 34% sur 21486, soit 2,47%.
 data_04_07_2022 : on a 188 frames avec une confiance < 34% sur 29415, soit 0,64%%. C'est déjà mieux. 
 
+```{r}
+#Highest confidence rate when there is :
+
+#3 predictions
+mean(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence) #0.54
+boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence)
+
+#2 predictions
+mean(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence) #0.77
+boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
+```
+
+
+```{r}
+library(jsonlite)
+
+extract_confidence_differences <- function(directory) {
+  files <- list.files(path = directory, pattern = "\\.json$", full.names = TRUE)
+  confidence_diff_vector <- c()
+  
+  for (file in files) {
+    json_data <- fromJSON(file)
+    
+    if (length(json_data$objects[[1]])>0) {   #if Json not empty
+      objects <- json_data$objects[[1]]
+      n_objects <- nrow(objects)
+      
+      # Si 2 prédictions exactement
+      if (n_objects == 2) {
+        
+        diff <- abs(json_data$objects[[1]]$confidence[2]-
+                      json_data$objects[[1]]$confidence[1])
+        
+        confidence_diff_vector <- c(confidence_diff_vector, diff)
+      }
+    }
+  }
+  
+  return(confidence_diff_vector)
+}
+
+confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1")
+
+boxplot(confidences_test)
+```
+
+
+
+
+
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
 
 ## 1.1 Fréquence de mouvement du CG par unité de temps
