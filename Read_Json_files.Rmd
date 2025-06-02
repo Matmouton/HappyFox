@@ -86,9 +86,9 @@ rm(datatest1)
 
 # 2. Fonction pour garder qu'une position à chaque fois {.tabset}
 
-Sélection possible du seuil de confiance.
-Fox_id_limits est un vecteur de taille 2 qui prend la position de la première et
-de la dernière partie de l'identifiant du renard. Pareil pour date_time_limits.
+Sélection possible du seuil de confiance. Fox_id_limits est un vecteur de taille
+2 qui prend la position de la première et de la dernière partie de l'identifiant
+du renard. Pareil pour date_time_limits.
 
 [Exemple]{.underline} : pour un filename de la forme
 "blabla_fox4352_01_07_2023_14_36_02_blabla", on aura fox_id_limits = c(11,14) et
@@ -329,7 +329,7 @@ Format de l'input date_time_format attendu selon le format du filename dans le
 Json :
 
 | Filename format                                  | Date_time_format    | Limits                                 | Fox_id | Datetime |
-|-----------------------|-------------|------------------|-------------|-------------|
+|--------------------------------------------------|---------------------|----------------------------------------|--------|----------|
 | 0807fox4384c.png                                 | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 0807fox4384gg.png                                | \-                  | fox_id : c(8,11)                       | x      | \-       |
 | 1408Mfox4384-1.png                               | \-                  | fox_id : c(8,11)                       | x      | \-       |
