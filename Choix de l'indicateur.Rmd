@@ -57,6 +57,8 @@ one_position_file <- function(json_file,
   #If Json file is not empty (there is a prediction)
   if(length(json_file$objects[[1]])>0) {
     
+    nb_pred <- nrow(json_file$objects[[1]]) #get the number of predictions made by YOLO
+    
     #Get file and most reliable prediction  
     dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
     posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
@@ -72,13 +74,15 @@ one_position_file <- function(json_file,
     data_new <- data.frame(class_id = NA,
                            name = NA,
                            relative_coordinates = NA,
-                           confidence = NA)
+                           confidence = NA,
+                           nb_pred = 0)
   }
   
   #In any situation (if Json file is/is not empty)
     #add the filename
     data_new <- data_new %>%
-      mutate(filename = json_file$filename) #get filename
+      mutate(filename = json_file$filename,    #get filename
+             number_of_predictions = nb_pred)  #get number of predictions
     
     #get the date and time
     str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
@@ -183,15 +187,24 @@ data <- data %>% arrange(Date_Time)
 ```
 
 ```{r real_sample_to_work_on}
+#Test on real data from YOLO (29000 files) : 04/07/2022
+data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1",
+                threshold = 0.34,  #just to be sure we don't do worse than a random prediction
+                fox_id_limits = c(8,11),
+                date_time_limits = c(13,31),
+                date_time_format = "%d_%m_%Y_%H_%M_%S")
+
 #renard4313 Video 1 06_07_2022 11_34_21 1 Part 1/2
-data <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
-                        threshold = 0.34,  #just to be sure we don't do worse than a random prediction
+data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
+                        threshold = 0.34,  
                         fox_id_limits = c(8,11),
                         date_time_limits = c(13,31),
                         date_time_format = "%d_%m_%Y_%H_%M_%S")
+
 ```
 
-On a 530 frames avec une confiance < 34% sur 21486, soit 2,47%.
+data_06_07_2022 : On a 530 frames avec une confiance < 34% sur 21486, soit 2,47%.
+data_04_07_2022 : on a ?? frames avec une confiance < 34% sur 29415, soit ??%.
 
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
 
