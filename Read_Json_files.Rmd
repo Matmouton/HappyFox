@@ -156,6 +156,9 @@ one_position_file <- function(json_file,
     posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
     data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
     
+    data_new <- data_new %>% 
+      mutate(number_of_predictions = nb_pred)      #get number of predictions
+    
     #Check reliability
     if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
       print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
@@ -167,14 +170,13 @@ one_position_file <- function(json_file,
                            name = NA,
                            relative_coordinates = NA,
                            confidence = NA,
-                           nb_pred = 0)
+                           number_of_predictions = 0)
   }
   
   #In any situation (if Json file is/is not empty)
     #add the filename
     data_new <- data_new %>%
-      mutate(filename = json_file$filename, #get filename
-             number_of_predictions = nb_pred) #get number of predictions 
+      mutate(filename = json_file$filename) #get filename
     
     #get the date and time
     str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
@@ -342,14 +344,43 @@ df_test2 <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/scrip
 
 ```
 
+```{r remove_useless_objects}
+rm(data_json_real_1,
+   data_json_real_2,
+   data_json_real_3,
+   data_json_real_4,
+   data_json_real_5,
+   data_json_real_6,
+   data_json_real_7,
+   data_json_real_8,
+   data_json_real_9,
+   data_json_real_10,
+   data_json_real_11,
+   data_json_real_12,
+   data_json_real_13,
+   df_test,
+   df_test2,
+   df_final,
+   empty_json)
+```
+
+
 ```{r test_on_real_data}
 #Test on real data from YOLO (29000 files)
-data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1",
-                fox_id_limits = c(8,11),
-                date_time_limits = c(13,31),
-                date_time_format = "%d_%m_%Y_%H_%M_%S")
+  # data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1",
+  #                 threshold = 0.34,
+  #                 fox_id_limits = c(8,11),
+  #                 date_time_limits = c(13,31),
+  #                 date_time_format = "%d_%m_%Y_%H_%M_%S")
+  # 
+  # data_04_07_22
 
-data_04_07_22
+#Test on small sample of real data (86 files)
+data_test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Try",
+                             threshold = 0.34,
+                             fox_id_limits = c(8,11),
+                             date_time_limits = c(13,31),
+                             date_time_format = "%d_%m_%Y_%H_%M_%S")
 ```
 
 

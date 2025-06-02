@@ -64,6 +64,9 @@ one_position_file <- function(json_file,
     posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
     data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
     
+    data_new <- data_new %>% 
+      mutate(number_of_predictions = nb_pred)      #get number of predictions
+    
     #Check reliability
     if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
       print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
@@ -75,15 +78,14 @@ one_position_file <- function(json_file,
                            name = NA,
                            relative_coordinates = NA,
                            confidence = NA,
-                           nb_pred = 0)
+                           number_of_predictions = 0)
   }
   
   #In any situation (if Json file is/is not empty)
     #add the filename
     data_new <- data_new %>%
-      mutate(filename = json_file$filename,    #get filename
-             number_of_predictions = nb_pred)  #get number of predictions
-    
+      mutate(filename = json_file$filename)    #get filename
+
     #get the date and time
     str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
     #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
@@ -204,7 +206,7 @@ data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_m
 ```
 
 data_06_07_2022 : On a 530 frames avec une confiance < 34% sur 21486, soit 2,47%.
-data_04_07_2022 : on a ?? frames avec une confiance < 34% sur 29415, soit ??%.
+data_04_07_2022 : on a 188 frames avec une confiance < 34% sur 29415, soit 0,64%%. C'est déjà mieux. 
 
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
 
