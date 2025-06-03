@@ -74,8 +74,8 @@ one_position_file <- function(json_file,
     
   }else{
     data_new <- json_file    #if empty Json : no change needed
-    data_new <- data.frame(class_id = NA,
-                           name = NA,
+    data_new <- data.frame(class_id = 3,                #number of the position = 3
+                           name = "not visible",        #position value = not visible
                            relative_coordinates = NA,
                            confidence = NA,
                            number_of_predictions = 0)

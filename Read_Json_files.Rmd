@@ -166,8 +166,8 @@ one_position_file <- function(json_file,
     
   }else{
     data_new <- json_file    #if empty Json : no change needed
-    data_new <- data.frame(class_id = NA,
-                           name = NA,
+    data_new <- data.frame(class_id = 3,            #position number 3
+                           name = "not visible",    #position name = not visible
                            relative_coordinates = NA,
                            confidence = NA,
                            number_of_predictions = 0)
@@ -376,7 +376,7 @@ rm(data_json_real_1,
   # data_04_07_22
 
 #Test on small sample of real data (86 files)
-data_test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Try",
+data_test <- from_json_to_df("C:/Users/m.alhamadah/Desktop/test_json",
                              threshold = 0.34,
                              fox_id_limits = c(8,11),
                              date_time_limits = c(13,31),
