@@ -409,9 +409,29 @@ library(dplyr)
 frequency_position_04_07_22_PIVOT <- frequency_position_04_07_22[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
-    names_to = "position", 
-    values_to = "count"
+    names_to = "Posture", 
+    values_to = "Count"
   )
+
+#chart
+ggplot(data = frequency_position_04_07_22_PIVOT,
+       aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox4313's posture every 10min on day 04/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+
+#OR : 
+# ggplot(data = frequency_position_04_07_22_PIVOT,
+#        aes(fill = Posture, y = Count, x = start_time)) + 
+#   geom_col(aes(fill = Posture)) 
+  
 ```
 
 
