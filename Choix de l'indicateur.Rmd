@@ -361,6 +361,7 @@ calculate_distances(data=data,interval=600)
 
 ## 2.1 Fréquence de chaque position par unité de temps
 
+### 2.1.1 Fonction 
 ```{r}
 
 # Frequency of positions lying/ sitting/ standing by timestep (chosen)
@@ -381,19 +382,38 @@ frequency_position <- function(data, interval_seconds) {
   df_counts <- df_counts %>%
     rowwise() %>%               #for each line
     mutate(
-      count_lying_0 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
-      count_standing_1 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
-      count_sitting_2 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2),            #count sitting
-      count_not_visible_3 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3)             #count not visible
+      lying = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
+      standing = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
+      sitting = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2),            #count sitting
+      not_visible = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3)             #count not visible
     )
   
   return(df_counts)
 }
 
 # Test pour 600 secondes (10 minutes)
-new_df <- frequency_position(data = data_04_07_22, interval_seconds = 600)
+frequency_position_04_07_22 <- frequency_position(data = data_04_07_22, interval_seconds = 600)
 
 ```
+
+### 2.2.2 Chart
+
+```{r}
+#install.packages("ggplot2")
+#install.packages("tidyr")
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+#put data in the long format (instead of wide) : pivot function
+frequency_position_04_07_22_PIVOT <- frequency_position_04_07_22[,-2] %>% #drop the end_time column
+  pivot_longer(
+    cols = !start_time, 
+    names_to = "position", 
+    values_to = "count"
+  )
+```
+
 
 ## 2.2 Quantification de chaque position et addition
 
