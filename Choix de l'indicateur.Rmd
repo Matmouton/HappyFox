@@ -381,16 +381,17 @@ frequency_position <- function(data, interval_seconds) {
   df_counts <- df_counts %>%
     rowwise() %>%               #for each line
     mutate(
-      count_0 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
-      count_1 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
-      count_2 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2)             #count sitting
+      count_lying_0 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
+      count_standing_1 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
+      count_sitting_2 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2),            #count sitting
+      count_not_visible_3 = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3)             #count not visible
     )
   
   return(df_counts)
 }
 
 # Test pour 600 secondes (10 minutes)
-new_df <- frequency_position(data = data, interval_seconds = 600)
+new_df <- frequency_position(data = data_04_07_22, interval_seconds = 600)
 
 ```
 
