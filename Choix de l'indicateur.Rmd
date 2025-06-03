@@ -196,7 +196,7 @@ data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda
                 date_time_limits = c(13,31),
                 date_time_format = "%d_%m_%Y_%H_%M_%S")
 
-#renard4313 Video 1 06_07_2022 11_34_21 1 Part 1/2
+#renard4313 Video 1 06_07_2022 11_34_21 1
 data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
                         threshold = 0.34,  
                         fox_id_limits = c(8,11),
@@ -205,11 +205,11 @@ data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_m
 
 ```
 
-data_06_07_2022 : On a 530 frames avec une confiance < 34% sur 21486, soit 2,47%.
-data_04_07_2022 : on a 188 frames avec une confiance < 34% sur 29415, soit 0,64%%. C'est déjà mieux. 
+data_06_07_2022 : On a 615 frames avec une confiance < 34% sur 35086, soit 1,8%.
+data_04_07_2022 : on a 190 frames avec une confiance < 34% sur 29415, soit 0,6%. C'est déjà mieux. Pourtant c'est le jour de l'inoculation : bizarre.
 
 ```{r}
-#Highest confidence rate when there is :
+# Highest confidence rate when there is :
 
 #3 predictions
 mean(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence) #0.54
@@ -218,6 +218,10 @@ boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence)
 #2 predictions
 mean(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence) #0.77
 boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
+
+#1 prediction
+mean(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence) #0.94
+boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence)
 ```
 
 
