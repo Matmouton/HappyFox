@@ -25,6 +25,7 @@ library(purrr)
 library(curl)
 library(dplyr)
 library(lubridate)
+library(tidyr)
 ```
 ## 0.1 Fonctions
 
@@ -272,7 +273,31 @@ boxplot(confidences_test)
 
 ## 0.3 Agrégation des données
 
+On peut agréger facilement les dataframes :
+```{r}
+data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
+```
 
+On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant :
+```{r}
+# Keep only frames between 8am and 9pm
+data_8h_21h_04_to_06_07_2022_missing_seconds <- data_04_to_06_07_2022 %>%
+  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
+
+# Create every second between 8am and 9pm for every fox id and day of recording
+complete_df <- data_04_to_06_07_2022_8h_21h %>%
+  mutate(date = as.Date(Date_Time)) %>%
+  group_by(fox_id, date) %>%
+  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
+                          to   = as.POSIXct(paste(date[1], "21:00:00")),
+                          by   = "1 sec"))
+
+# Merge it to the original data
+data_8h_21h_04_to_06_07_2022 <- complete_df %>%
+  left_join(data_8h_21h_04_to_06_07_2022_missing_seconds, by = c("fox_id", "Date_Time"))
+
+rm(data_8h_21h_04_to_06_07_2022_missing_seconds, complete_df)
+```
 
 
 

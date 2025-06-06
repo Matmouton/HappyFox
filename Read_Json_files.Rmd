@@ -411,7 +411,7 @@ df_test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_r
                           date_time_format = "%d_%m_%Y_%H_%M_%S")
 ```
 
-### 4.1.0 Boxplots de la différence de conf entre 2 prédictions (pour la même frame)
+### 4.1 Boxplots de la différence de conf entre 2 prédictions (pour la même frame)
 
 
 ```{r}
@@ -460,216 +460,31 @@ confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/don
 boxplot(confidences_test)
 ```
 
+# 5. Agréger plusieurs jours et filtrer entre 8h et 21h
 
-
-
-### 4.1 Tableau récap
-
-Format de l'input date_time_format attendu selon le format du filename dans le
-Json :
-
-| Filename format                                  | Date_time_format    | Limits                                 | Fox_id | Datetime |
-|--------------------------------------------------|---------------------|----------------------------------------|--------|----------|
-| 0807fox4384c.png                                 | \-                  | fox_id : c(8,11)                       | x      | \-       |
-| 0807fox4384gg.png                                | \-                  | fox_id : c(8,11)                       | x      | \-       |
-| 1408Mfox4384-1.png                               | \-                  | fox_id : c(8,11)                       | x      | \-       |
-| 0807fox4384-02.png                               | \-                  | fox_id : c(8,11)                       | x      | \-       |
-| "1408MEfox4384-2023-01-30-14h36m08s231.png"      | "%Y-%m-%d-%Hh%Mm%S" | fox_id : c(10,13), datetime : c(15,33) | x      | x        |
-| "check 0407fox4384-2023-01-27-12h13m39s818.png"  | "%Y-%m-%d-%Hh%Mm%S" | fox_id : c(14,17), datetime : c(19,37) | x      | x        |
-| "check 0907Mfox4384-2023-01-30-12h01m56s326.png" | "%Y-%m-%d-%Hh%Mm%S" | fox_id : c(15,18), datetime : c(20,38) | x      | x        |
-| "fox4002E-2023-02-15.png"                        | "%Y-%m-%d"          | fox_id : c(4,7), datetime : c(10,19)   | x      | \~       |
-| "fox4062-2023-02-15-13h18m36s998.png"            | "%Y-%m-%d-%Hh%Mm%S" | fox_id : c(4,7), datetime : c(9,27)    | x      | x        |
-| "fox4313M-2023-02-13-16h06m26s299.png"           | "%Y-%m-%d-%Hh%Mm%S" | fox_id : c(4,7), datetime : c(10,28)   | x      | x        |
-
-# 5. Fonction pour vérifier la cohérence des noms des images déjà labellisés {.tabset}
-
-Je vais essayer de voir si tous les fichiers déjà labellisés ont des noms
-cohérents (même taille pour les dates, les identifiants, même nombre de
-caractères avant l'id du renard, etc).
-
-Je commence par charger les noms des fichiers du renard n° 4284 en position
-allongée. Je n'ai pas l'accès aux fichiers mais j'ai accès aux noms des fichiers
-donc ça suffit :
-
-F:\projet\\2024_HAPPY_FOX\donnee\Image set\Fox 4284 301-302-303_x\lying
-
-```{r load_data_sample}
-setwd("F:\\projet\\2024_HAPPY_FOX\\donnee\\Image set\\Fox 4284 301-302-303_x\\lying")        #Set WD
-files_img <- list.files(pattern = ".png")
-files_img          #ensemble de character 
-
-length(files_img)  #136 images position allongée pour ce renard
+On peut agréger facilement les dataframes :
+```{r}
+data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
 ```
 
-Maintenant on peut vouloir faire une fonction qui prend l'id du renard, l'année
-de la vidéo, et le chemin du dossier d'images, et qui vérifie la consistance de
-l'id, de la date et de l'heure pour tous les fichiers ".png" extraits du
-dossier. Si tout est ok, alors il faudra juste modifier la fonctoin
-one_position_file pour qu'elle prenne les bonnes dates et id renard.
+On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant :
+```{r}
+# Keep only frames between 8am and 9pm
+data_8h_21h_04_to_06_07_2022_missing_seconds <- data_04_to_06_07_2022 %>%
+  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
 
-```{r check_consistency_function}
+# Create every second between 8am and 9pm for every fox id and day of recording
+complete_df <- data_04_to_06_07_2022_8h_21h %>%
+  mutate(date = as.Date(Date_Time)) %>%
+  group_by(fox_id, date) %>%
+  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
+                          to   = as.POSIXct(paste(date[1], "21:00:00")),
+                          by   = "1 sec"))
 
-library(stringr)
-library(dplyr)
-library(purrr)
-library(stringr)
+# Merge it to the original data
+data_8h_21h_04_to_06_07_2022 <- complete_df %>%
+  left_join(data_8h_21h_04_to_06_07_2022_missing_seconds, by = c("fox_id", "Date_Time"))
 
-check_consistency <- function (file_names_str, fox_id, year){
-  
-  nb_pb = 0 #amount of checks not passed
-  if(class(fox_id) != "character" | class(year) != "character") {
-    stop("L'identifiant du renard et l'année doivent être des chaînes de caractères.")
-  }
-  
-  # Cohérence mot fox :
-  if(all(str_detect(file_names_str, "fox")) == TRUE & #si le mot fox est présent partout
-      all(str_count(file_names_str, "fox") != 1) == FALSE &  #et pas plus d'une fois
-      all(str_locate(file_names_str, "fox")[,1] != 6) == FALSE) { #et tj en position 6-8
-    
-    print("Le mot 'fox' est présent une seule fois dans tous les fichiers, entre les positions 6 et 8.")
-    
-  } else{
-    print("Le mot 'fox' est absent d'un fichier, ou présent plus d'une fois dans un fichier, ou situé ailleurs qu'entre les positions 6 et 8.")
-    nb_pb <- nb_pb +1   #there is 1 issue
-  }
-  
-  # Cohérence de l'id du renard
-  if( all(str_detect(file_names_str, fox_id)) == TRUE & #le bon id est dans tous les noms de fichiers
-      all(str_count(file_names_str, fox_id) != 1) == FALSE & #et pas plus d'une fois
-      all(str_locate(file_names_str, fox_id)[,1]!=9) == FALSE ) { #et tj en position 9-12
-  
-    print(paste("L'id de renard ", fox_id, " est présent une seule fois dans tous les fichiers, entre les positions 9 et 12"))
-    
-  } else{
-    print(paste("L'id de renard ", fox_id, " est absent d'un fichier, ou présent plus d'une fois dans un fichier, ou situé ailleurs qu'entre les positions 9 et 12."))
-    nb_pb <- nb_pb +1    #there is 1 issue
-  }
-  
-  # Cohérence de l'heure
-  if(
-      # Heure
-     all(str_detect(file_names_str, "h")) == TRUE & #la lettre h est présente partout
-     all(str_count(file_names_str, "h") != 1) == FALSE & #et elle y est qu'une fois
-     all(str_locate(file_names_str, "h")[,1] != 27) == FALSE &  #et toujours en position 27
-     
-      # Minutes
-    all(str_detect(file_names_str, "m")) == TRUE & #la lettre m est présente partout
-    all(str_count(file_names_str, "m") != 1) == FALSE & #et qu'une fois
-    all(str_locate(file_names_str, "m")[,1] != 30) == FALSE & #et toujours en position 30 
-    
-      # Secondes
-    all(str_detect(file_names_str, "s")) == TRUE & #la lettre s est présente partout
-    all(str_count(file_names_str, "s") != 1) == FALSE & #et qu'une fois
-    all(str_locate(file_names_str, "s")[,1] != 33) == FALSE #et toujours en position 33
-     
-  ){
-    print("L'heure, les minutes et les secondes sont présentes une seule fois dans les fichiers, respectivement aux positions 27, 30 et 33.")
-    
-  } else {
-    print("L'heure, les minutes ou les secondes sont absentes d'un fichier ou présentes plus d'une fois ou situées ailleurs qu'en position 27, 30 et 33.")
-    nb_pb <- nb_pb +1
-  }
-
-  # Cohérence de la date
-  if (
-        # Année 
-      all(str_detect(file_names_str, year)) == TRUE & #l'année 2023 est présente partout
-      all(str_count(file_names_str, year) != 1) == FALSE & #et qu'une seule fois
-      all(str_locate(file_names_str, year)[,1] != 14) == FALSE & #et uniquement en position 14
-      
-        # Mois & jour : on va checker les tirets pour vérif que toujours 2 chiffres
-  
-          # 4 tirets par nom
-    all(str_detect(file_names_str, "-")) == TRUE & #il y a des tirets dans chaque fichier
-    all(lapply(str_locate_all(file_names_str, "-"), nrow) != 4) == FALSE & #il y en a toujours 4
-  
-          # toujours à la même position
-    all(map_lgl(map(file_names_str,
-                    ~ str_locate_all(.x, "-")[[1]][,1]),
-                ~ all(.x == c(13,18,21,24) ))) == TRUE #toujours à la même position
-    
-  ) {
-    print("L'année, le mois et le jour sont présentes une seule fois dans les fichiers, respectivement aux positions 13, 18, 21 et 24.")
-  } else {
-    print("L'année, le mois ou le jour sont absents d'un fichier ou présents plus d'une fois ou situés ailleur qu'aux positions 13, 18, 21 et 24.")
-    nb_pb <- nb_pb +1
-  }
-  
-  # Final check
-  if(nb_pb == 0)
-    {print(paste("CONCLUSION : Il n'y a aucun problème apparent dans le nom des", length(file_names_str), "fichiers.")) #0 pb
-  } else {
-      print(paste("CONCLUSION : Il y a ", nb_pb, " problème(s) dans les noms des fichiers. Cela peut se situer au niveau du mot 'fox', de l'id du renard, de l'heure ou de la date.")) #1 or more pb
-    }
-  
-}
-
-# Test function
-check_consistency(files_img, "4284", "2023")
-#check_consistency(files_img, "4284", 2023) #error : wrong year format
-# check_consistency(list("0308fox4284--2023-02-02-1h06m25s922.png",
-#                        "0308Efox4284-2023-02-02-16h06m28s593.png"),
-#                   "4283", "2023")         #error : wrong file name
-
+rm(data_8h_21h_04_to_06_07_2022_missing_seconds, complete_df)
 ```
 
-/!\\\\ Attention : Fonction destinée aux images déjà labellisées, pour entraîner
-YOLO et voir si le format de nom est toujours le même. Si oui : modifier l'input
-de la fonction one_position_file pour prendre l'id renard et la date aux bons
-indices.
-
-Sinon pour tester si la date récupérée est bien la bonne depuis les fichiers de
-l'app de Marcin, juste vérifier manuellement si les dates sont cohérentes avec
-le filename.
-
-# 6. Format des données
-
-## 6.1 Dans les images pour entraîner YOLO et leurs sorties Json {.tabset}
-
-Dans les jdd Prediction_train et Prediction_test, les images png et les fichiers
-json associés ont le même nom (sauf l'extension). Le nom de l'image dans le json
-est aussi le même mais sans la partie ".png_pred" :
-
--   Prediction_train :
-
-    -   image : 0308Efox4284-2023-02-02-16h05m37s604.png_pred.jpg
-
-    -   json : 0308Efox4284-2023-02-02-16h05m37s604.png_pred.json
-
-    -   nom de l image dans le json : 0308Efox4284-2023-02-02-16h05m37s604.png
-
--   Prediction_test
-
-    -   image : 0308Efox4284-2023-02-02-16h08m11s045.png_pred.jpg
-
-    -   json : 0308Efox4284-2023-02-02-16h08m11s045.png_pred.json
-
-    -   nom de l image dans le json : 0308Efox4284-2023-02-02-16h08m11s045.png
-
--   Videos post infection
-
-    -   renard4383 Video 4 03_08_2022 15_32_00 3.mp4
-
-    -   renard4306 Video 2 07_09_2022 10_43_47 1.mp4
-
--   Video post implant pre infection
-
-    -   renard4383 Video 4 04_07_2022 10_47_16 3.mp4
-
-    -   renard4383 Video 3 04_07_2022 10_47_16 2.mp4
-
-## 6.2 Dans les vidéos
-
-Sinon pour les vidéos les noms des fichiers sont d'un autre format :
-***"renardxxxx Video x dd_mm_yyyy hh_mm_ss x.mp4".***
-
-## 6.3 En sortie de la fonction from_json_to_df
-
-Il va falloir utiliser l'applicaion de Marcin pour récupérer la date. L'app de
-Marcin fait des images au format suivant : **f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg**
-
-![](images/clipboard-2878179951.png)
-
-On a fait une fonction qui arrive à lire la date en la prenant dans le filename,
-s'il est en format **f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg.** Et ça pour chaque
-seconde/ frame.
