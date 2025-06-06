@@ -488,3 +488,28 @@ data_8h_21h_04_to_06_07_2022 <- complete_df %>%
 rm(data_8h_21h_04_to_06_07_2022_missing_seconds, complete_df)
 ```
 
+Fonction :
+```{r function_rescale_8h_21h}
+rescale_8h_21h <- function(data){
+
+# Keep only frames between 8am and 9pm
+data_8h_21h_missing_seconds <- data %>%
+  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
+
+# Create every second between 8am and 9pm for every fox id and day of recording
+complete_data <- data_8h_21h_missing_seconds %>%
+  mutate(date = as.Date(Date_Time)) %>%
+  group_by(fox_id, date) %>%
+  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
+                          to   = as.POSIXct(paste(date[1], "21:00:00")),
+                          by   = "1 sec"))
+
+# Merge it to the original data
+data_8h_21h <- complete_data %>%
+  left_join(data_8h_21h_missing_seconds, by = c("fox_id", "Date_Time"))
+
+return (data_8h_21h)
+  
+}
+```
+
