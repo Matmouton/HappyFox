@@ -26,6 +26,7 @@ library(curl)
 library(dplyr)
 library(lubridate)
 ```
+## 0.1 Fonctions
 
 ```{r load_json_function}
 #Function to load the data
@@ -166,8 +167,10 @@ from_json_to_df <- function(WD,
 }
 ```
 
+## 0.2 Chargement des données
 
-```{r example_sample_to_work_on}
+Dataset d'exemple, données hétérogènes :
+```{r example_sample_to_work_on, eval=FALSE}
 # Récupérer tous les fichiers json que Julie m'a donnés
 df_not_clean <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
                             fox_id_limits = c(9,12),
@@ -187,14 +190,22 @@ rm(df_not_clean)
 # Trier par date
 data <- data %>% arrange(Date_Time) 
 ```
+Datasets des 4 5 et 6 juillet 2022 :
 
-```{r real_sample_to_work_on}
+```{r real_sample_to_work_on, eval=FALSE}
 #Test on real data from YOLO (29000 files) : 04/07/2022
 data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1",
-                threshold = 0.34,  #just to be sure we don't do worse than a random prediction
+                threshold = 0.34,  #just to be sure we don't do worse than a random prediction = 1 chance/3 of getting the right prediction for the posture
                 fox_id_limits = c(8,11),
                 date_time_limits = c(13,31),
                 date_time_format = "%d_%m_%Y_%H_%M_%S")
+
+#renard4313 Video 1 06_07_2022 11_34_21 1
+data_05_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 05_07_2022 08_13_03 1",
+                        threshold = 0.34,  
+                        fox_id_limits = c(8,11),
+                        date_time_limits = c(13,31),
+                        date_time_format = "%d_%m_%Y_%H_%M_%S")
 
 #renard4313 Video 1 06_07_2022 11_34_21 1
 data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
@@ -206,6 +217,7 @@ data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_m
 ```
 
 data_06_07_2022 : On a 615 frames avec une confiance < 34% sur 35086, soit 1,8%.
+data_05_07_2022 : On a 403 frames avec une confiance < 34% sur 38687, soit 1,0%.
 data_04_07_2022 : on a 190 frames avec une confiance < 34% sur 29415, soit 0,6%. C'est déjà mieux. Pourtant c'est le jour de l'inoculation : bizarre.
 
 ```{r}
@@ -257,6 +269,8 @@ confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/don
 
 boxplot(confidences_test)
 ```
+
+## 0.3 Agrégation des données
 
 
 
@@ -361,7 +375,7 @@ calculate_distances(data=data,interval=600)
 
 ## 2.1 Fréquence de chaque position par unité de temps
 
-### 2.1.1 Fonction 
+### 2.1.1 Function 
 ```{r}
 
 # Frequency of positions lying/ sitting/ standing by timestep (chosen)
@@ -396,7 +410,7 @@ frequency_position_04_07_22 <- frequency_position(data = data_04_07_22, interval
 
 ```
 
-### 2.2.2 Chart
+### 2.1.2 Chart
 
 ```{r}
 #install.packages("ggplot2")
@@ -439,48 +453,81 @@ ggplot(data = frequency_position_04_07_22_PIVOT,
 
 Pour le moment on a 0-allongé 1-debout 2-couché. On veut plutôt 0-allongé
 1-assis 2-debout pour quantifier l'activité en fonction de la posture détectée.
+Mais finalement il nous faudrait plus un indicateur qui va entre 0 et 1 (peut être transformé en %) -> plutôt faire 0,0.5 et 1 :
+
+### 2.2.1 Function
 
 ```{r}
-#Change position code
-data <- data %>% 
-  mutate(position_code = case_when(name=="lying" ~ 0,
-                                   name=="sitting" ~ 1,
-                                   name=="standing" ~ 2,
-                                   TRUE ~ NA
-  ))
+#Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
+recoding_posture <- function(data){
+  data <- data %>% 
+  mutate(increasing_code = case_when(name=="lying" ~ 0,
+                                   name=="sitting" ~ 0.5,
+                                   name=="standing" ~ 1,
+                                   name=="not visible" ~ NA, #to avoid having it in the sum
+                                   TRUE ~ NA))
+}
 
-# Amount of activity in positions by timestep (chosen)
+#Test data 04/07/2022
+data_04_07_22_increasing_code <- recoding_posture(data_04_07_22)
+```
+
+
+```{r}
 amount_activity <- function(data, interval_seconds) {
-  data <- data %>% arrange(Date_Time) #sort by date
+  data <- data %>% arrange(Date_Time)
   
-  start_time <- min(data$Date_Time)   #oldest frame
-  end_time <- max(data$Date_Time)     #newest frame
+  start_time <- min(data$Date_Time)
+  end_time <- max(data$Date_Time)
   
-  #cut between these 2 frames depending on the time interval
   intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
   
-  df_counts <- data.frame(                       #create the new df
-    start_time = intervals[-length(intervals)],  #drop the last time
-    end_time = intervals[-1]                     #drop the first time
+  df_counts <- data.frame(
+    interval_start = intervals[-length(intervals)],
+    interval_end = intervals[-1]
   )
   
   df_counts <- df_counts %>%
-    rowwise() %>%               #for each line
+    rowwise() %>%
     mutate(
-      total_activity = sum(data[data$Date_Time >= start_time #sum position scores 
-                          & data$Date_Time < end_time,]$position_code),            
-      activity_proportion = ifelse(total_activity != 0, #if not always lying
-                                   total_activity/nrow(data[data$Date_Time >= start_time & data$Date_Time < end_time,]),                       #compute proportion
-                                   0)              #else : proportion = 0
+      total_activity = sum(data$increasing_code[data$Date_Time >= interval_start & data$Date_Time < interval_end], na.rm = TRUE), #not counting NAs
+      activity_proportion = ifelse(
+        total_activity != 0,
+        total_activity / nrow(data[data$Date_Time >= interval_start & data$Date_Time < interval_end, ]),
+        0
+      )
     )
   
   return(df_counts)
 }
 
-# Test pour 600 secondes (10 minutes)
-new_df2 <- amount_activity(data = data, interval_seconds = 600)
 
-# Test pour 24h = 86400s
+# Test toutes les 600 secondes (10 minutes)
+amount_activity_04_07_2022 <- amount_activity(data = data_04_07_22_increasing_code,
+                                              interval_seconds = 600)
 
-df_24h <- amount_activity(data = data, interval_seconds = 86400)
 ```
+
+### 2.2.2 Chart
+
+```{r}
+#barchart classique pour l'effectif (en secondes)
+ggplot(data = frequency_position_04_07_22_PIVOT,
+       aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox4313's posture every 10min on day 04/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+ggplot(data = amount_activity_04_07_2022, aes(interval_start)) +
+  geom_bar()
+
+```
+
+
+
