@@ -126,60 +126,7 @@ merge_postures <- function(list_df_postures) {
 
 ```{r from_json_to_df_function}
 
-from_json_to_df <- function(WD,
-                            threshold = 0.34,          #being better than random
-                            fox_id_limits = c(8,11),   #default = YOLO output
-                            date_time_limits = c(13,31),                #same
-                            date_time_format = "%d_%m_%Y_%H_%M_%S")  {  #same
-  
-  # Récuperer tous les fichiers Json du dossier
-  setwd(WD)        #Set WD
-  files <- list.files(pattern = ".json") #get Json files
-  print(paste("Chargement terminé. ",length(files), " fichiers ont été chargés."))
-  
-  # Créer la liste vide de dataframes et la variable à incrémenter
-  list_df1line = list()  #empty list
-  i = 0  #increment
-  
-  # Boucle pour chaque fichier
-  for (file in files) {
-    
-    # Appliquer la fonction load_json à tous les éléments du dossier
-    data_loaded <- load_json(WD = WD, file = file)
-    
-    # Appliquer one_position_file à tous les nouveaux dataframes
-    data_1line <- one_position_file(json_file = data_loaded,
-                                    threshold = threshold,
-                                    fox_id_limits = fox_id_limits,
-                                    date_time_limits = date_time_limits,
-                                    date_time_format = date_time_format)
-  
-    # Tous les mettre dans une liste 
-    list_df1line[[i+1]] <- data_1line
-    
-    i <- i+1 #next file
-  }
-  
-  # Appliquer le merge sur la liste et récup le dataframe mergé
-  df_merged <- merge_postures(list_df1line) 
-  
-
-  # Afficher la fin du run
-  print(paste("Extraction terminée. ", i, "fichiers ont été fusionnés."))
-  
-  # Spotter les fichiers de date NA (vérif qu'il s'agit des fichiers predictions.jpg créés à chaque lancement de YOLO)
-  print(paste("Il y avait", nrow(df_merged[is.na(df_merged$Date_Time),]), "fichiers sans date. Il s'agit des fichiers : ", df_merged[is.na(df_merged$Date_Time),]$filename))
-  
-  # Supprimer ces fichiers
-  df_merged <- df_merged[!is.na(df_merged$Date_Time),]
-  
-  return(df_merged)
-  
-}
-```
-
-```{r}
-#Version opti gptouze
+#Version opti 
 from_json_to_df <- function(WD,
                             threshold = 0.34,            #being better than random
                             fox_id_limits = c(8, 11),    #default = YOLO output
