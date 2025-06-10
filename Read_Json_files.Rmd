@@ -285,9 +285,9 @@ On automatise tout ça dans une fonction :
 ```{r from_json_to_df_function}
 
 from_json_to_df <- function(WD,
-                            threshold = 0.6,
-                            fox_id_limits = c(5,8),   #default = for the app outputs
-                            date_time_limits = c(10,28),                #same
+                            threshold = 0.34,          #being better than random
+                            fox_id_limits = c(8,11),   #default = YOLO output
+                            date_time_limits = c(13,31),                #same
                             date_time_format = "%d_%m_%Y_%H_%M_%S")  {  #same
   
   # Récuperer tous les fichiers Json du dossier
@@ -320,7 +320,16 @@ from_json_to_df <- function(WD,
   
   # Appliquer le merge sur la liste et récup le dataframe mergé
   df_merged <- merge_postures(list_df1line) 
+  
+
+  # Afficher la fin du run
   print(paste("Extraction terminée. ", i, "fichiers ont été fusionnés."))
+  
+  # Spotter les fichiers de date NA (vérif qu'il s'agit des fichiers predictions.jpg créés à chaque lancement de YOLO)
+  print(paste("Il y avait", nrow(df_merged[is.na(df_merged$Date_Time),]), "fichiers sans date. Il s'agit des fichiers : ", df_merged[is.na(df_merged$Date_Time),]$filename))
+  
+  # Supprimer ces fichiers
+  df_merged <- df_merged[!is.na(df_merged$Date_Time),]
   
   return(df_merged)
   
@@ -379,6 +388,12 @@ data_test <- from_json_to_df("C:/Users/m.alhamadah/Desktop/test_json",
                              fox_id_limits = c(8,11),
                              date_time_limits = c(13,31),
                              date_time_format = "%d_%m_%Y_%H_%M_%S")
+
+#Test2
+test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Try",
+                        fox_id_limits = c(8,11),
+                        date_time_limits = c(13,31),
+                        date_time_format = "%d_%m_%Y_%H_%M_%S")
 ```
 
 /!\\ Pas de panique : on n'a pas toutes les lignes dans le df_final parce que
