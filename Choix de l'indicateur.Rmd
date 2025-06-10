@@ -27,6 +27,7 @@ library(dplyr)
 library(lubridate)
 library(tidyr)
 ```
+
 ## 0.1 Fonctions
 
 ```{r load_json_function}
@@ -171,6 +172,7 @@ from_json_to_df <- function(WD,
 ## 0.2 Chargement des données
 
 Dataset d'exemple, données hétérogènes :
+
 ```{r example_sample_to_work_on, eval=FALSE}
 # Récupérer tous les fichiers json que Julie m'a donnés
 df_not_clean <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
@@ -191,6 +193,7 @@ rm(df_not_clean)
 # Trier par date
 data <- data %>% arrange(Date_Time) 
 ```
+
 Datasets des 4 5 et 6 juillet 2022 :
 
 ```{r real_sample_to_work_on, eval=FALSE}
@@ -217,9 +220,13 @@ data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_m
 
 ```
 
-data_06_07_2022 : On a 615 frames avec une confiance < 34% sur 35086, soit 1,8%.
-data_05_07_2022 : On a 403 frames avec une confiance < 34% sur 38687, soit 1,0%.
-data_04_07_2022 : on a 190 frames avec une confiance < 34% sur 29415, soit 0,6%. C'est déjà mieux. Pourtant c'est le jour de l'inoculation : bizarre.
+data_06_07_2022 : On a 615 frames avec une confiance \< 34% sur 35086, soit
+1,8%. data_05_07_2022 : On a 403 frames avec une confiance \< 34% sur 38687,
+soit 1,0%. data_04_07_2022 : on a 190 frames avec une confiance \< 34% sur
+29415, soit 0,6%. C'est déjà mieux. Pourtant c'est le jour de l'inoculation :
+bizarre.
+
+## 0.3 Premières stats descriptives
 
 ```{r}
 # Highest confidence rate when there is :
@@ -236,7 +243,6 @@ boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
 mean(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence) #0.94
 boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence)
 ```
-
 
 ```{r}
 library(jsonlite)
@@ -271,35 +277,19 @@ confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/don
 boxplot(confidences_test)
 ```
 
-## 0.3 Agrégation des données
+## 0.4 Agrégation des données
 
-On peut agréger facilement les dataframes :
+On peut agréger facilement les dataframes.
+
 ```{r}
 data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
 ```
 
-On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant :
-```{r}
-# Keep only frames between 8am and 9pm
-data_8h_21h_04_to_06_07_2022_missing_seconds <- data_04_to_06_07_2022 %>%
-  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
-
-# Create every second between 8am and 9pm for every fox id and day of recording
-complete_df <- data_8h_21h_04_to_06_07_2022_missing_seconds %>%
-  mutate(date = as.Date(Date_Time)) %>%
-  group_by(fox_id, date) %>%
-  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
-                          to   = as.POSIXct(paste(date[1], "21:00:00")),
-                          by   = "1 sec"))
-
-# Merge it to the original data
-data_8h_21h_04_to_06_07_2022 <- complete_df %>%
-  left_join(data_8h_21h_04_to_06_07_2022_missing_seconds, by = c("fox_id", "Date_Time"))
-
-rm(data_8h_21h_04_to_06_07_2022_missing_seconds, complete_df)
-```
+On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des
+données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant.
 
 Fonction :
+
 ```{r}
 rescale_8h_21h <- function(data){
 
@@ -323,9 +313,9 @@ return (data_8h_21h)
   
 }
 
+#Test
 #data_8h_21h_04_to_06_07_2022_test <- rescale_8h_21h(data_04_to_06_07_2022)
 ```
-
 
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
 
@@ -426,7 +416,8 @@ calculate_distances(data=data,interval=600)
 
 ## 2.1 Fréquence de chaque position par unité de temps
 
-### 2.1.1 Function 
+### 2.1.1 Function
+
 ```{r}
 
 # Frequency of positions lying/ sitting/ standing by timestep (chosen)
@@ -499,12 +490,12 @@ ggplot(data = frequency_position_04_07_22_PIVOT,
   
 ```
 
-
 ## 2.2 Quantification de chaque position et addition
 
 Pour le moment on a 0-allongé 1-debout 2-couché. On veut plutôt 0-allongé
 1-assis 2-debout pour quantifier l'activité en fonction de la posture détectée.
-Mais finalement il nous faudrait plus un indicateur qui va entre 0 et 1 (peut être transformé en %) -> plutôt faire 0,0.5 et 1 :
+Mais finalement il nous faudrait plus un indicateur qui va entre 0 et 1 (peut
+être transformé en %) -\> plutôt faire 0,0.5 et 1 :
 
 ### 2.2.1 Function
 
@@ -522,7 +513,6 @@ recoding_posture <- function(data){
 #Test data 04/07/2022
 data_04_07_22_increasing_code <- recoding_posture(data_04_07_22)
 ```
-
 
 ```{r}
 amount_activity <- function(data, interval_seconds) {
@@ -579,6 +569,3 @@ ggplot(data = amount_activity_04_07_2022, aes(interval_start)) +
   geom_bar()
 
 ```
-
-
-
