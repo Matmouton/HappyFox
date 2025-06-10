@@ -135,7 +135,6 @@ nrow(data_json_real_10$objects[[1]])
 nrow(data_json_real_1$objects[[1]]) #comparaison avec json à 1 prédiction
 ```
 
-
 Du coup on adapte la fonction one_position_file pour que si on a un json vide,
 on mette des NA partout sauf dans le filename :
 
@@ -364,7 +363,6 @@ rm(data_json_real_1,
    empty_json)
 ```
 
-
 ```{r test_on_real_data}
 #Test on real data from YOLO (29000 files)
   # data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1",
@@ -382,7 +380,6 @@ data_test <- from_json_to_df("C:/Users/m.alhamadah/Desktop/test_json",
                              date_time_limits = c(13,31),
                              date_time_format = "%d_%m_%Y_%H_%M_%S")
 ```
-
 
 /!\\ Pas de panique : on n'a pas toutes les lignes dans le df_final parce que
 c'était long alors j'en ai mis que 3 sur les 10. Et on n'a pas la même date que
@@ -413,7 +410,6 @@ df_test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_r
 
 ### 4.1 Boxplots de la différence de conf entre 2 prédictions (pour la même frame)
 
-
 ```{r}
 #Highest confidence rate when there is :
 
@@ -427,6 +423,7 @@ boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
 ```
 
 Adding descriptive statistics of confidence when 2 predictions :
+
 ```{r}
 library(jsonlite)
 
@@ -463,11 +460,14 @@ boxplot(confidences_test)
 # 5. Agréger plusieurs jours et filtrer entre 8h et 21h
 
 On peut agréger facilement les dataframes :
+
 ```{r}
 data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
 ```
 
-On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant :
+On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des
+données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant :
+
 ```{r}
 # Keep only frames between 8am and 9pm
 data_8h_21h_04_to_06_07_2022_missing_seconds <- data_04_to_06_07_2022 %>%
@@ -489,6 +489,7 @@ rm(data_8h_21h_04_to_06_07_2022_missing_seconds, complete_df)
 ```
 
 Fonction :
+
 ```{r function_rescale_8h_21h}
 rescale_8h_21h <- function(data){
 
@@ -512,4 +513,3 @@ return (data_8h_21h)
   
 }
 ```
-
