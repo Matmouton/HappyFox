@@ -198,7 +198,6 @@ data_06_07_2022_part2 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/s
                         date_time_format = "%d_%m_%Y_%H_%M_%S")
 
 
-
 ```
 
 data_06_07_2022 : On a 615 frames avec une confiance \< 34% sur 35086, soit
@@ -263,28 +262,10 @@ boxplot(confidences_test)
 On peut agréger facilement les dataframes.
 
 ```{r}
-#ça merdouille au niveau du merge quand je mets les données du 6 juillet
-rownames(data_04_07_2022) <- NULL
-rownames(data_05_07_2022) <- NULL
-rownames(data_06_07_2022_part1) <- NULL
-rownames(data_06_07_2022_part2) <- NULL
+data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
 
-
-any(duplicated(rownames(data_06_07_2022_part1)))
-any(duplicated(rownames(data_06_07_2022_part2)))
-
-
-class(data_06_07_2022_part1)
-class(data_06_07_2022_part2)
-
-
-datatest <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
-  
-test <- rbind(data_06_07_2022_part1, data_06_07_2022_part2)
-test2 <- rbind(data_04_07_2022, data_05_07_2022)
-test3 <- rbind(test, test2)
-
-class(data_06_07_2022_part1$)
+#Delete the line with a NA
+data_04_to_06_07_2022 <- data_04_to_06_07_2022[!is.na(data_04_to_06_07_2022$Date_Time),]
 ```
 
 On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des
@@ -316,7 +297,7 @@ return (data_8h_21h)
 }
 
 #Test
-#data_8h_21h_04_to_06_07_2022_test <- rescale_8h_21h(data_04_to_06_07_2022)
+data_8h_21h_04_to_06_07_2022 <- rescale_8h_21h(data_04_to_06_07_2022)
 ```
 
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
@@ -366,7 +347,7 @@ return(df_counts)
 
 }
 
-df_movement <- movements_amount(data = data, interval_seconds = 3600)
+movement_04_to_06_07_2022 <- movements_amount(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 3600)
 ```
 
 ```{r}
@@ -451,11 +432,9 @@ frequency_position <- function(data, interval_seconds) {
 }
 
 # Test pour 900 secondes (15 minutes)
-frequency_position_04_07_2022 <- frequency_position(data = data_04_07_2022, interval_seconds = 600)
+# frequency_position_04_07_2022 <- frequency_position(data = data_04_07_2022, interval_seconds = 600)
 
-frequency_position_04_to_06_07_2022 <- frequency_position(data = data_04_to_06_07_2022, interval_seconds = 600)
-
-min(data_04_to_06_07_2022$Date_Time)
+frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 600)
 ```
 
 ### 2.1.2 Chart
@@ -468,7 +447,7 @@ library(tidyr)
 library(dplyr)
 
 #put data in the long format (instead of wide) : pivot function
-frequency_position_04_07_22_PIVOT <- frequency_position_04_07_22[,-2] %>% #drop the end_time column
+frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
     names_to = "Posture", 
@@ -476,10 +455,10 @@ frequency_position_04_07_22_PIVOT <- frequency_position_04_07_22[,-2] %>% #drop 
   )
 
 #chart
-ggplot(data = frequency_position_04_07_22_PIVOT,
+ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
        aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
-  ggtitle("Fox4313's posture every 10min on day 04/07/2022") +   #title
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
   xlab("Time of the day") +
   ylab("Amount of seconds spent in this posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
