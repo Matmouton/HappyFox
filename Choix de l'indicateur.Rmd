@@ -178,30 +178,46 @@ from_json_to_df <- function(WD,
 }
 ```
 
-## 0.2 Chargement des données
+```{r}
+#Version opti gptouze
+from_json_to_df <- function(WD,
+                            threshold = 0.34,            #being better than random
+                            fox_id_limits = c(8, 11),    #default = YOLO output
+                            date_time_limits = c(13, 31),             #same
+                            date_time_format = "%d_%m_%Y_%H_%M_%S") { #same
+  
+  # Récupérer tous les fichiers JSON du dossier
+  files <- list.files(path = WD, pattern = "\\.json$", full.names = TRUE)
+  message("Chargement terminé. ", length(files), " fichiers ont été chargés.")
+  
+  # Charger et transformer chaque fichier
+  list_df1line <- lapply(files, function(file) {
+    data_loaded <- load_json(WD = WD, file = basename(file)) #basename : get only the file name from the whole working directory/ file path
+    one_position_file(json_file = data_loaded,
+                      threshold = threshold,
+                      fox_id_limits = fox_id_limits,
+                      date_time_limits = date_time_limits,
+                      date_time_format = date_time_format)
+  })
+  
+  # Fusionner les résultats
+  df_merged <- merge_postures(list_df1line)
+  message("Extraction terminée. ", length(files), " fichiers ont été fusionnés.")
+  
+  # Identifier et supprimer les lignes sans date
+  na_rows <- is.na(df_merged$Date_Time)
+  if (any(na_rows)) {
+    message("Il y avait ", sum(na_rows), " fichiers sans date. Il s'agit des fichiers : ",
+            paste(df_merged$filename[na_rows], collapse = ", "))
+    df_merged <- df_merged[!na_rows, ]
+  }
+  
+  return(df_merged)
+}
 
-Dataset d'exemple, données hétérogènes :
-
-```{r example_sample_to_work_on, eval=FALSE}
-# Récupérer tous les fichiers json que Julie m'a donnés
-df_not_clean <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
-                            fox_id_limits = c(9,12),
-                            date_time_limits = c(14,32),
-                            date_time_format = "%Y-%m-%d-%Hh%Mm%S")
-
-# Supprimer ceux qui ont des formats chiants (date illisible)
-data <- df_not_clean[  !is.na(df_not_clean$Date_Time) &
-                       !is.na(as.numeric(df_not_clean$fox_id)) &
-                       (df_not_clean$class_id == 0 |
-                       df_not_clean$class_id == 1 |
-                       df_not_clean$class_id == 2) ,
-                     ]
-
-rm(df_not_clean)
-
-# Trier par date
-data <- data %>% arrange(Date_Time) 
 ```
+
+## 0.2 Chargement des données
 
 Datasets des 4 5 et 6 juillet 2022 :
 
@@ -220,12 +236,21 @@ data_05_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_m
                         date_time_limits = c(13,31),
                         date_time_format = "%d_%m_%Y_%H_%M_%S")
 
-#renard4313 Video 1 06_07_2022 11_34_21 1
-data_06_07_2022 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
+#renard4313 Video 1 06_07_2022 08_50_18 1
+data_06_07_2022_part1 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 08_50_18 1",
                         threshold = 0.34,  
                         fox_id_limits = c(8,11),
                         date_time_limits = c(13,31),
                         date_time_format = "%d_%m_%Y_%H_%M_%S")
+
+#renard4313 Video 1 06_07_2022 11_34_21 1
+data_06_07_2022_part2 <- from_json_to_df(WD = "F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 06_07_2022 11_34_21 1",
+                        threshold = 0.34,  
+                        fox_id_limits = c(8,11),
+                        date_time_limits = c(13,31),
+                        date_time_format = "%d_%m_%Y_%H_%M_%S")
+
+
 
 ```
 
@@ -291,7 +316,28 @@ boxplot(confidences_test)
 On peut agréger facilement les dataframes.
 
 ```{r}
-data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
+#ça merdouille au niveau du merge quand je mets les données du 6 juillet
+rownames(data_04_07_2022) <- NULL
+rownames(data_05_07_2022) <- NULL
+rownames(data_06_07_2022_part1) <- NULL
+rownames(data_06_07_2022_part2) <- NULL
+
+
+any(duplicated(rownames(data_06_07_2022_part1)))
+any(duplicated(rownames(data_06_07_2022_part2)))
+
+
+class(data_06_07_2022_part1)
+class(data_06_07_2022_part2)
+
+
+datatest <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
+  
+test <- rbind(data_06_07_2022_part1, data_06_07_2022_part2)
+test2 <- rbind(data_04_07_2022, data_05_07_2022)
+test3 <- rbind(test, test2)
+
+class(data_06_07_2022_part1$)
 ```
 
 On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des
