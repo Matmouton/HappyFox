@@ -225,8 +225,6 @@ boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence)
 ```
 
 ```{r}
-library(jsonlite)
-
 extract_confidence_differences <- function(directory) {
   files <- list.files(path = directory, pattern = "\\.json$", full.names = TRUE)
   confidence_diff_vector <- c()
@@ -297,7 +295,19 @@ return (data_8h_21h)
 }
 
 #Test
-data_8h_21h_04_to_06_07_2022 <- rescale_8h_21h(data_04_to_06_07_2022)
+#data_8h_21h_04_to_06_07_2022 <- rescale_8h_21h(data_04_to_06_07_2022)
+```
+
+Puis on ajoute une fonction qui est comme le temps mais qui n'augmente pas entre
+21h et 8h, pour pouvoir "coller" tous les jours ensemble :
+
+```{r}
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1
+  return(data)
+}
+
+#test3 <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
 ```
 
 # 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
@@ -473,6 +483,69 @@ ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
 #        aes(fill = Posture, y = Count, x = start_time)) + 
 #   geom_col(aes(fill = Posture)) 
   
+```
+
+### 2.1.3 Chronologic series without 21h-8h gap
+
+```{r}
+  # To get 1 dataset per posture
+
+# Count amount of each posture
+frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 600) #/!\ there are still data btw 21h-8h !
+
+# Remove data between 21h-8h
+frequency_position_8h_21h_04_to_06_07_2022 <- frequency_position_04_to_06_07_2022[hour(frequency_position_04_to_06_07_2022$start_time) >= 8 & hour(frequency_position_04_to_06_07_2022$start_time) < 21,]
+
+# One dataset per posture
+frequency_position_8h_21h_04_to_06_07_2022_LYING <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","lying")]
+
+frequency_position_8h_21h_04_to_06_07_2022_SITTING <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","sitting")]
+
+frequency_position_8h_21h_04_to_06_07_2022_STANDING <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","standing")]
+
+frequency_position_8h_21h_04_to_06_07_2022_NOT_VISIBLE <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","not_visible")]
+
+# Add compressed time variable
+frequency_position_8h_21h_04_to_06_07_2022_LYING <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_LYING)
+
+frequency_position_8h_21h_04_to_06_07_2022_SITTING <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_SITTING)
+
+frequency_position_8h_21h_04_to_06_07_2022_STANDING <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_STANDING)
+
+frequency_position_8h_21h_04_to_06_07_2022_NOT_VISIBLE <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_NOT_VISIBLE)
+
+  # To get all the postures in a single dataset
+
+# Remove data between 21h-8h
+frequency_position_8h_21h_04_to_06_07_2022 <- frequency_position_04_to_06_07_2022[hour(frequency_position_04_to_06_07_2022$start_time) >= 8 & hour(frequency_position_04_to_06_07_2022$start_time) < 21,]
+
+# Pivot the data
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- frequency_position_8h_21h_04_to_06_07_2022 %>% 
+  select (-end_time) %>%                #drop the end_time column
+  pivot_longer(
+    cols = !start_time, 
+    names_to = "Posture", 
+    values_to = "Count"
+  )
+
+# Add the compressed time
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_PIVOT)
+```
+
+Plots :
+
+```{r}
+plot(x=frequency_position_8h_21h_04_to_06_07_2022_LYING$compressed_time,frequency_position_8h_21h_04_to_06_07_2022_LYING$lying, type = "l")
+
+ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+       aes(x = compressed_time, y = Count)) +
+  geom_line(aes(color= Posture)) +
+  scale_color_manual(name = "Posture",
+                     labels = c("Lying", "Sitting", "Standing", "Not visible"),
+                     values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
 ```
 
 ## 2.2 Quantification de chaque position et addition

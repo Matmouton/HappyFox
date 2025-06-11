@@ -524,7 +524,26 @@ complete_data <- data_8h_21h_missing_seconds %>%
 data_8h_21h <- complete_data %>%
   left_join(data_8h_21h_missing_seconds, by = c("fox_id", "Date_Time"))
 
+
 return (data_8h_21h)
   
 }
+
+```
+
+# 6. Ajouter une variable qui remplace le temps pour sauter les vides de 21h à 8h
+
+On a un jeu de données qui passe automatiquement de 21h à 8h le lendemain. Donc
+le "temps compressé" qu'on veut, qui supprime les temps entre 21h et 8h, est
+exactement le numéro de chaque ligne. Il suffit d'enlever 1 si on veut que ce
+temps commence à 0.
+
+```{r function_add_compressed_time_variable}
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1 #-1 to make it start with 0
+  return(data)
+}
+
+
+#test2 <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
 ```
