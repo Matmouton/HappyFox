@@ -26,6 +26,7 @@ library(curl)
 library(dplyr)
 library(lubridate)
 library(tidyr)
+library(ggplot2)
 ```
 
 ## 0.1 Fonctions
@@ -382,6 +383,7 @@ ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
                                "not_visible" = "lightgrey"))
 
 
+
 #OR : 
 # ggplot(data = frequency_position_04_07_22_PIVOT,
 #        aes(fill = Posture, y = Count, x = start_time)) + 
@@ -439,8 +441,6 @@ frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- add_compressed_time_variable
 Plots :
 
 ```{r}
-plot(x=frequency_position_8h_21h_04_to_06_07_2022_LYING$compressed_time,frequency_position_8h_21h_04_to_06_07_2022_LYING$lying, type = "l")
-
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color= Posture)) +
@@ -473,7 +473,7 @@ recoding_posture <- function(data){
 }
 
 #Test data 04/07/2022
-data_04_07_22_increasing_code <- recoding_posture(data_04_07_22)
+data_8h_21h_04_to_06_07_2022_increasing_code <- recoding_posture(data_8h_21h_04_to_06_07_2022)
 ```
 
 ```{r}
@@ -506,30 +506,21 @@ amount_activity <- function(data, interval_seconds) {
 
 
 # Test toutes les 600 secondes (10 minutes)
-amount_activity_04_07_2022 <- amount_activity(data = data_04_07_22_increasing_code,
+amount_activity_8h_21h_04_to_06_07_2022 <- amount_activity(data = data_8h_21h_04_to_06_07_2022_increasing_code,
                                               interval_seconds = 900)
 
 ```
 
-### 1.2.2 Chart
+### 1.2.2 Chronologic series
 
 ```{r}
-#barchart classique pour l'effectif (en secondes)
-ggplot(data = frequency_position_04_07_22_PIVOT,
-       aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
-  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
-  ggtitle("Fox4313's posture every 10min on day 04/07/2022") +   #title
-  xlab("Time of the day") +
-  ylab("Amount of seconds spent in this posture") +                              
-  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
-                               "sitting" = "orange",
-                               "standing" = "tomato",
-                               "not_visible" = "lightgrey"))
+# Variable de temps compressé pour skip les parties 21h-8h
+amount_activity_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h_04_to_06_07_2022)
 
-ggplot(data = amount_activity_04_07_2022, aes(interval_start)) +
-  geom_bar()
-
+# Plot
+ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
+       aes(x = compressed_time, y = activity_proportion)) +
+  geom_line() 
 ```
 
 ## 1.3 Nombre de changements de position par unité de temps
