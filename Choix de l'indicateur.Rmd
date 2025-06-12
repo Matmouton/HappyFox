@@ -310,107 +310,11 @@ add_compressed_time_variable <- function(data) {
 #test3 <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
 ```
 
-# 1. Mouvement dans la cage : centre du rectangle sur les axes x et y
+# 1. Alternance des positions assis/ debout/ couché
 
-## 1.1 Fréquence de mouvement du CG par unité de temps
+## 1.1 Nombre de chaque position par unité de temps
 
-```{r}
-# Marche pas encore
-# Number of movements made by time interval
-
-movements_amount <- function(data, interval_seconds, movement_threshold = 0.01) {
-  data <- data %>% arrange(Date_Time) #sort by date
-  
-  start_time <- min(data$Date_Time)   #oldest frame
-  end_time <- max(data$Date_Time)     #newest frame
-  
-  #cut between these 2 frames depending on the time interval
-  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
-  
-  df_counts <- data.frame(                       #create the new df
-    start_time = intervals[-length(intervals)],  #drop the last time
-    end_time = intervals[-1]                     #drop the first time
-  )
-  
-  #movement yes/no :
-  data <- data %>% 
-    mutate(movement_yes_no = ifelse( #if position difference between 2 times > 0,01
-     abs(data$relative_coordinates$center_x - lag(data$relative_coordinates$center_x)) > movement_threshold
-     | abs(data$relative_coordinates$center_y - lag(data$relative_coordinates$center_y)) > movement_threshold ,     
-     1,                              #then movement
-     0)                              #else : no movement)
-    )
-  
- df_counts <- df_counts %>% 
-   rowwise() %>%
-   mutate(movement_counts = sum(data[data$Date_Time > start_time & data$Date_Time <= end_time,]$movement_yes_no, #amount of movements = sum of the 1 (= movements)
-                                na.rm = T),  #to avoid the 1st NA
-          movement_proportion = ifelse(
-            nrow(data[data$Date_Time > start_time & data$Date_Time <= end_time,])!=0, #if there is at least 1 observation for this timestep
-            movement_counts/nrow(data[data$Date_Time > start_time & data$Date_Time <= end_time,]), #proportion = n/N
-            0   #else : proportion = 0
-          )
-     )
-
-
-return(df_counts)
-
-}
-
-movement_04_to_06_07_2022 <- movements_amount(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 3600)
-```
-
-```{r}
-
-#code copilot, à voir
-calculate_distances <- function(data, interval) {
-  
-  # Calculer la distance entre deux points
-  calculate_distance <- function(x1, y1, x2, y2) {
-    sqrt((x2 - x1)^2 + (y2 - y1)^2)
-  }
-  
-  # Ajouter une colonne pour la distance parcourue chaque seconde
-  data <- data %>%
-    arrange(Date_Time) %>%
-    mutate(
-      distance = sqrt((relative_coordinates$center_x - lag(relative_coordinates$center_x))^2 + 
-                      (relative_coordinates$center_y - lag(relative_coordinates$center_y))^2),
-      time_diff = as.numeric(difftime(Date_Time, lag(Date_Time), units = "secs"))
-    ) %>%
-    filter(!is.na(distance) & time_diff == 1)  #should not happen ?
-  
-  # Calculer la somme des distances et la vitesse moyenne pour chaque intervalle
-  result <- data %>%
-    mutate(interval_group = floor(as.numeric(difftime(Date_Time, min(Date_Time), units = "secs")) / interval)) %>%
-    group_by(interval_group) %>%
-    summarise(
-      total_distance = sum(distance, na.rm = TRUE),
-      average_speed = total_distance / interval
-    )
-  
-  return(result)
-}
-
-# Exemple d'utilisation
-# data <- read.csv("path_to_your_data.csv")
-# interval <- 60 # par exemple, 60 secondes
-# result <- calculate_distances(data, interval)
-# print(result)
-
-calculate_distances(data=data,interval=600)
-
-```
-
-## 1.2 Intensité des mouvements
-
-## 1.3 Vitesse des mouvements
-
-# 2. Alternance des positions assis/ debout/ couché
-
-## 2.1 Fréquence de chaque position par unité de temps
-
-### 2.1.1 Function
+### 1.1.1 Function
 
 ```{r}
 
@@ -444,10 +348,10 @@ frequency_position <- function(data, interval_seconds) {
 # Test pour 900 secondes (15 minutes)
 # frequency_position_04_07_2022 <- frequency_position(data = data_04_07_2022, interval_seconds = 600)
 
-frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 600)
+frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
 ```
 
-### 2.1.2 Chart
+### 1.1.2 Chart
 
 ```{r}
 #install.packages("ggplot2")
@@ -485,13 +389,13 @@ ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
   
 ```
 
-### 2.1.3 Chronologic series without 21h-8h gap
+### 1.1.3 Chronologic series without 21h-8h gap
 
 ```{r}
   # To get 1 dataset per posture
 
 # Count amount of each posture
-frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 600) #/!\ there are still data btw 21h-8h !
+frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900) #/!\ there are still data btw 21h-8h !
 
 # Remove data between 21h-8h
 frequency_position_8h_21h_04_to_06_07_2022 <- frequency_position_04_to_06_07_2022[hour(frequency_position_04_to_06_07_2022$start_time) >= 8 & hour(frequency_position_04_to_06_07_2022$start_time) < 21,]
@@ -548,14 +452,14 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
                                "not_visible" = "lightgrey"))
 ```
 
-## 2.2 Quantification de chaque position et addition
+## 1.2 Score de mouvement : quantification de chaque position et addition
 
 Pour le moment on a 0-allongé 1-debout 2-couché. On veut plutôt 0-allongé
 1-assis 2-debout pour quantifier l'activité en fonction de la posture détectée.
 Mais finalement il nous faudrait plus un indicateur qui va entre 0 et 1 (peut
 être transformé en %) -\> plutôt faire 0,0.5 et 1 :
 
-### 2.2.1 Function
+### 1.2.1 Function
 
 ```{r}
 #Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
@@ -603,11 +507,11 @@ amount_activity <- function(data, interval_seconds) {
 
 # Test toutes les 600 secondes (10 minutes)
 amount_activity_04_07_2022 <- amount_activity(data = data_04_07_22_increasing_code,
-                                              interval_seconds = 600)
+                                              interval_seconds = 900)
 
 ```
 
-### 2.2.2 Chart
+### 1.2.2 Chart
 
 ```{r}
 #barchart classique pour l'effectif (en secondes)
@@ -627,3 +531,88 @@ ggplot(data = amount_activity_04_07_2022, aes(interval_start)) +
   geom_bar()
 
 ```
+
+## 1.3 Nombre de changements de position par unité de temps
+
+# -----
+
+# Éventuellement plus tard : mouvement dans la cage du centre du rectangle sur les axes x et y
+
+## 1 Fréquence de mouvement du CG par unité de temps
+
+```{r}
+# Marche pas encore
+
+# Number of movements made by time interval 
+movements_amount <- function(data, interval_seconds, movement_threshold = 0.01) {   data <- data %>% arrange(Date_Time) #sort by date      
+start_time <- min(data$Date_Time)   #oldest frame   
+end_time <- max(data$Date_Time)     #newest frame  
+
+#cut between these 2 frames depending on the time interval   
+intervals <- seq(from = start_time, to = end_time, by = interval_seconds)      
+df_counts <- data.frame(                       #create the new df     
+  start_time = intervals[-length(intervals)],  #drop the last time     
+  end_time = intervals[-1]                     #drop the first time   
+  )      
+#movement yes/no :   
+data <- data %>%      
+  mutate(movement_yes_no = ifelse( #if position difference between 2 times > 0,01      
+    abs(data$relative_coordinates$center_x - lag(data$relative_coordinates$center_x)) > movement_threshold      
+    | abs(data$relative_coordinates$center_y - lag(data$relative_coordinates$center_y)) > movement_threshold ,           
+    1,                              #then movement      
+    0)                              #else : no movement)     
+    )     df_counts <- df_counts %>%     
+  rowwise() %>%    
+  mutate(movement_counts = sum(data[data$Date_Time > start_time & data$Date_Time <= end_time,]$movement_yes_no, #amount of movements = sum of the 1 (= movements)                       
+                               na.rm = T),  #to avoid the 1st NA        
+         movement_proportion = ifelse(             
+           nrow(data[data$Date_Time > start_time & data$Date_Time <= end_time,])!=0, #if there is at least 1 observation for this timestep             
+           movement_counts/nrow(data[data$Date_Time > start_time & data$Date_Time <= end_time,]),   #proportion = n/N             
+           0   #else : proportion = 0           
+           )      
+         )   
+return(df_counts)  
+}  
+
+movement_04_to_06_07_2022 <- movements_amount(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 3600)
+```
+
+```{r}
+#code copilot, à voir 
+calculate_distances <- function(data, interval) {      # Calculer la distance entre deux points   
+  calculate_distance <- function(x1, y1, x2, y2) {     
+    sqrt((x2 - x1)^2 + (y2 - y1)^2)   
+    }      
+  
+  # Ajouter une colonne pour la distance parcourue chaque seconde   
+  data <- data %>%     
+    arrange(Date_Time) %>%     
+    mutate(       
+      distance = sqrt((relative_coordinates$center_x - lag(relative_coordinates$center_x))^2 +
+                        (relative_coordinates$center_y - lag(relative_coordinates$center_y))^2),       
+      time_diff = as.numeric(difftime(Date_Time, lag(Date_Time), units = "secs"))     ) %>%
+    filter(!is.na(distance) & time_diff == 1)  #should not happen ?      
+  
+  # Calculer la somme des distances et la vitesse moyenne pour chaque intervalle   
+  result <- data %>%     
+    mutate(interval_group = floor(as.numeric(difftime(Date_Time, min(Date_Time), units = "secs")) / interval)) %>%     
+    group_by(interval_group) %>%     
+    summarise(       
+      total_distance = sum(distance, na.rm = TRUE),       
+      average_speed = total_distance / interval     
+      )      
+  return(result) 
+  }  
+
+# Exemple d'utilisation # 
+data <- read.csv("path_to_your_data.csv") 
+interval <- 60 # par exemple, 60 secondes 
+result <- calculate_distances(data, interval) 
+print(result) 
+
+calculate_distances(data=data,interval=600) 
+```
+
+## 2 Intensité des mouvements
+
+## 3 Vitesse des mouvements
