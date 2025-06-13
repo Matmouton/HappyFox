@@ -552,17 +552,20 @@ ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
 ## 1.3 Nombre de changements de position par unité de temps
 
 ```{r}
-# Conversion de la colonne Date_Time en format date-heure si nécessaire
-df$Date_Time <- as.POSIXct(df$Date_Time, format = "%Y-%m-%d %H:%M:%S")
+
+amount_posture_changes <- function(){
+  
+  
+}
 
 # Filtrage des positions valides
 df_clean <- df %>%
-  filter(!is.na(Position), Position != "not_visible") %>%
+  filter(!is.na(name), name != "not visible") %>%
   arrange(Date_Time)
 
 # Détection des changements de position
 df_clean <- df_clean %>%
-  mutate(Position_Change = Position != lag(Position, default = first(Position)))
+  mutate(Position_Change = name != lag(name, default = first(name)))
 
 # Fonction pour calculer les changements par unité de temps
 changements_par_temps <- function(data, unite = "1 min") {
