@@ -22,7 +22,9 @@ Le fichier .gitignore c'est pour demander à Git de pas prendre en compte certai
 
 Créer une nouvelle branche avec l'icône violette. Puis on peut commit et push dedans.
 
-Quand on est satisfait de la branche et qu'on veut la merge dans le main, on fait une Pull Request sur GitHub Bonne pratique travail à plusieurs : ne pas valider sa propre pull request, pour faire vérifier son code par qqn ! Mais là projet solo : on valide.
+Quand on est satisfait de la branche et qu'on veut la merge dans le main, on fait une Pull Request sur GitHub. Si le bouton apparaît pas, il faut se reconnecter à GitHub.
+
+Bonne pratique travail à plusieurs : ne pas valider sa propre pull request, pour faire vérifier son code par qqn ! Mais là projet solo : on valide.
 
 Pour supprimer les changements non comités et revenir au dernier comit de la branche : alt+maj+R puis : git reset --hard
 

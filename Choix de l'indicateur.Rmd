@@ -53,43 +53,68 @@ load_json <- function(WD, file_name){
 
 ```{r one_position_file_function}
 one_position_file <- function(json_file,
-                              threshold = 0.5,        #default = arbitrary
+                              threshold = 0.34,        #default = arbitrary
                               fox_id_limits = c(5,8), #default = like in the app
                               date_time_limits = c(10,28), #same remark
                               date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
   
-  #If Json file is not empty (there is a prediction)
-  if(length(json_file$objects[[1]])>0) {
+  #number of predictions
+  nb_pred <- length(json_file$objects[[1]])
+  
+#If Json file is not empty (there is at least 1 prediction)
+  if(nb_pred >0) {
     
-    nb_pred <- nrow(json_file$objects[[1]]) #get the number of predictions made by YOLO
+    nb_pred <- nrow(json_file$objects[[1]])  #get how many predictions are made by YOLO
     
-    #Get file and most reliable prediction  
-    dataframe_postures <- json_file$objects[[1]]                        #isolate the df with posture lines
-    posture_most_confidence <- which.max(dataframe_postures$confidence) #identify most reliable posture
-    data_new <- dataframe_postures[posture_most_confidence,] #new dataset with only the line that has the higher threshold
+    #Get file and most reliable prediction 
     
-    data_new <- data_new %>% 
-      mutate(number_of_predictions = nb_pred)      #get number of predictions
+  #isolate the df with posture lines + sort by confidence (higher on line 1)
+    dataframe_postures <- json_file$objects[[1]] %>% 
+      arrange(desc(confidence))
+  #identify the most reliable posture
+    posture_most_confidence <- dataframe_postures[1,]
     
+  #identify the 2nd most reliable posture (if existing)
+    posture_2nd_most_confidence <- ifelse(nb_pred >= 2,
+                                          dataframe_postures[2,],
+                                          NA) #if <2 pred : no 2nd posture
+  #new dataset with only the most confident prediction (1 line)
+    data_new <- posture_most_confidence  #get the most confident line
+    
+    #get the gap between the 2 most reliable predictions (if there are 2)
+      data_new <- data_new %>% 
+        mutate(
+          confidence_gap = case_when(
+          #if only 1 prediction : confidence_gap = 1 (highest certainty gap)
+            nb_pred == 1 ~ 1, 
+          #if 2+ predictions : confidence_gap = difference btw 2 highest pred
+            nb_pred >= 2 ~ dataframe_postures[1, "confidence"] - dataframe_postures[2, "confidence"]),
+          
+      #get number of predictions
+          number_of_predictions = nb_pred)
+
     #Check reliability
     if (max(json_file$objects[[1]]$confidence) < threshold){  #No line reliable enough
       print(paste("Confidence <", threshold*100, "% for file", json_file$filename,". Change threshold or do human check.")) #Change threshold/ human check
-    }   
+      
+    }
     
+# If Json file is empty (0 predictions)
   }else{
-    data_new <- json_file    #if empty Json : no change needed
-    data_new <- data.frame(class_id = 3,                #number of the position = 3
-                           name = "not visible",        #position value = not visible
-                           relative_coordinates = NA,
-                           confidence = NA,
-                           number_of_predictions = 0)
+    data_new <- json_file                           #no change needed
+    data_new <- data.frame(class_id = 3,            #position number 3
+                           name = "not visible",    #position name = not visible
+                           relative_coordinates = NA, #no coordinates
+                           confidence = NA,           #no confidence
+                           confidence_gap = NA,       #no confidence gap
+                           number_of_predictions = 0) #no predictions
   }
   
-  #In any situation (if Json file is/is not empty)
+#In any situation (if Json file is/is not empty)
     #add the filename
     data_new <- data_new %>%
-      mutate(filename = json_file$filename)    #get filename
-
+      mutate(filename = json_file$filename) #get filename
+    
     #get the date and time
     str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
     #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
@@ -109,6 +134,7 @@ one_position_file <- function(json_file,
     
     data_new <- data_new %>% 
       mutate(fox_id = fox_id)
+
     
    #output  
     return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
