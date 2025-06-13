@@ -545,5 +545,11 @@ add_compressed_time_variable <- function(data) {
 }
 
 
-#test2 <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
+#data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
+```
+
+# 7. Restrictions sur la confiance
+
+```{r}
+
 ```
