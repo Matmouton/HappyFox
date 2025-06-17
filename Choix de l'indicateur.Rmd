@@ -381,11 +381,9 @@ frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_
 ### 1.1.2 Chart
 
 ```{r}
-#install.packages("ggplot2")
-#install.packages("tidyr")
-library(ggplot2)
-library(tidyr)
-library(dplyr)
+# library(ggplot2)
+# library(tidyr)
+# library(dplyr)
 
 #put data in the long format (instead of wide) : pivot function
 frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022[,-2] %>% #drop the end_time column
@@ -464,6 +462,7 @@ frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- frequency_position_8h_21h_04
 frequency_position_8h_21h_04_to_06_07_2022_PIVOT$compressed_time <- rep(0:((nrow(frequency_position_8h_21h_04_to_06_07_2022_PIVOT)-1) %/% 4), each = 4)
 
 # Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT$proportion <- frequency_position_8h_21h_04_to_06_07_2022_PIVOT$Count/(15*60)
 
 ```
 
@@ -483,7 +482,7 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
 
 # Frequencies
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
-       aes(x = compressed_time, y = Count)) +
+       aes(x = compressed_time, y = proportion)) +
   geom_line(aes(color= Posture)) +
   scale_color_manual(name = "Posture",
                      labels = c("Lying", "Sitting", "Standing", "Not visible"),
