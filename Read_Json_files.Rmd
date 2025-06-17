@@ -463,7 +463,9 @@ boxplot(confidences_test)
 
 Aggregate dataframes :
 ```{r}
-data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
+#dplyr::bind_rows() is more flexible than base::rbind(). We need flexibility because there are dataframes within the dataframe.
+
+data_04_to_06_07_2022 <- bind_rows(data_04_07_2022, data_05_07_2022, data_06_07_2022)
 ```
 
 Adapt dataframe so that there is only (and mandatory) data between 8h and 21h. No matter if we have to create NAs/ loose data.

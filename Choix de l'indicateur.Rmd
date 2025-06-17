@@ -249,7 +249,7 @@ boxplot(confidences_test)
 
 ```{r}
 # Aggregate dataframes 
-data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
+data_04_to_06_07_2022 <- bind_rows(data_04_07_2022, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
 ```
 
 ```{r function_rescale_8h_21h}
@@ -382,7 +382,12 @@ boxplot(confidences_test)
 ## 0.4 Merge data
 
 ```{r}
-data_04_to_06_07_2022 <- rbind(data_04_07_22, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
+#dplyr::bind_rows() is more flexible than base::rbind(). Manages df within the df
+data_04_to_06_07_2022 <- bind_rows(
+  data_04_07_22,
+  data_05_07_2022,
+  data_06_07_2022_part1,
+  data_06_07_2022_part2)
 ```
 
 Keep only data between 8h and 21h :
