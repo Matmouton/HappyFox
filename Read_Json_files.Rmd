@@ -24,6 +24,10 @@ library(jsonlite)
 library(purrr)
 library(curl)
 library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
 ```
 
 Run the whole chunk at the same time (WD & fromJSON).

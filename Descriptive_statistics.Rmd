@@ -1,0 +1,68 @@
+---
+title: "Descriptive statistics"
+author: "Mathilda Alhamadah"
+date: "2025-06-17"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+```{r packages, message=FALSE, warning=FALSE}
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+```
+
+# Outputs of the 3 indicators on the data of the 3 first days
+
+## Consistency of the certainty distribution
+
+Original data :
+
+```{r}
+# Highest confidence rate depending on the number of predictions
+
+data_04_to_06_07_2022 %>%
+#  mutate(class = fct_reorder(class, hwy, .fun='length' )) %>%
+  ggplot( aes(group=as.factor(number_of_predictions), y=confidence, fill=number_of_predictions)) + 
+    geom_boxplot() +
+    xlab("class") +
+    theme(legend.position="right") +
+    xlab("Nombre de prédictions faites par frame") +
+    ylab("Confiance la plus haute de la prédiction pour la frame")
+
+```
+
+Data between 8h and 21h only :
+
+```{r}
+# Highest confidence rate depending on the number of predictions
+
+data_8h_21h_04_to_06_07_2022 %>%
+#  mutate(class = fct_reorder(class, hwy, .fun='length' )) %>%
+  ggplot( aes(group=as.factor(number_of_predictions), y=confidence, fill=number_of_predictions)) + 
+    geom_boxplot() +
+    xlab("class") +
+    theme(legend.position="right") +
+    xlab("Nombre de prédictions faites par frame") +
+    ylab("Confiance la plus haute de la prédiction pour la frame")
+
+
+```
+
+=\> Ça change pas grand chose avec ou sans les données hors des bornes 8h-21h. À
+confirmer avec plus de données, mais encourageant.
+
+## 

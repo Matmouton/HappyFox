@@ -27,6 +27,7 @@ library(dplyr)
 library(lubridate)
 library(tidyr)
 library(ggplot2)
+library(patchwork)
 ```
 
 ## 0.1 Functions
@@ -346,6 +347,10 @@ boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
 #1 prediction
 mean(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence) #0.94
 boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence)
+
+#overall
+mean(data_04_07_22$confidence)
+boxplot(data_04_07_22$confidence)
 ```
 
 ```{r}
