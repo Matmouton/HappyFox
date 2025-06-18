@@ -27,21 +27,33 @@ library(patchwork)
 
 # Outputs of the 3 indicators on the data of the 3 first days
 
-## Consistency of the certainty distribution
+## (Useless ?) Consistency of the certainty distribution
 
 Original data :
 
 ```{r}
 # Highest confidence rate depending on the number of predictions
 
-data_04_to_06_07_2022 %>%
-#  mutate(class = fct_reorder(class, hwy, .fun='length' )) %>%
-  ggplot( aes(group=as.factor(number_of_predictions), y=confidence, fill=number_of_predictions)) + 
-    geom_boxplot() +
-    xlab("class") +
-    theme(legend.position="right") +
-    xlab("Nombre de prédictions faites par frame") +
-    ylab("Confiance la plus haute de la prédiction pour la frame")
+# New dataset with the number of predictions as a factor variable
+data_group_number_pred <- data_04_to_06_07_2022 %>%
+  mutate(group = as.factor(number_of_predictions))
+
+# New dataset with a variable "group" always being "All"
+data_group_overall <- data_04_to_06_07_2022 %>%
+  mutate(group = "Total")
+
+# Merge the 2 datasets into 1 (so it's 2 times bigger)
+merged_data <- bind_rows(data_group_number_pred, data_group_overall)
+
+# Display boxplots
+ggplot(merged_data, aes(x = group, y = confidence, fill = group)) +
+  geom_boxplot() +
+  xlab("Nombre de prédictions faites par frame (et global)") +
+  ylab("Confiance la plus haute de la prédiction pour la frame") +
+  theme(legend.position = "right")
+
+# Clean up
+rm(data_group_number_pred, data_group_overall, merged_data)
 
 ```
 
@@ -50,19 +62,41 @@ Data between 8h and 21h only :
 ```{r}
 # Highest confidence rate depending on the number of predictions
 
-data_8h_21h_04_to_06_07_2022 %>%
-#  mutate(class = fct_reorder(class, hwy, .fun='length' )) %>%
-  ggplot( aes(group=as.factor(number_of_predictions), y=confidence, fill=number_of_predictions)) + 
-    geom_boxplot() +
-    xlab("class") +
-    theme(legend.position="right") +
-    xlab("Nombre de prédictions faites par frame") +
-    ylab("Confiance la plus haute de la prédiction pour la frame")
+# New dataset with the number of predictions as a factor variable
+data_group_number_pred <- data_8h_21h_04_to_06_07_2022 %>%
+  mutate(group = as.factor(number_of_predictions))
 
+# New dataset with a variable "group" always being "All"
+data_group_overall <- data_8h_21h_04_to_06_07_2022 %>%
+  mutate(group = "Total")
 
+# Merge the 2 datasets into 1 (so it's 2 times bigger)
+merged_data <- bind_rows(data_group_number_pred, data_group_overall)
+
+# Display boxplots
+ggplot(merged_data, aes(x = group, y = confidence, fill = group)) +
+  geom_boxplot() +
+  xlab("Nombre de prédictions faites par frame (et global)") +
+  ylab("Confiance la plus haute de la prédiction pour la frame") +
+  theme(legend.position = "right")
+
+# Clean up
+rm(data_group_number_pred, data_group_overall, merged_data)
 ```
 
-=\> Ça change pas grand chose avec ou sans les données hors des bornes 8h-21h. À
-confirmer avec plus de données, mais encourageant.
+=\> Changes nothing with or without the data that is not between 8h and 21h.
+
+Anyways, we were forced to remove them because with the data corruption there
+were not enough data outside this range to keep it. And we also did this because
+we had to make the days homogeneous so that we can stick them together and skip
+the majority of the missing part.
+
+So we won't use these boxplots to prove that we did a good choice because we
+were forced to do this. But we can use it to suggest that if we had complete
+data, maybe the confidence distribution won't change since adding or not data
+between 8-21h didn't change its distribution.
+
+But idk if it's true because the missing data contains a big part of night, so
+maybe certainty won't be the same (less certainty).
 
 ## 

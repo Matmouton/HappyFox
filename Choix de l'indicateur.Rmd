@@ -678,7 +678,7 @@ ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
 
 # -----
 
-# Maybe later : movement of the center of the box 
+# Maybe later : movement of the center of the box
 
 ## 1 Frequency of movement of the center by time unit
 
