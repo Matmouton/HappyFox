@@ -1,0 +1,102 @@
+---
+title: "Indicator 3 - Amount of posture changes by time unit"
+author: "Mathilda Alhamadah"
+date: "2025-06-18"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+```{r}
+load("data_only_8h_21h_from_04_07_2022_to_06_07_2022.Rdata")
+```
+
+## 1.3 Amount of posture changes by time unit
+
+### 1.3.1 Function
+
+posture_no_na is a temporary variable : every not_visible & NA posture will be
+replaced by the previous one. Useful only to count the amount of posture
+changes.
+
+```{r}
+# Function 1 : Detect time changes
+
+amount_posture_changes <- function(
+    data,
+    group_time){ #group_time : "number + unit" (among : second, minute, hour, day,                     week, month, bimonth, quarter, season, halfyear and year)
+  
+# Temporary variable : not_visible & NAs replaced by the latest posture (so wrong data, but useful to count the posture changes)
+  data <- data %>% 
+    mutate(posture_no_NA = case_when(
+    #replace not_visible & NA by the latest
+      name == "not_visible" ~ lag(name, default = first(name)),
+      is.na(name) ~ lag(name, default = first(name)),
+    #leave the others
+      TRUE ~ name))
+  
+  # Detect position changes
+  data_valid <- data %>%
+    arrange(Date_Time) %>%  #Sort by date
+    # Movement : if posture != posture at previous time (skip NAs & not_visible)
+    mutate(Position_change = posture_no_NA != lag(posture_no_NA, default = first(posture_no_NA)))
+
+  # Results
+  return(changes_by_group_time(data_valid, time_gap = group_time))
+  }
+
+
+
+# Function 2 : Get the sum of posture changes by time unit
+
+changes_by_group_time <- function(data, time_gap) {
+  data %>%
+    mutate(Time_group = floor_date(Date_Time, unit = time_gap)) %>% #make time groups
+    group_by(Time_group) %>%
+    summarise(Nb_changes = sum(Position_change, na.rm = TRUE)) %>% #sum changes
+    ungroup()                                     #just in case
+}
+
+```
+
+```{r}
+# Changes per 15minutes & per day
+amount_changes_data_8h_21h_04_to_06_07_2022 <- amount_posture_changes(data_8h_21h_04_to_06_07_2022, "15 minute")
+
+amount_posture_changes(data_8h_21h_04_to_06_07_2022, "1 day")
+```
+
+### 1.3.2 Chart : Skip parts between 21h and 8h
+
+```{r}
+  # Add a new time variable to replace the real time
+
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1
+  return(data)
+}
+```
+
+```{r}
+ # Dataset
+
+amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_06_07_2022)
+```
+
+```{r}
+  # Plot
+
+ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
+       aes(x = compressed_time, y = Nb_changes)) +
+  geom_line() +
+  xlab("Temps entre 8h et 21h chaque jour") +
+  ylab("Nombre de changements de position") +
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes")
+```

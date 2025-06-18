@@ -17,9 +17,6 @@ editor_options:
 # 0. Reload function to get Jsons in dataframes
 
 ```{r packages, message=FALSE, warning=FALSE}
-#install.packages("jsonlite")
-#install.packages("curl")
-#install.packages("lubridate")
 library(jsonlite)
 library(purrr)
 library(curl)
@@ -209,7 +206,7 @@ from_json_to_df <- function(WD,
 
 ```
 
-```{r}
+```{r idk_if_useful}
 # Confidence gap when 2 predictions
 
 extract_confidence_differences <- function(directory) {
@@ -242,10 +239,10 @@ extract_confidence_differences <- function(directory) {
   return(confidence_diff_vector)
 }
 
-confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1")
+#confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1")
 
 # Boxplot
-boxplot(confidences_test)
+#boxplot(confidences_test)
 ```
 
 ```{r}
@@ -445,19 +442,13 @@ frequency_position <- function(data, interval_seconds) {
 
 # Test for 900 seconds (15 minutes)
 
-frequency_position_04_07_2022 <- frequency_position(data = data_04_07_2022, interval_seconds = 600)
-
 frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
 ```
 
 ### 1.1.2 Chart
 
 ```{r}
-# library(ggplot2)
-# library(tidyr)
-# library(dplyr)
-
-#put data in the long format (instead of wide) : pivot function
+# Put data in the long format (instead of wide) : pivot function
 frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
@@ -465,7 +456,7 @@ frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022
     values_to = "Count"
   )
 
-#chart
+# Chart for count
 ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
        aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
@@ -477,32 +468,72 @@ ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
-  
+
 ```
 
 ### 1.1.3 Chronologic series without 21h-8h gap
 
 ```{r}
-
-# Getting all the postures in a single dataset
-
 # Remove data between 21h-8h
-frequency_position_8h_21h_04_to_06_07_2022 <- frequency_position_04_to_06_07_2022[hour(frequency_position_04_to_06_07_2022$start_time) >= 8 & hour(frequency_position_04_to_06_07_2022$start_time) < 21,]
 
-# Pivot the data
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- frequency_position_8h_21h_04_to_06_07_2022 %>% 
-  select (-end_time) %>%                #drop the end_time column
-  pivot_longer(
-    cols = !start_time, 
-    names_to = "Posture", 
-    values_to = "Count"
-  )
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
 
-# Add the compressed time : don't use the add_compressed_time_variable on pivot data ! Because 4 lines for each time period and not only 1 !
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT$compressed_time <- rep(0:((nrow(frequency_position_8h_21h_04_to_06_07_2022_PIVOT)-1) %/% 4), each = 4)
+frequency_position_8h_21h_04_to_06_07_2022 <- filter_8h_21h(frequency_position_04_to_06_07_2022, start_time)
 
+# Clean up useless datasets
+rm(frequency_position_04_to_06_07_2022, frequency_position_04_to_06_07_2022_PIVOT)
+```
+
+```{r}
+# Pivot the data : 4 lines/time unit
+
+pivot_data <- function(data,
+                       variables_to_drop,       #useless variables
+                       variables_to_merge,      #variables we want to merge into 1 var
+                       str_name_merged_labels,  #column of the former colnames : rename
+                       str_name_merged_values,  #column of the former values : rename
+                       add_compressed_time_variable){ #"yes" or "no"
+  
+  if(add_compressed_time_variable == "yes") {
+    
+   data <- add_compressed_time_variable(data)   #add a compressed time : 1111 2222 3333 ...
+  }
+  
+  data <- data %>% 
+    select (-{{variables_to_drop}}) %>%   #eg : column end_time
+    pivot_longer(
+      cols = {{variables_to_merge}},      #eg : all the columns except start_time
+      names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
+      values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
+    )
+} 
+
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- pivot_data(data = frequency_position_8h_21h_04_to_06_07_2022,
+                   variables_to_drop = end_time,
+                   variables_to_merge = c(lying, standing, sitting, not_visible),
+                   str_name_merged_labels = "Posture",
+                   str_name_merged_values = "Count",
+                   add_compressed_time_variable = "yes")
+```
+
+```{r}
 # Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT$proportion <- frequency_position_8h_21h_04_to_06_07_2022_PIVOT$Count/(15*60)
+
+add_proportion <- function(data,
+                           count_variable,    #variable of the count for each time period
+                           period_duration) { #in seconds
+  data <- data %>% 
+    mutate(proportion = {{count_variable}}/{{period_duration}}) #proportion = count/total time
+}
+
+# Test
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT<- add_proportion(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+                      count_variable = Count,
+                      period_duration = 900)  #15 mintues by time period = 900 seconds
 
 ```
 
@@ -512,9 +543,12 @@ Plots :
 # Counts
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
        aes(x = compressed_time, y = Count)) +
-  geom_line(aes(color= Posture)) +
+  geom_line(aes(color=
+                  factor(Posture,
+                         #re-order the labels
+                         levels = c("lying", "sitting", "standing", "not_visible")))) +
   scale_color_manual(name = "Posture",
-                     labels = c("Lying", "Sitting", "Standing", "Not visible"),
+                     labels = c("lying", "sitting", "standing", "not_visible"),
                      values = c("lying" = "lightgreen", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
@@ -523,7 +557,9 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
 # Frequencies
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
        aes(x = compressed_time, y = proportion)) +
-  geom_line(aes(color= Posture)) +
+  geom_line(aes(color= factor(Posture,
+                         #re-order the labels
+                         levels = c("lying", "sitting", "standing", "not_visible")))) +
   scale_color_manual(name = "Posture",
                      labels = c("Lying", "Sitting", "Standing", "Not visible"),
                      values = c("lying" = "lightgreen", #change legend colors
@@ -543,7 +579,7 @@ What we want : 0 = lying, 0.5 = sitting, 1 = standing (so that the max score =
 
 ```{r}
 #Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
-recoding_posture <- function(data){
+posture_123 <- function(data){
   data <- data %>% 
   mutate(increasing_code = case_when(name=="lying" ~ 0,
                                    name=="sitting" ~ 0.5,
@@ -553,7 +589,7 @@ recoding_posture <- function(data){
 }
 
 #Test data 04/07/2022
-data_8h_21h_04_to_06_07_2022_increasing_code <- recoding_posture(data_8h_21h_04_to_06_07_2022)
+data_8h_21h_04_to_06_07_2022_increasing_code <- posture_123(data_8h_21h_04_to_06_07_2022)
 ```
 
 ```{r}

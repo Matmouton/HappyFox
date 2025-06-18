@@ -1,0 +1,104 @@
+---
+title: "Indicator 2 - Movement score, posture quantification"
+author: "Mathilda Alhamadah"
+date: "2025-06-18"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+```{r}
+load("data_only_8h_21h_from_04_07_2022_to_06_07_2022.Rdata")
+```
+
+# Movement score : quantify each posture & sum it
+
+What we do have : 0 = lying, 1 = standing, 2 = sitting.
+
+What we want : 1 = lying, 2= sitting, 3= standing (so that 0 is only for missing
+data & fox not visible).
+
+## 1. Function
+
+```{r}
+#Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
+posture_123 <- function(data){
+  data <- data %>% 
+  mutate(increasing_code = case_when(name=="lying" ~ 1,
+                                   name=="sitting" ~ 2,
+                                   name=="standing" ~ 3,
+                                   name=="not visible" ~ NA, #to avoid having it in the sum
+                                   TRUE ~ NA))
+}
+```
+
+```{r}
+#Test data 04 tot 06/07/2022
+data_8h_21h_04_to_06_07_2022_increasing_code <- posture_123(data_8h_21h_04_to_06_07_2022)
+```
+
+```{r}
+# Amount activity function
+amount_activity <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time)
+  
+  start_time <- min(data$Date_Time)
+  end_time <- max(data$Date_Time)
+  
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(
+    interval_start = intervals[-length(intervals)],
+    interval_end = intervals[-1]
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%
+    mutate(
+      total_activity = sum(data$increasing_code[data$Date_Time >= interval_start & data$Date_Time < interval_end], na.rm = TRUE)/3, #not counting NAs
+      activity_proportion = ifelse(
+        total_activity != 0,
+        (total_activity) / nrow(data[data$Date_Time >= interval_start & data$Date_Time < interval_end, ]), #divided by 3 because score max = 3
+        0
+      )
+    )
+  
+  return(df_counts)
+}
+```
+
+```{r}
+# Test every 900 seconds (15 minutes)
+amount_activity_8h_21h_04_to_06_07_2022 <- amount_activity(data = data_8h_21h_04_to_06_07_2022_increasing_code,
+                                              interval_seconds = 900)
+```
+
+## 2. Chronologic series
+
+```{r function_add_comressed_time_variable}
+# Useful to skip the 21h-8h gap when plotting/ analyzing
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1 #-1 to make it start with 0
+  return(data)
+}
+```
+
+```{r}
+# Compressed time variable to skip parts between 21h and 8h
+amount_activity_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h_04_to_06_07_2022)
+
+# Plot
+ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
+       aes(x = compressed_time, y = activity_proportion)) +
+  geom_line() 
+```
+
+On a un gros trou au milieu au niveau de la quantité d'activité : c'est
+cohérent, parce que le renard était sous anesthésie.
