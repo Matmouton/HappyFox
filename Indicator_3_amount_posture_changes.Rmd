@@ -140,6 +140,6 @@ to get up, but it doesn't work well. So a lot of alternates between lying &
 sitting.
 
 ```{r}
-data_8h_21h_04_to_06_07_2022[data_8h_21h_04_to_06_07_2022$Date_Time > as.POSIXct("2022-07-04 11:45:00")
-                             & data_8h_21h_04_to_06_07_2022$Date_Time < as.POSIXct("2022-07-04 12:00:00") ,  ]
+test2 <- data_8h_21h_04_to_06_07_2022[data_8h_21h_04_to_06_07_2022$Date_Time > as.POSIXct("2022-07-04 11:50:00")
+                             & data_8h_21h_04_to_06_07_2022$Date_Time < as.POSIXct("2022-07-04 12:05:00") ,  ]
 ```

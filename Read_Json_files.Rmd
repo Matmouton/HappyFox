@@ -465,6 +465,12 @@ boxplot(confidences_test)
 
 # 5. Aggregate several days & filter between 8h and 21h
 
+/!\\ Check if the id_fox is always the same, if not : set it manually !
+```{r}
+#data$fox_id <- "4313"
+```
+
+
 Aggregate dataframes :
 ```{r}
 #dplyr::bind_rows() is more flexible than base::rbind(). We need flexibility because there are dataframes within the dataframe.
