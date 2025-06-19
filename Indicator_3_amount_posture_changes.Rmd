@@ -33,16 +33,16 @@ amount_posture_changes <- function(
     data,
     group_time){ #group_time : "number + unit" (among : second, minute, hour, day,                     week, month, bimonth, quarter, season, halfyear and year)
   
-# Temporary variable : not_visible & NAs replaced by the latest posture (so wrong data, but useful to count the posture changes)
+  # Temporary variable : not_visible & NAs replaced by NAs
   data <- data %>% 
     mutate(posture_no_NA = case_when(
-    #replace not visible & NA by the latest
-      name == "not visible" ~ lag(name, default = first(name)),
-      is.na(name) ~ lag(name, default = first(name)),
-    #leave the others
-      TRUE ~ name))
+      name == "not visible" ~ NA,  #NA if not visible
+      is.na(name) ~ NA,            #NA if NA
+      TRUE ~ name)                 #else : posture name
+      )  
   
-
+  data <- data %>%
+    fill(posture_no_NA)
   
   # variable posture_no_NA : mettre les not visible en NA et laisser les NA en NA
   # puis remplir les NA à l'aide de la dernière valeur
@@ -55,8 +55,7 @@ amount_posture_changes <- function(
     mutate(Position_change = posture_no_NA != lag(posture_no_NA, default = first(posture_no_NA)))
 
   # Results
-  #return(changes_by_group_time(data_valid, time_gap = group_time))
-  return(data_valid)
+  return(changes_by_group_time(data_valid, time_gap = group_time))
   }
 
 
@@ -98,14 +97,49 @@ amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_ti
 ```
 
 ```{r}
+  # Areas to color
+
+#red : no data available (corrupted videos)
+#
+
+areas <- data.frame(
+  xmin = c(0, 43, 96,
+           11, 21, 53, 109,
+           36, 57, 113,
+           15),
+  xmax = c(11, 53, 109,
+           15, 28, 57, 113,
+           43, 62, 124,
+           21),
+  fill = c("No data", "No data", "No data",
+           "Inactive", "Inactive", "Inactive", "Inactive",
+           "Active", "Active", "Active",
+           "Out for implant")
+)
+
+
+
   # Plot
 
 ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
        aes(x = compressed_time, y = Nb_changes)) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
   geom_line() +
   #xlab("Temps entre 8h et 21h chaque jour") +
   ylab("Nombre de changements de position") +
   ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") +
   scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
                      breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150))
+```
+
+Spike between 28&36 : because the fox is waking up from anesthesia & he's trying
+to get up, but it doesn't work well. So a lot of alternates between lying &
+sitting.
+
+```{r}
+data_8h_21h_04_to_06_07_2022[data_8h_21h_04_to_06_07_2022$Date_Time > as.POSIXct("2022-07-04 11:45:00")
+                             & data_8h_21h_04_to_06_07_2022$Date_Time < as.POSIXct("2022-07-04 12:00:00") ,  ]
 ```
