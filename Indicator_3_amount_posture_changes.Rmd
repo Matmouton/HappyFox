@@ -53,10 +53,7 @@ amount_posture_changes <- function(
       )  
   
   data <- data %>%
-    fill(posture_no_NA)
-  
-  # variable posture_no_NA : mettre les not visible en NA et laisser les NA en NA
-  # puis remplir les NA à l'aide de la dernière valeur
+    fill(posture_no_NA)           #refill NAs (= real NAs + not_visible) with latest posture seen
   
   
   # Detect position changes
@@ -110,8 +107,10 @@ amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_ti
 ```{r}
   # Areas to color
 
-#red : no data available (corrupted videos)
-#
+#blue : no data available (corrupted videos)
+#purple : out of the cage to put him the implant
+#red : active
+#green : inactive
 
 areas <- data.frame(
   xmin = c(0, 43, 96,
