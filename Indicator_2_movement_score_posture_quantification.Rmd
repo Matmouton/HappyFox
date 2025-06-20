@@ -15,7 +15,18 @@ editor_options:
 ---
 
 ```{r}
-load("data_only_8h_21h_from_04_07_2022_to_06_07_2022.Rdata")
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+load("data_only_8h_21h_04_to_06_07_2022.Rdata")
 ```
 
 # Movement score : quantify each posture & sum it
@@ -62,7 +73,10 @@ amount_activity <- function(data, interval_seconds) {
   df_counts <- df_counts %>%
     rowwise() %>%
     mutate(
-      total_activity = sum(data$increasing_code[data$Date_Time >= interval_start & data$Date_Time < interval_end], na.rm = TRUE)/3, #not counting NAs
+      total_activity =
+        sum(data$increasing_code[data$Date_Time >= interval_start
+                                 & data$Date_Time < interval_end],
+            na.rm = TRUE)/3, #divide by 3 because max score = 3 : get a max to 1
       activity_proportion = ifelse(
         total_activity != 0,
         (total_activity) / nrow(data[data$Date_Time >= interval_start & data$Date_Time < interval_end, ]), #divided by 3 because score max = 3
@@ -98,6 +112,24 @@ amount_activity_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_v
 ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
        aes(x = compressed_time, y = activity_proportion)) +
   geom_line() 
+
+
+
+
+  # Plot
+
+ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
+       aes(x = compressed_time, y = Nb_changes)) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
+  geom_line() +
+  #xlab("Temps entre 8h et 21h chaque jour") +
+  ylab("Nombre de changements de position") +
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") +
+  scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
+                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150))
 ```
 
 On a un gros trou au milieu au niveau de la quantité d'activité : c'est

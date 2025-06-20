@@ -15,7 +15,18 @@ editor_options:
 ---
 
 ```{r}
-load("data_only_8h_21h_from_04_07_2022_to_06_07_2022.Rdata")
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+load("data_only_8h_21h_04_to_06_07_2022.Rdata")
 ```
 
 ## 1.1 Number & proportion of each posture by time unit
