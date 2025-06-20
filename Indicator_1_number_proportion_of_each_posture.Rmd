@@ -180,30 +180,70 @@ frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time<- add_proportio
 Plots :
 
 ```{r}
-# Counts
+  #Areas we want to color
+
+#blue : no data available (corrupted videos)
+#purple : out of the cage to put him the implant
+#red : active
+#green : inactive
+
+areas <- data.frame(
+  xmin = c(0, 43, 96,
+           11, 21, 53, 109,
+           36, 57, 113,
+           15),
+  xmax = c(11, 53, 109,
+           15, 28, 57, 113,
+           43, 62, 124,
+           21),
+  fill = c("No data", "No data", "No data",
+           "Inactive", "Inactive", "Inactive", "Inactive",
+           "Active", "Active", "Active",
+           "Out for implant")
+)
+
+  # Counts
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
   scale_color_manual(name = "Posture",
                      labels = c("lying", "sitting", "standing", "not_visible"),
                      values = c("lying" = "lightgreen", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
-                               "not_visible" = "lightgrey"))
+                               "not_visible" = "lightgrey"))+
+  scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
+                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150)) +
+  ylab("Quantité de secondes passé dans chaque posture") +
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") 
 
-# Frequencies
+  # Frequencies
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
        aes(x = compressed_time, y = proportion)) +
   geom_line(aes(color= factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
   scale_color_manual(name = "Posture",
                      labels = c("Lying", "Sitting", "Standing", "Not visible"),
                      values = c("lying" = "lightgreen", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
-                               "not_visible" = "lightgrey"))
+                               "not_visible" = "lightgrey")) +
+  scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
+                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150)) +
+  ylab("Proportion de temps passé dans chaque posture") +
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") 
+
+
 ```
