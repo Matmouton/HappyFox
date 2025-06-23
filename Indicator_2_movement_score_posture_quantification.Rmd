@@ -34,7 +34,8 @@ load("data_only_8h_21h_04_to_06_07_2022.Rdata")
 What we do have : 0 = lying, 1 = standing, 2 = sitting.
 
 What we want : 1 = lying, 2= sitting, 3= standing (so that 0 is only for missing
-data & fox not visible).
+data & fox not visible). What we did is equevalent of multiplying the proportion
+of time spent in a posture by the index of this posture (1 2 or 3).
 
 ## 1. Function
 
@@ -91,7 +92,7 @@ amount_activity <- function(data, interval_seconds) {
 ```{r}
 # Test every 900 seconds (15 minutes)
 amount_activity_04_to_06_07_2022 <- amount_activity(data = data_8h_21h_04_to_06_07_2022_increasing_code,
-                                              interval_seconds = 900)
+                                              interval_seconds = 1800)
 ```
 
 ```{r}
@@ -109,7 +110,7 @@ amount_activity_8h_21h_04_to_06_07_2022 <- filter_8h_21h(
   data = amount_activity_04_to_06_07_2022,
   time_column = interval_start)
 
-rm(amount_activity_04_to_06_07_2022)  #useless now, data with the 21h-8h gap
+rm(amount_activity_04_to_06_07_2022, data_8h_21h_04_to_06_07_2022_increasing_code)  #useless now, data with the 21h-8h gap
 ```
 
 ## 2. Chronologic series
@@ -124,7 +125,7 @@ add_compressed_time_variable <- function(data) {
 
 ```{r}
 # Compressed time variable to skip parts between 21h and 8h
-amount_activity_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h_04_to_06_07_2022)
+amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h_04_to_06_07_2022)
 
 rm(amount_activity_8h_21h_04_to_06_07_2022)  #useless now, data without compressed time variable
 ```
@@ -153,8 +154,8 @@ areas <- data.frame(
 )
 
 
-# Plot
-ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
+  # Plot
+ggplot(amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time,
        aes(x = compressed_time, y = activity_proportion)) +
   
   geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
@@ -163,8 +164,8 @@ ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
   geom_line() +
   ylab("Score de mouvement par addition des indices des postures") +
   scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
-                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150)) + #scale
-  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes")
+                     breaks = seq(from = 0, to = nrow(amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time), by = 10)) + #scale
+  ggtitle("Score de postures du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 30 minutes")
 ```
 
 On a un gros trou au milieu au niveau de la quantité d'activité : c'est
