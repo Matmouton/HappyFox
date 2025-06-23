@@ -1,0 +1,15 @@
+---
+title: "Indicator 4 - Linear model"
+author: "Mathilda Alhamadah"
+date: "2025-06-23"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
