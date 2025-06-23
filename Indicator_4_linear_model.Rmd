@@ -13,3 +13,207 @@ editor_options:
   markdown: 
     wrap: 80
 ---
+
+```{r}
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+load("data_only_8h_21h_04_to_06_07_2022.Rdata")
+```
+
+## 1.1 Number & proportion of each posture by time unit
+
+### 1.1.1 Function
+
+```{r}
+# Frequency of postures lying/ sitting/ standing by timestep (chosen)
+
+frequency_position <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      lying = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
+      standing = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
+      sitting = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2),            #count sitting
+      not_visible = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3)             #count not visible
+    )
+  
+  return(df_counts)
+}
+```
+
+```{r}
+# Test for 900 seconds (15 minutes)
+
+frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
+```
+
+### 1.1.2 Chart
+
+```{r remove1}
+# # Pivot the data : 4 lines/time unit
+# 
+# pivot_data <- function(data,
+#                        variables_to_drop,       #useless variables
+#                        variables_to_merge,      #variables we want to merge into 1 var
+#                        str_name_merged_labels,  #column of the former colnames : rename
+#                        str_name_merged_values){  #column of the former values : rename
+#   
+#   data <- data %>% 
+#     select (-{{variables_to_drop}}) %>%   #eg : column end_time
+#     pivot_longer(
+#       cols = {{variables_to_merge}},      #eg : all the columns except start_time
+#       names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
+#       values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
+#     )
+# } 
+
+```
+
+```{r remove2}
+# # Test
+# 
+# frequency_position_04_to_06_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_06_07_2022,
+#                    variables_to_drop = end_time,
+#                    variables_to_merge = c(lying, standing, sitting, not_visible),
+#                    str_name_merged_labels = "Posture",
+#                    str_name_merged_values = "Count")
+```
+
+```{r}
+  #Remove data between 21h-8h
+
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
+```
+
+```{r remove_part3}
+  # Test
+
+frequency_position_8h_21h_04_to_06_07_2022 <- filter_8h_21h(frequency_position_04_to_06_07_2022, start_time)
+
+rm(frequency_position_04_to_06_07_2022)  #remove data with the 21h-8h gap
+```
+
+```{r}
+# Add the compressed time variable to to replace the real time in order to skip the 21h-8h gap
+
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1
+  return(data)
+}
+```
+
+```{r}
+# Test
+
+frequency_position_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022)
+
+#remove useless data : no compressed time
+rm(frequency_position_8h_21h_04_to_06_07_2022)
+```
+
+```{r remove4}
+# # Chart for count
+# ggplot(data = frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
+#        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
+#   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+#   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
+#   xlab("Time of the day") +
+#   ylab("Amount of seconds spent in this posture") +                              
+#   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+#                     values = c("lying" = "lightgreen", #change legend colors
+#                                "sitting" = "orange",
+#                                "standing" = "tomato",
+#                                "not_visible" = "lightgrey"))
+
+```
+
+### 1.1.3 Chronologic series without 21h-8h gap
+
+```{r remove5}
+# # Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
+# 
+# add_proportion <- function(data,
+#                            count_variable,    #variable of the count for each time period
+#                            period_duration) { #in seconds
+#   data <- data %>% 
+#     mutate(proportion = {{count_variable}}/{{period_duration}}) #proportion = count/total time
+# }
+
+```
+
+
+### Linear model for movement score
+
+We affect 1 to lying posture, 2 to sitting and 3 to standing, but this time 
+
+```{r}
+test <- frequency_position_8h_21h_04_to_06_07_2022_compressed_time
+test$movement_score <- test$lying + 2*test$sitting + 3*test$standing
+```
+
+```{r}
+  # Areas we want to color
+
+#blue : no data available (corrupted videos)
+#purple : out of the cage to put him the implant
+#red : active
+#green : inactive
+
+areas <- data.frame(
+  xmin = c(0, 43, 96,
+           11, 21, 53, 109,
+           36, 57, 113,
+           15),
+  xmax = c(11, 53, 109,
+           15, 28, 57, 113,
+           43, 62, 124,
+           21),
+  fill = c("No data", "No data", "No data",
+           "Inactive", "Inactive", "Inactive", "Inactive",
+           "Active", "Active", "Active",
+           "Out for implant")
+)
+
+
+  # Plot
+ggplot(test,
+       aes(x = compressed_time, y = movement_score)) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
+  geom_line() +
+  ylab("Score de mouvement par modèle linéaire") +
+  scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
+                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150)) + #scale
+  ggtitle("Score de postures du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes")
+```
+
+
+
