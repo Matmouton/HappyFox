@@ -1,0 +1,221 @@
+---
+title: "Indicator 1 - Number & proportion of posture/ time period"
+author: "Mathilda Alhamadah"
+date: "2025-06-18"
+output:
+  html_document:
+    toc: true             #table des matières
+    toc_float: true       #table des matières toujours visible
+    theme: bootstrap      #changer le thème de la page
+    highlight: zenburn    #changer le thème des chunks
+    
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+```{r}
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+load("data_only_8h_21h_04_to_06_07_2022.Rdata")
+```
+
+## 1.1 Number & proportion of each posture by time unit
+
+### 1.1.1 Function
+
+```{r}
+# Frequency of postures lying/ sitting/ standing by timestep (chosen)
+
+frequency_position <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      lying = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
+      standing = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
+      sitting = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2),            #count sitting
+      not_visible = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3)             #count not visible
+    )
+  
+  return(df_counts)
+}
+```
+
+```{r}
+# Test for 900 seconds (15 minutes)
+
+frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
+```
+
+### 1.1.2 Chart
+
+```{r}
+# Put data in the long format (instead of wide) : pivot function
+
+frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022[,-2] %>% #drop the end_time column
+  pivot_longer(
+    cols = !start_time, 
+    names_to = "Posture", 
+    values_to = "Count"
+  )
+```
+
+```{r}
+# Chart for count
+ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
+       aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+```
+
+### 1.1.3 Chronologic series without 21h-8h gap
+
+```{r}
+# Remove data between 21h-8h
+
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
+```
+
+```{r}
+# Test
+
+frequency_position_8h_21h_04_to_06_07_2022 <- filter_8h_21h(frequency_position_04_to_06_07_2022, start_time)
+```
+
+```{r}
+# Clean up useless datasets
+
+rm(frequency_position_04_to_06_07_2022, frequency_position_04_to_06_07_2022_PIVOT)
+```
+
+```{r}
+# Pivot the data : 4 lines/time unit
+
+pivot_data <- function(data,
+                       variables_to_drop,       #useless variables
+                       variables_to_merge,      #variables we want to merge into 1 var
+                       str_name_merged_labels,  #column of the former colnames : rename
+                       str_name_merged_values,  #column of the former values : rename
+                       add_compressed_time_variable){ #"yes" or "no"
+  
+  if(add_compressed_time_variable == "yes") {
+    
+   data <- add_compressed_time_variable(data)   #add a compressed time : 1111 2222 3333 ...
+  }
+  
+  data <- data %>% 
+    select (-{{variables_to_drop}}) %>%   #eg : column end_time
+    pivot_longer(
+      cols = {{variables_to_merge}},      #eg : all the columns except start_time
+      names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
+      values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
+    )
+} 
+
+```
+
+```{r}
+  # Add a new time variable to replace the real time
+
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1
+  return(data)
+}
+```
+
+```{r}
+# Test
+
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- pivot_data(data = frequency_position_8h_21h_04_to_06_07_2022,
+                   variables_to_drop = end_time,
+                   variables_to_merge = c(lying, standing, sitting, not_visible),
+                   str_name_merged_labels = "Posture",
+                   str_name_merged_values = "Count",
+                   add_compressed_time_variable = "yes")
+```
+
+```{r}
+# Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
+
+add_proportion <- function(data,
+                           count_variable,    #variable of the count for each time period
+                           period_duration) { #in seconds
+  data <- data %>% 
+    mutate(proportion = {{count_variable}}/{{period_duration}}) #proportion = count/total time
+}
+
+```
+
+```{r}
+# Test
+
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT<- add_proportion(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+                      count_variable = Count,
+                      period_duration = 900)  #15 mintues by time period = 900 seconds
+
+```
+
+Plots :
+
+```{r}
+# Counts
+ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+       aes(x = compressed_time, y = Count)) +
+  geom_line(aes(color=
+                  factor(Posture,
+                         #re-order the labels
+                         levels = c("lying", "sitting", "standing", "not_visible")))) +
+  scale_color_manual(name = "Posture",
+                     labels = c("lying", "sitting", "standing", "not_visible"),
+                     values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+# Frequencies
+ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+       aes(x = compressed_time, y = proportion)) +
+  geom_line(aes(color= factor(Posture,
+                         #re-order the labels
+                         levels = c("lying", "sitting", "standing", "not_visible")))) +
+  scale_color_manual(name = "Posture",
+                     labels = c("Lying", "Sitting", "Standing", "Not visible"),
+                     values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+```

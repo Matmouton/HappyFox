@@ -14,12 +14,9 @@ editor_options:
     wrap: 80
 ---
 
-# 0. Recharger la fonction pour avoir les json en df
+# 0. Reload function to get Jsons in dataframes
 
 ```{r packages, message=FALSE, warning=FALSE}
-#install.packages("jsonlite")
-#install.packages("curl")
-#install.packages("lubridate")
 library(jsonlite)
 library(purrr)
 library(curl)
@@ -27,9 +24,10 @@ library(dplyr)
 library(lubridate)
 library(tidyr)
 library(ggplot2)
+library(patchwork)
 ```
 
-## 0.1 Fonctions
+## 0.1 Functions
 
 ```{r load_json_function}
 #Function to load the data
@@ -52,14 +50,17 @@ load_json <- function(WD, file_name){
 ```
 
 ```{r one_position_file_function}
-one_position_file <- function(json_file,
-                              threshold = 0.34,        #default = arbitrary
-                              fox_id_limits = c(5,8), #default = like in the app
-                              date_time_limits = c(10,28), #same remark
-                              date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
+#Keep only one posture (= one line) per second
+
+one_position_file <- function(
+    json_file,
+    threshold = 0.34,            #default = better prediction than random classification (=1/3 because there are 3 postures)
+    fox_id_limits = c(8,11),     #default = YOLO output
+    date_time_limits = c(13,31), #same
+    date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same
   
-  #number of predictions
-  nb_pred <- length(json_file$objects[[1]])
+
+  nb_pred <- length(json_file$objects[[1]]) #keep the number of predictions
   
 #If Json file is not empty (there is at least 1 prediction)
   if(nb_pred >0) {
@@ -116,28 +117,26 @@ one_position_file <- function(json_file,
       mutate(filename = json_file$filename) #get filename
     
     #get the date and time
-    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
-    #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
+    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #get the datetime part from the string
     
-    date_wrong_format <- strptime(str_datetime, format = date_time_format) #transformé en date et heure
+    date_wrong_format <- strptime(str_datetime, format = date_time_format) #change the date into a datetime format (but not the right one : default)
     
-    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
+    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & hour in the right format
     
-    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #mettre en format datetime
+    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #convert it into POSIXct (a great format for datetime data)
     
     data_new <- data_new %>% 
-      mutate(Date_Time = great_date)
+      mutate(Date_Time = great_date) #add variable
     
    #get the fox id
     fox_id <- substr(data_new$filename, fox_id_limits[1], fox_id_limits[2])
-    #/!\ ça aussi ça peut changer si format filenamechange
     
     data_new <- data_new %>% 
-      mutate(fox_id = fox_id)
+      mutate(fox_id = fox_id)        #add variable
 
     
    #output  
-    return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
+    return(data_new = data_new)  
 
 }
 
@@ -153,49 +152,147 @@ merge_postures <- function(list_df_postures) {
 
 ```{r from_json_to_df_function}
 
-#Version opti 
 from_json_to_df <- function(WD,
-                            threshold = 0.34,            #being better than random
-                            fox_id_limits = c(8, 11),    #default = YOLO output
-                            date_time_limits = c(13, 31),             #same
-                            date_time_format = "%d_%m_%Y_%H_%M_%S") { #same
+                            threshold = 0.34,          #being better than random
+                            fox_id_limits = c(8,11),   #default = YOLO output
+                            date_time_limits = c(13,31),                #same
+                            date_time_format = "%d_%m_%Y_%H_%M_%S")  {  #same
   
-  # Récupérer tous les fichiers JSON du dossier
-  files <- list.files(path = WD, pattern = "\\.json$", full.names = TRUE)
-  message("Chargement terminé. ", length(files), " fichiers ont été chargés.")
+  # Get all the JSON files from the folder
+  setwd(WD)                              #Set WD
+  files <- list.files(pattern = ".json") #get Json files
+  print(paste("Chargement terminé. ",length(files), " fichiers ont été chargés."))
   
-  # Charger et transformer chaque fichier
-  list_df1line <- lapply(files, function(file) {
-    data_loaded <- load_json(WD = WD, file = basename(file)) #basename : get only the file name from the whole working directory/ file path
-    one_position_file(json_file = data_loaded,
-                      threshold = threshold,
-                      fox_id_limits = fox_id_limits,
-                      date_time_limits = date_time_limits,
-                      date_time_format = date_time_format)
-  })
+  # Create empty list of dataframes & variable to increment
+  list_df1line = list()  #empty list
+  i = 0                  #increment
   
-  # Fusionner les résultats
-  df_merged <- merge_postures(list_df1line)
-  message("Extraction terminée. ", length(files), " fichiers ont été fusionnés.")
+  # Loop for each file
+  for (file in files) {
+    
+    # Apply function load_json to every file of the folder
+    data_loaded <- load_json(WD = WD, file = file)
+    
+    # Apply function one_position_file to every new dataframe
+    data_1line <- one_position_file(json_file = data_loaded,
+                                    threshold = threshold,
+                                    fox_id_limits = fox_id_limits,
+                                    date_time_limits = date_time_limits,
+                                    date_time_format = date_time_format)
   
-  # Identifier et supprimer les lignes sans date
-  na_rows <- is.na(df_merged$Date_Time)
-  if (any(na_rows)) {
-    message("Il y avait ", sum(na_rows), " fichiers sans date. Il s'agit des fichiers : ",
-            paste(df_merged$filename[na_rows], collapse = ", "))
-    df_merged <- df_merged[!na_rows, ]
+    # Put them all in a list
+    list_df1line[[i+1]] <- data_1line
+    
+    i <- i+1 #next file
   }
   
+  # Merge this list's elements & get the dataframe
+  df_merged <- merge_postures(list_df1line) 
+  
+
+  # Print end of the run
+  print(paste("Extraction terminée. ", i, "fichiers ont été fusionnés."))
+  
+  # Spot files with NA date (check if they are prediction files, 1 of them is created at every YOLO run)
+  print(paste("Il y avait", nrow(df_merged[is.na(df_merged$Date_Time),]), "fichiers sans date. Il s'agit des fichiers : ", df_merged[is.na(df_merged$Date_Time),]$filename))
+  
+  # Delete those files
+  df_merged <- df_merged[!is.na(df_merged$Date_Time),]
+  
+  # Return data
   return(df_merged)
+  
 }
 
 ```
 
-## 0.2 Chargement des données
+```{r idk_if_useful}
+# Confidence gap when 2 predictions
 
-Datasets des 4 5 et 6 juillet 2022 :
+extract_confidence_differences <- function(directory) {
+  
+  # For all the Json files in the directory 
+  files <- list.files(path = directory, pattern = "\\.json$", full.names = TRUE)
+  confidence_diff_vector <- c() #empty vector
+  
+  for (file in files) {
+    json_data <- fromJSON(file)
+    
+    # If Json not empty
+    if (length(json_data$objects[[1]])>0) { 
+      objects <- json_data$objects[[1]]
+      n_objects <- nrow(objects)
+      
+      # If 2 predictions exactly
+      if (n_objects == 2) {
+        
+        # Compute confidence difference
+        diff <- abs(json_data$objects[[1]]$confidence[2]-
+                      json_data$objects[[1]]$confidence[1])
+        
+        # Put it in a vector
+        confidence_diff_vector <- c(confidence_diff_vector, diff)
+      }
+    }
+  }
+  # Return it
+  return(confidence_diff_vector)
+}
+
+#confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1")
+
+# Boxplot
+#boxplot(confidences_test)
+```
+
+```{r}
+# Aggregate dataframes 
+data_04_to_06_07_2022 <- bind_rows(data_04_07_2022, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
+```
+
+```{r function_rescale_8h_21h}
+# Adapt dataframe so that there is only (and mandatory) data between 8h and 21h. No matter if we have to create NAs/ loose data.
+
+rescale_8h_21h <- function(data){
+
+# Keep only frames between 8am and 9pm
+data_8h_21h_missing_seconds <- data %>%
+  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
+
+# Create every second between 8am and 9pm for every fox id and day of recording
+complete_data <- data_8h_21h_missing_seconds %>%
+  mutate(date = as.Date(Date_Time)) %>%
+  group_by(fox_id, date) %>%
+  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
+                          to   = as.POSIXct(paste(date[1], "21:00:00")),
+                          by   = "1 sec"))
+
+# Merge it to the original data
+data_8h_21h <- complete_data %>%
+  left_join(data_8h_21h_missing_seconds, by = c("fox_id", "Date_Time"))
+
+
+return (data_8h_21h)
+  
+}
+```
+
+```{r function_add_compressed_time_variable}
+# Useful to skip the 21h-8h gap when plotting/ analyzing
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1 #-1 to make it start with 0
+  return(data)
+}
+```
+
+## 0.2 Load data
+
+Datasets from 4 5 and 6 of July 2022 :
 
 ```{r real_sample_to_work_on, eval=FALSE}
+  
+  # Load data
+
 #Test on real data from YOLO (29000 files) : 04/07/2022
 data_04_07_22 <- from_json_to_df("H:/Etude 1 Video plus implants/Images et prédictions YOLO/renard4313 Video 1 04_07_2022 10_47_16 1",
                 threshold = 0.34,  #just to be sure we don't do worse than a random prediction = 1 chance/3 of getting the right prediction for the posture
@@ -224,16 +321,14 @@ data_06_07_2022_part2 <- from_json_to_df(WD = "H:/Etude 1 Video plus implants/Im
                         date_time_limits = c(13,31),
                         date_time_format = "%d_%m_%Y_%H_%M_%S")
 
+  # Merge data
+data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
 
+  # Rescale data
+data_8h_21h_04_to_06_07_2022 <- rescale_8h_21h(data_04_to_06_07_2022)
 ```
 
-data_06_07_2022 : On a 615 frames avec une confiance \< 34% sur 35086, soit
-1,8%. data_05_07_2022 : On a 403 frames avec une confiance \< 34% sur 38687,
-soit 1,0%. data_04_07_2022 : on a 190 frames avec une confiance \< 34% sur
-29415, soit 0,6%. C'est déjà mieux. Pourtant c'est le jour de l'inoculation :
-bizarre.
-
-## 0.3 Premières stats descriptives
+## 0.3 First descriptive statistics
 
 ```{r}
 # Highest confidence rate when there is :
@@ -249,6 +344,10 @@ boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
 #1 prediction
 mean(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence) #0.94
 boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence)
+
+#overall
+mean(data_04_07_22$confidence)
+boxplot(data_04_07_22$confidence)
 ```
 
 ```{r}
@@ -282,70 +381,39 @@ confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/don
 boxplot(confidences_test)
 ```
 
-## 0.4 Agrégation des données
-
-On peut agréger facilement les dataframes.
+## 0.4 Merge data
 
 ```{r}
-data_04_to_06_07_2022 <- rbind(data_04_07_22, data_05_07_2022, data_06_07_2022_part1, data_06_07_2022_part2)
-
-#Delete the line with a NA
-data_04_to_06_07_2022 <- data_04_to_06_07_2022[!is.na(data_04_to_06_07_2022$Date_Time),]
+#dplyr::bind_rows() is more flexible than base::rbind(). Manages df within the df
+data_04_to_06_07_2022 <- bind_rows(
+  data_04_07_22,
+  data_05_07_2022,
+  data_06_07_2022_part1,
+  data_06_07_2022_part2)
 ```
 
-On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des
-données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant.
-
-Fonction :
+Keep only data between 8h and 21h :
 
 ```{r}
-rescale_8h_21h <- function(data){
-
-# Keep only frames between 8am and 9pm
-data_8h_21h_missing_seconds <- data %>%
-  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
-
-# Create every second between 8am and 9pm for every fox id and day of recording
-complete_data <- data_8h_21h_missing_seconds %>%
-  mutate(date = as.Date(Date_Time)) %>%
-  group_by(fox_id, date) %>%
-  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
-                          to   = as.POSIXct(paste(date[1], "21:00:00")),
-                          by   = "1 sec"))
-
-# Merge it to the original data
-data_8h_21h <- complete_data %>%
-  left_join(data_8h_21h_missing_seconds, by = c("fox_id", "Date_Time"))
-
-return (data_8h_21h)
-  
-}
-
-#Test
-#data_8h_21h_04_to_06_07_2022 <- rescale_8h_21h(data_04_to_06_07_2022)
+data_8h_21h_04_to_06_07_2022 <- rescale_8h_21h(data_04_to_06_07_2022)
 ```
 
-Puis on ajoute une fonction qui est comme le temps mais qui n'augmente pas entre
-21h et 8h, pour pouvoir "coller" tous les jours ensemble :
+Add a time variable which does not take into account the missing hours between
+21h and 8h :
 
 ```{r}
-add_compressed_time_variable <- function(data) {
-  data$compressed_time <- seq_len(nrow(data))-1
-  return(data)
-}
-
-#test3 <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
+data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
 ```
 
-# 1. Alternance des positions assis/ debout/ couché
+# 1. Switches between postures lying/sitting/standing
 
-## 1.1 Nombre & proportion de chaque position par unité de temps
+## 1.1 Number & proportion of each posture by time unit
 
 ### 1.1.1 Function
 
 ```{r}
 
-# Frequency of positions lying/ sitting/ standing by timestep (chosen)
+# Frequency of postures lying/ sitting/ standing by timestep (chosen)
 frequency_position <- function(data, interval_seconds) {
   data <- data %>% arrange(Date_Time) #sort by date
   
@@ -372,8 +440,7 @@ frequency_position <- function(data, interval_seconds) {
   return(df_counts)
 }
 
-# Test pour 900 secondes (15 minutes)
-# frequency_position_04_07_2022 <- frequency_position(data = data_04_07_2022, interval_seconds = 600)
+# Test for 900 seconds (15 minutes)
 
 frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
 ```
@@ -381,11 +448,7 @@ frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_
 ### 1.1.2 Chart
 
 ```{r}
-# library(ggplot2)
-# library(tidyr)
-# library(dplyr)
-
-#put data in the long format (instead of wide) : pivot function
+# Put data in the long format (instead of wide) : pivot function
 frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
@@ -393,7 +456,7 @@ frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022
     values_to = "Count"
   )
 
-#chart
+# Chart for count
 ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
        aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
@@ -406,63 +469,71 @@ ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
 
-
-
-#OR : 
-# ggplot(data = frequency_position_04_07_22_PIVOT,
-#        aes(fill = Posture, y = Count, x = start_time)) + 
-#   geom_col(aes(fill = Posture)) 
-  
 ```
 
 ### 1.1.3 Chronologic series without 21h-8h gap
 
 ```{r}
-#   # To get 1 dataset per posture
-# 
-# # Count amount of each posture
-# frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900) #/!\ there are still data btw 21h-8h !
-# 
-# # Remove data between 21h-8h
-# frequency_position_8h_21h_04_to_06_07_2022 <- frequency_position_04_to_06_07_2022[hour(frequency_position_04_to_06_07_2022$start_time) >= 8 & hour(frequency_position_04_to_06_07_2022$start_time) < 21,]
-# 
-# # One dataset per posture
-# frequency_position_8h_21h_04_to_06_07_2022_LYING <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","lying")]
-# 
-# frequency_position_8h_21h_04_to_06_07_2022_SITTING <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","sitting")]
-# 
-# frequency_position_8h_21h_04_to_06_07_2022_STANDING <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","standing")]
-# 
-# frequency_position_8h_21h_04_to_06_07_2022_NOT_VISIBLE <- frequency_position_8h_21h_04_to_06_07_2022[,c("start_time","not_visible")]
-# 
-# # Add compressed time variable
-# frequency_position_8h_21h_04_to_06_07_2022_LYING <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_LYING)
-# 
-# frequency_position_8h_21h_04_to_06_07_2022_SITTING <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_SITTING)
-# 
-# frequency_position_8h_21h_04_to_06_07_2022_STANDING <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_STANDING)
-# 
-# frequency_position_8h_21h_04_to_06_07_2022_NOT_VISIBLE <- add_compressed_time_variable(frequency_position_8h_21h_04_to_06_07_2022_NOT_VISIBLE)
-
-  # To get all the postures in a single dataset
-
 # Remove data between 21h-8h
-frequency_position_8h_21h_04_to_06_07_2022 <- frequency_position_04_to_06_07_2022[hour(frequency_position_04_to_06_07_2022$start_time) >= 8 & hour(frequency_position_04_to_06_07_2022$start_time) < 21,]
 
-# Pivot the data
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- frequency_position_8h_21h_04_to_06_07_2022 %>% 
-  select (-end_time) %>%                #drop the end_time column
-  pivot_longer(
-    cols = !start_time, 
-    names_to = "Posture", 
-    values_to = "Count"
-  )
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
 
-# Add the compressed time : don't use the add_compressed_time_variable on pivot data ! Because 4 lines for each time period and not only 1 !
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT$compressed_time <- rep(0:((nrow(frequency_position_8h_21h_04_to_06_07_2022_PIVOT)-1) %/% 4), each = 4)
+frequency_position_8h_21h_04_to_06_07_2022 <- filter_8h_21h(frequency_position_04_to_06_07_2022, start_time)
 
+# Clean up useless datasets
+rm(frequency_position_04_to_06_07_2022, frequency_position_04_to_06_07_2022_PIVOT)
+```
+
+```{r}
+# Pivot the data : 4 lines/time unit
+
+pivot_data <- function(data,
+                       variables_to_drop,       #useless variables
+                       variables_to_merge,      #variables we want to merge into 1 var
+                       str_name_merged_labels,  #column of the former colnames : rename
+                       str_name_merged_values,  #column of the former values : rename
+                       add_compressed_time_variable){ #"yes" or "no"
+  
+  if(add_compressed_time_variable == "yes") {
+    
+   data <- add_compressed_time_variable(data)   #add a compressed time : 1111 2222 3333 ...
+  }
+  
+  data <- data %>% 
+    select (-{{variables_to_drop}}) %>%   #eg : column end_time
+    pivot_longer(
+      cols = {{variables_to_merge}},      #eg : all the columns except start_time
+      names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
+      values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
+    )
+} 
+
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- pivot_data(data = frequency_position_8h_21h_04_to_06_07_2022,
+                   variables_to_drop = end_time,
+                   variables_to_merge = c(lying, standing, sitting, not_visible),
+                   str_name_merged_labels = "Posture",
+                   str_name_merged_values = "Count",
+                   add_compressed_time_variable = "yes")
+```
+
+```{r}
 # Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT$proportion <- frequency_position_8h_21h_04_to_06_07_2022_PIVOT$Count/(15*60)
+
+add_proportion <- function(data,
+                           count_variable,    #variable of the count for each time period
+                           period_duration) { #in seconds
+  data <- data %>% 
+    mutate(proportion = {{count_variable}}/{{period_duration}}) #proportion = count/total time
+}
+
+# Test
+frequency_position_8h_21h_04_to_06_07_2022_PIVOT<- add_proportion(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+                      count_variable = Count,
+                      period_duration = 900)  #15 mintues by time period = 900 seconds
 
 ```
 
@@ -472,9 +543,12 @@ Plots :
 # Counts
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
        aes(x = compressed_time, y = Count)) +
-  geom_line(aes(color= Posture)) +
+  geom_line(aes(color=
+                  factor(Posture,
+                         #re-order the labels
+                         levels = c("lying", "sitting", "standing", "not_visible")))) +
   scale_color_manual(name = "Posture",
-                     labels = c("Lying", "Sitting", "Standing", "Not visible"),
+                     labels = c("lying", "sitting", "standing", "not_visible"),
                      values = c("lying" = "lightgreen", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
@@ -483,7 +557,9 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
 # Frequencies
 ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
        aes(x = compressed_time, y = proportion)) +
-  geom_line(aes(color= Posture)) +
+  geom_line(aes(color= factor(Posture,
+                         #re-order the labels
+                         levels = c("lying", "sitting", "standing", "not_visible")))) +
   scale_color_manual(name = "Posture",
                      labels = c("Lying", "Sitting", "Standing", "Not visible"),
                      values = c("lying" = "lightgreen", #change legend colors
@@ -492,18 +568,18 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
                                "not_visible" = "lightgrey"))
 ```
 
-## 1.2 Score de mouvement : quantification de chaque position et addition
+## 1.2 Movement score : quantify each posture & sum it
 
-Pour le moment on a 0-allongé 1-debout 2-couché. On veut plutôt 0-allongé
-1-assis 2-debout pour quantifier l'activité en fonction de la posture détectée.
-Mais finalement il nous faudrait plus un indicateur qui va entre 0 et 1 (peut
-être transformé en %) -\> plutôt faire 0,0.5 et 1 :
+What we do have : 0 = lying, 1 = standing, 2 = sitting.
+
+What we want : 0 = lying, 0.5 = sitting, 1 = standing (so that the max score =
+1).
 
 ### 1.2.1 Function
 
 ```{r}
 #Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
-recoding_posture <- function(data){
+posture_123 <- function(data){
   data <- data %>% 
   mutate(increasing_code = case_when(name=="lying" ~ 0,
                                    name=="sitting" ~ 0.5,
@@ -513,10 +589,11 @@ recoding_posture <- function(data){
 }
 
 #Test data 04/07/2022
-data_8h_21h_04_to_06_07_2022_increasing_code <- recoding_posture(data_8h_21h_04_to_06_07_2022)
+data_8h_21h_04_to_06_07_2022_increasing_code <- posture_123(data_8h_21h_04_to_06_07_2022)
 ```
 
 ```{r}
+# Amount activity function
 amount_activity <- function(data, interval_seconds) {
   data <- data %>% arrange(Date_Time)
   
@@ -545,7 +622,7 @@ amount_activity <- function(data, interval_seconds) {
 }
 
 
-# Test toutes les 600 secondes (10 minutes)
+# Test every 900 seconds (15 minutes)
 amount_activity_8h_21h_04_to_06_07_2022 <- amount_activity(data = data_8h_21h_04_to_06_07_2022_increasing_code,
                                               interval_seconds = 900)
 
@@ -563,24 +640,15 @@ ggplot(amount_activity_8h_21h_04_to_06_07_2022_compressed_time,
   geom_line() 
 ```
 
-## 1.3 Nombre de changements de position par unité de temps
+## 1.3 Amount of posture changes by time unit
 
 ### 1.3.1 Function
 
+posture_no_na is a temporary variable : every not_visible & NA posture will be
+replaced by the previous one. Useful only to count the amount of posture
+changes.
+
 ```{r}
-# Problème au niveau des not_visible comptés comme une position alors qu'on veut que ça soit NA
-
-# Temporary variable : not_visible & NAs replaced by the latest posture (so wrong data, but useful to count the posture changes)
-test <- test %>% 
-  mutate(posture_no_na = case_when(
-      #replace not_visible & NA by the latest
-    name == "not_visible" ~ lag(name, default = first(name)),
-    is.na(name) ~ lag(name, default = first(name)),
-      #leave the others
-    TRUE ~ name))
-
-any(is.na(test))==FALSE
-
 # Detect time changes
 amount_posture_changes <- function(
     data,
@@ -646,12 +714,12 @@ ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
 
 # -----
 
-# Éventuellement plus tard : mouvement dans la cage du centre du rectangle sur les axes x et y
+# Maybe later : movement of the center of the box
 
-## 1 Fréquence de mouvement du CG par unité de temps
+## 1 Frequency of movement of the center by time unit
 
 ```{r}
-# Marche pas encore
+# Doesn't work yet
 
 # Number of movements made by time interval 
 movements_amount <- function(data, interval_seconds, movement_threshold = 0.01) {   data <- data %>% arrange(Date_Time) #sort by date      
@@ -723,6 +791,6 @@ print(result)
 calculate_distances(data=data,interval=600) 
 ```
 
-## 2 Intensité des mouvements
+## 2 Movements' intensity
 
-## 3 Vitesse des mouvements
+## 3 Movements' speed

@@ -14,28 +14,29 @@ editor_options:
     wrap: 80
 ---
 
-# 1. Chargement des packages & des données {.tabset}
+# 1. Load packages & data {.tabset}
 
-## 1.1 Packages et données
+## 1.1 Packages & data
 
-Le package utile : **jsonlite**
-
+I used the **jsonlite** package.
 ```{r packages, message=FALSE, warning=FALSE}
-#install.packages("jsonlite")
-#install.packages("curl")
 library(jsonlite)
 library(purrr)
 library(curl)
 library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
 ```
 
+Run the whole chunk at the same time (WD & fromJSON).
 ```{r data_sample, message=FALSE}
-#Run the whole chunk at the same time
 
-#Set WD
-setwd("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json")        
+#6 test data
 
-#Load data
+setwd("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json") #Set WD
+
 data_json_1 <- fromJSON("0308Efox4284-2023-02-02-16h08m11s045.png_pred.json") 
 data_json_2 <- fromJSON("0308Mfox4284-2023-02-02-15h46m15s695.png_pred.json")
 data_json_3 <- fromJSON("0308Mfox4284-2023-02-02-15h46m43s354.png_pred.json")
@@ -43,27 +44,10 @@ data_json_4 <- fromJSON("0308Mfox4284-2023-02-02-15h48m01s143.png_pred.json")
 data_json_5 <- fromJSON("0308Mfox4284-2023-02-02-15h50m05s800.png_pred.json")
 data_json_6 <- fromJSON("0308Mfox4284-2023-02-02-15h50m36s039.png_pred.json")
 
-setwd("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1") #Json files directly from YOLO
+#10 files with 0, 1, 2, 3 and 4 predictions (2 files each). Same format than YOLO.
 
-  # 9 classic files
-data_json_real_1 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_42_pred.json") 
-data_json_real_2 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_43_pred.json")
-data_json_real_3 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_44_pred.json")
-data_json_real_4 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_45_pred.json")
-data_json_real_5 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_46_pred.json")
-data_json_real_6 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_47_pred.json")
-data_json_real_7 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_48_pred.json")
-data_json_real_8 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_49_pred.json")
-data_json_real_9 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_41_pred.json")
-
-  # 4 files with 2 predictions
-data_json_real_10 <- fromJSON("c_f_FOX4383_04_07_2022_10_57_41_pred.json") 
-data_json_real_11 <- fromJSON("c_f_FOX4383_04_07_2022_10_59_04_pred.json")
-data_json_real_12 <- fromJSON("c_f_FOX4383_04_07_2022_11_04_48_pred.json")
-data_json_real_13 <- fromJSON("c_f_FOX4383_04_07_2022_11_05_53_pred.json")
-
-  # 10 files with 0, 1, 2, 3 and 4 predictions (2 files each)
 setwd("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_comme_YOLO")
+
 data_json_real_1 <- fromJSON("c_f_FOX4383_05_07_2022_08_14_35_pred.json")
 data_json_real_2 <- fromJSON("c_f_FOX4383_05_07_2022_10_12_05_pred.json")
 data_json_real_3 <- fromJSON("c_f_FOX4383_05_07_2022_10_44_28_pred.json")
@@ -77,9 +61,7 @@ data_json_real_10 <- fromJSON("c_f_FOX4383_05_07_2022_17_31_40_pred.json")
 
 ```
 
-## 1.2 Fonction chargement des données
-
-On fait le load dans une fonction pour pouvoir l'automatiser :
+## 1.2 Function to load data
 
 ```{r load_json_function}
 #Function to load the data
@@ -100,18 +82,17 @@ load_json <- function(WD, file_name){
   return(loaded_file)                      #return file
 }
 
-
 #Test function
       #right file
 datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
                        file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json")
 datatest1[[1]] == data_json_real_1[[1]]  #Compare dataframes, [[1]] because there are 2 $objects in the json idk why
 
-      #wrong name_file type
+#       #wrong name_file type
 # datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
 #                        file_name = 3)
 
-      #wrong name_file extension
+#       #wrong name_file extension
 # datatest1 <- load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
 #                        file_name = "0308Efox4284-2023-02-02-16h08m11s045.png_pred.csv")
 
@@ -120,25 +101,7 @@ rm(datatest1)
 
 
 ```
-
-# 2. Fonction pour garder qu'une position à chaque fois {.tabset}
-
-Sélection possible du seuil de confiance. Fox_id_limits est un vecteur de taille
-2 qui prend la position de la première et de la dernière partie de l'identifiant
-du renard. Pareil pour date_time_limits.
-
-[Exemple]{.underline} : pour un filename de la forme
-"blabla_fox4352_01_07_2023_14_36_02_blabla", on aura fox_id_limits = c(11,14) et
-date_time_limits = c(16,34).
-
-Attention !! Cette fonction a été faite pour lire les noms de fichiers au format
-de ceux sortis par l'appli de Marcin ! Elle ne fonctionnera pas avec un autre
-format de nom de fichier, il faudra l'adapter !
-
-Normalement les fichiers Json qu'on charge ont un élément "objects" qui a une
-taille de 1\*4, 2\*4 ou 3\*4 selon combien il y a de prédictions pour cette
-frame. Mais si aucune prédiction n'est faite, objects est vide :
-
+If no prediction available in the JSON file :
 ```{r}
 #Chargement d'un Json vide pour voir 
 empty_json <- load_json("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_run_YOLO_10k_images", "c_f_FOX4383_06_07_2022_11_47_53_pred.json")
@@ -147,24 +110,34 @@ length(empty_json$objects[[1]])
 length(data_json_1$objects[[1]])
 ```
 
+If 2 predictions are available :
 ```{r}
 #Chargement d'un json à 2 prédictions
 nrow(data_json_real_10$objects[[1]])
 nrow(data_json_real_1$objects[[1]]) #comparaison avec json à 1 prédiction
 ```
 
-Du coup on adapte la fonction one_position_file pour que si on a un json vide,
-on mette des NA partout sauf dans le filename :
+# 2. Function to keep only a single posture per second
+
+Possible to select confidence threshold. Fox_id_limits is a vector of size 2 taking indexes of  the 1st & the last part of the fox_id. Same for date_time_limits.
+
+[Example]{.underline} : for a filename like :
+"blabla_fox4352_01_07_2023_14_36_02_blabla", we will have fox_id_limits = c(11,14) and date_time_limits = c(16,34).
 
 ```{r}
-one_position_file <- function(json_file,
-                              threshold = 0.34,        #default = arbitrary
-                              fox_id_limits = c(5,8), #default = like in the app
-                              date_time_limits = c(10,28), #same remark
-                              date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same remark
+# Function to keep only 1 posture per second
+
+#Keep only one posture (= one line) per second
+
+one_position_file <- function(
+    json_file,
+    threshold = 0.34,            #default = better prediction than random classification (=1/3 because there are 3 postures)
+    fox_id_limits = c(8,11),     #default = YOLO output
+    date_time_limits = c(13,31), #same
+    date_time_format = "%d_%m_%Y_%H_%M_%S" ) { #same
   
-  #number of predictions
-  nb_pred <- length(json_file$objects[[1]])
+
+  nb_pred <- length(json_file$objects[[1]]) #keep the number of predictions
   
 #If Json file is not empty (there is at least 1 prediction)
   if(nb_pred >0) {
@@ -221,30 +194,29 @@ one_position_file <- function(json_file,
       mutate(filename = json_file$filename) #get filename
     
     #get the date and time
-    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #bonne partie de la string
-    #/!\ à changer si la forme du fichier change. Là c'est pour des fichiers type f_ID4384_03_02_2023_19_46_12.jpg uniquement
+    str_datetime <- substr(data_new$filename, date_time_limits[1], date_time_limits[2]) #get the datetime part from the string
     
-    date_wrong_format <- strptime(str_datetime, format = date_time_format) #transformé en date et heure
+    date_wrong_format <- strptime(str_datetime, format = date_time_format) #change the date into a datetime format (but not the right one : default)
     
-    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & heure au bon format
+    great_date <- format(date_wrong_format, "%d/%m/%Y %H:%M:%S") #date & hour in the right format
     
-    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #mettre en format datetime
+    great_date <- as.POSIXct(great_date, format = "%d/%m/%Y %H:%M:%S") #convert it into POSIXct (a great format for datetime data)
     
     data_new <- data_new %>% 
-      mutate(Date_Time = great_date)
+      mutate(Date_Time = great_date) #add variable
     
    #get the fox id
     fox_id <- substr(data_new$filename, fox_id_limits[1], fox_id_limits[2])
-    #/!\ ça aussi ça peut changer si format filenamechange
     
     data_new <- data_new %>% 
-      mutate(fox_id = fox_id)
+      mutate(fox_id = fox_id)        #add variable
 
     
    #output  
-    return(data_new = data_new)  #attention : il est renvoyé mais pas stocké ! 
+    return(data_new = data_new)  
 
 }
+
 
 # Tests
 
@@ -279,17 +251,19 @@ one_position_file(load_json(WD = "F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/
                   date_time_format = "%Y-%m-%d-%Hh%Mm%S")
 ```
 
-# 3. Fonction pour concaténer les lignes des positions dans un seul dataframe {.tabset}
-
-## 3.2 Cas général : automatisation via une fonction
+# 3. Put every second in the same dataframe
 
 ```{r merge_postures_function}
-# Fonction pour merge automatiquement toutes les lignes des dataframes en un seul dataframe
+# Automatically merge all the files in a single dataframe
+
 merge_postures <- function(list_df_postures) {
   return (dplyr::bind_rows(list_df_postures))
 }
 
-# Création de lignes isolées pour l'exemple
+
+  # Test
+
+# Create single lines
 line1 <- one_position_file(
   load_json("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_test_comme_app_marcin",
             "0308Efox4284-2023-02-02-16h08m11s045.png_pred.json"))
@@ -303,34 +277,31 @@ line3 <- one_position_file(
             "0407Afox4284-2023-02-02-09h58m22s726.png_pred.json"))
 
 
-# Test 
+# Merge them
 list_test <- list(line1, line2, line3)
 df_final <- merge_postures(list_test)       #working
+
+# Test with empty JSONs
+
+Test
+line1 <- one_position_file(data_json_1,
+                  fox_id_limits = c(9,12),
+                  date_time_limits = c(14,32),
+                  date_time_format = "%Y-%m-%d-%Hh%Mm%S") #still working for a non-empty file
+line2 <- one_position_file(empty_json,
+                  fox_id_limits = c(8,11),
+                  date_time_limits = c(13,31),
+                  date_time_format = "%d_%m_%Y_%H_%M_%S")
+
+merge_postures(list(line1, line2))
 
 # Nettoyage
 rm(list_test, line1, line2, line3, line4, line5, line6, data_json_1, data_json_2, data_json_3, data_json_4, data_json_5, data_json_6)
 ```
 
-Test with empty Json : working !
+# 4. From JSON files to dataframe
 
-```{r}
-# Test
-# line1 <- one_position_file(data_json_1,
-#                   fox_id_limits = c(9,12),
-#                   date_time_limits = c(14,32),
-#                   date_time_format = "%Y-%m-%d-%Hh%Mm%S") #still working for a non-empty file
-# line2 <- one_position_file(empty_json,
-#                   fox_id_limits = c(8,11),
-#                   date_time_limits = c(13,31),
-#                   date_time_format = "%d_%m_%Y_%H_%M_%S")
-# 
-# merge_postures(list(line1, line2))
-```
-
-# 4. Fonction du fichier Json au dataframe {.tabset}
-
-On automatise tout ça dans une fonction :
-
+Automatize all of the above functions into a single one :
 ```{r from_json_to_df_function}
 
 from_json_to_df <- function(WD,
@@ -339,47 +310,48 @@ from_json_to_df <- function(WD,
                             date_time_limits = c(13,31),                #same
                             date_time_format = "%d_%m_%Y_%H_%M_%S")  {  #same
   
-  # Récuperer tous les fichiers Json du dossier
-  setwd(WD)        #Set WD
+  # Get all the JSON files from the folder
+  setwd(WD)                              #Set WD
   files <- list.files(pattern = ".json") #get Json files
   print(paste("Chargement terminé. ",length(files), " fichiers ont été chargés."))
   
-  # Créer la liste vide de dataframes et la variable à incrémenter
+  # Create empty list of dataframes & variable to increment
   list_df1line = list()  #empty list
-  i = 0  #increment
+  i = 0                  #increment
   
-  # Boucle pour chaque fichier
+  # Loop for each file
   for (file in files) {
     
-    # Appliquer la fonction load_json à tous les éléments du dossier
+    # Apply function load_json to every file of the folder
     data_loaded <- load_json(WD = WD, file = file)
     
-    # Appliquer one_position_file à tous les nouveaux dataframes
+    # Apply function one_position_file to every new dataframe
     data_1line <- one_position_file(json_file = data_loaded,
                                     threshold = threshold,
                                     fox_id_limits = fox_id_limits,
                                     date_time_limits = date_time_limits,
                                     date_time_format = date_time_format)
   
-    # Tous les mettre dans une liste 
+    # Put them all in a list
     list_df1line[[i+1]] <- data_1line
     
     i <- i+1 #next file
   }
   
-  # Appliquer le merge sur la liste et récup le dataframe mergé
+  # Merge this list's elements & get the dataframe
   df_merged <- merge_postures(list_df1line) 
   
 
-  # Afficher la fin du run
+  # Print end of the run
   print(paste("Extraction terminée. ", i, "fichiers ont été fusionnés."))
   
-  # Spotter les fichiers de date NA (vérif qu'il s'agit des fichiers predictions.jpg créés à chaque lancement de YOLO)
+  # Spot files with NA date (check if they are prediction files, 1 of them is created at every YOLO run)
   print(paste("Il y avait", nrow(df_merged[is.na(df_merged$Date_Time),]), "fichiers sans date. Il s'agit des fichiers : ", df_merged[is.na(df_merged$Date_Time),]$filename))
   
-  # Supprimer ces fichiers
+  # Delete those files
   df_merged <- df_merged[!is.na(df_merged$Date_Time),]
   
+  # Return data
   return(df_merged)
   
 }
@@ -387,11 +359,10 @@ from_json_to_df <- function(WD,
 
 ```{r test_function_json_to_df}
 
-#test function for app files format : f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg
+#test function for this file format (output of Marcin's app) : f_IDxxxx_dd_mm_yyyy_hh_mm_ss.jpg
 df_test <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/Json_test_comme_app_marcin")
 
 df_test  #Working !
-df_final #Pour comparer avec ce qui avait été fait manuellement : même chose
 
 #test function for other files format : 0308Efox4284-2023-02-02-16h08m11s045.png
 df_test2 <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/json",
@@ -399,38 +370,14 @@ df_test2 <- from_json_to_df("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/scrip
                             date_time_limits = c(14,32),
                             date_time_format = "%d_%m_%Y_%H_%M_%S")
 
-```
-
-```{r remove_useless_objects}
-rm(data_json_real_1,
-   data_json_real_2,
-   data_json_real_3,
-   data_json_real_4,
-   data_json_real_5,
-   data_json_real_6,
-   data_json_real_7,
-   data_json_real_8,
-   data_json_real_9,
-   data_json_real_10,
-   data_json_real_11,
-   data_json_real_12,
-   data_json_real_13,
-   df_test,
-   df_test2,
-   df_final,
-   empty_json)
+#Remove useless objects
+rm(data_json_real_1, data_json_real_2, data_json_real_3, data_json_real_4,
+   data_json_real_5, data_json_real_6, data_json_real_7, data_json_real_8,
+   data_json_real_9, data_json_real_10,data_json_real_11, data_json_real_12,
+   data_json_real_13, df_test, df_test2, df_final, empty_json)
 ```
 
 ```{r test_on_real_data}
-#Test on real data from YOLO (29000 files)
-  # data_04_07_22 <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1",
-  #                 threshold = 0.34,
-  #                 fox_id_limits = c(8,11),
-  #                 date_time_limits = c(13,31),
-  #                 date_time_format = "%d_%m_%Y_%H_%M_%S")
-  # 
-  # data_04_07_22
-
 #Test on small sample of real data (86 files)
 data_test <- from_json_to_df("C:/Users/m.alhamadah/Desktop/test_json",
                              threshold = 0.34,
@@ -443,117 +390,95 @@ test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Try",
                         fox_id_limits = c(8,11),
                         date_time_limits = c(13,31),
                         date_time_format = "%d_%m_%Y_%H_%M_%S")
-```
 
-/!\\ Pas de panique : on n'a pas toutes les lignes dans le df_final parce que
-c'était long alors j'en ai mis que 3 sur les 10. Et on n'a pas la même date que
-dans le titre du fichier pour le df_test parce que c'était le même jour tout le
-temps alors pour varier j'ai changé le filename DANS LE JSON. Si on compare avec
-le Json tout est bon.
-
-```{r}
-#Afficher les formats de filenames qui vont pas :
-wrong_id <- df_test2$filename[which(is.na(df_test2$Date_Time) | is.na(df_test2$fox_id))]
-wrong_id
-```
-
-Des fois on a des Json avec les objets vides parce qu'on n'a pas de prédiction
-de la part de YOLO. Dans ces cas. On a quand même le filename donc on peut récup
-la date et l'id renard. Donc on veut juste rajouter une variable de position qui
-vaut "hidden" quand le renard n'est pas visible, et où on a quand même des
-données pour Datetime et id renard. On aura juste des NA pour les 4 variables de
-position x et y.
-
-```{r from_json_to_df_empty_json}
+# Test with empty JSONs
 df_test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_run_YOLO_10k_images",
                           threshold = 0.33,
                           fox_id_limits = c(8,11),   #default = for the app outputs
                           date_time_limits = c(13,31),                #same
                           date_time_format = "%d_%m_%Y_%H_%M_%S")
+
 ```
 
-### 4.1 Boxplots de la différence de conf entre 2 prédictions (pour la même frame)
+/!\\ Not the same date as in the filename because I changed a bit the files so that the days can vary (I used JSON files of only 1 day so I wanted to make it vary a bit).
 
+### → Boxplots of confidence difference between 2 prédictions (for the same frame)
+
+If a frame gets 2 or 3 predictions from YOLO, does it make the highest confidence lower ?
 ```{r}
 #Highest confidence rate when there is :
+
+#1 prediction
+mean(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence) #0.94
+boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 1,]$confidence)
+
+#2 predictions
+mean(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence) #0.77
+boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
 
 #3 predictions
 mean(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence) #0.54
 boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence)
 
-#2 predictions
-mean(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence) #0.77
-boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 2,]$confidence)
 ```
+=> Yes
 
-Adding descriptive statistics of confidence when 2 predictions :
-
+Descriptive statistics of confidence gap when 2 predictions :
 ```{r}
 library(jsonlite)
 
 extract_confidence_differences <- function(directory) {
+  
+  # For all the Json files in the directory 
   files <- list.files(path = directory, pattern = "\\.json$", full.names = TRUE)
-  confidence_diff_vector <- c()
+  confidence_diff_vector <- c() #empty vector
   
   for (file in files) {
     json_data <- fromJSON(file)
     
-    if (length(json_data$objects[[1]])>0) {   #if Json not empty
+    # If Json not empty
+    if (length(json_data$objects[[1]])>0) { 
       objects <- json_data$objects[[1]]
       n_objects <- nrow(objects)
       
-      # Si 2 prédictions exactement
+      # If 2 predictions exactly
       if (n_objects == 2) {
         
+        # Compute confidence difference
         diff <- abs(json_data$objects[[1]]$confidence[2]-
                       json_data$objects[[1]]$confidence[1])
         
+        # Put it in a vector
         confidence_diff_vector <- c(confidence_diff_vector, diff)
       }
     }
   }
-  
+  # Return it
   return(confidence_diff_vector)
 }
 
 confidences_test <- extract_confidence_differences("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/Cropped_images_complete/renard4313 Video 1 04_07_2022 10_47_16 1")
 
+# Boxplot
 boxplot(confidences_test)
 ```
 
-# 5. Agréger plusieurs jours et filtrer entre 8h et 21h
+# 5. Aggregate several days & filter between 8h and 21h
 
-On peut agréger facilement les dataframes :
-
+/!\\ Check if the id_fox is always the same, if not : set it manually !
 ```{r}
-data_04_to_06_07_2022 <- rbind(data_04_07_2022, data_05_07_2022, data_06_07_2022)
+#data$fox_id <- "4313"
 ```
 
-On peut ensuite filtrer le dataframe merge pour qu'il ne contienne que des
-données entre 8h et 21h, et qu'il créé les secondes manquantes le cas échéant :
 
+Aggregate dataframes :
 ```{r}
-# Keep only frames between 8am and 9pm
-data_8h_21h_04_to_06_07_2022_missing_seconds <- data_04_to_06_07_2022 %>%
-  filter(format(Date_Time, "%H:%M:%S") >= "08:00:00" & format(Date_Time, "%H:%M:%S") <= "21:00:00")
+#dplyr::bind_rows() is more flexible than base::rbind(). We need flexibility because there are dataframes within the dataframe.
 
-# Create every second between 8am and 9pm for every fox id and day of recording
-complete_df <- data_04_to_06_07_2022_8h_21h %>%
-  mutate(date = as.Date(Date_Time)) %>%
-  group_by(fox_id, date) %>%
-  reframe(Date_Time = seq(from = as.POSIXct(paste(date[1], "08:00:00")),
-                          to   = as.POSIXct(paste(date[1], "21:00:00")),
-                          by   = "1 sec"))
-
-# Merge it to the original data
-data_8h_21h_04_to_06_07_2022 <- complete_df %>%
-  left_join(data_8h_21h_04_to_06_07_2022_missing_seconds, by = c("fox_id", "Date_Time"))
-
-rm(data_8h_21h_04_to_06_07_2022_missing_seconds, complete_df)
+data_04_to_06_07_2022 <- bind_rows(data_04_07_2022, data_05_07_2022, data_06_07_2022)
 ```
 
-Fonction :
-
+Adapt dataframe so that there is only (and mandatory) data between 8h and 21h. No matter if we have to create NAs/ loose data.
 ```{r function_rescale_8h_21h}
 rescale_8h_21h <- function(data){
 
@@ -577,28 +502,18 @@ data_8h_21h <- complete_data %>%
 return (data_8h_21h)
   
 }
-
 ```
 
-# 6. Ajouter une variable qui remplace le temps pour sauter les vides de 21h à 8h
+# 6. Add variable to replace time so that we can skip the unavailable part between 21h and 8h.
 
-On a un jeu de données qui passe automatiquement de 21h à 8h le lendemain. Donc
-le "temps compressé" qu'on veut, qui supprime les temps entre 21h et 8h, est
-exactement le numéro de chaque ligne. Il suffit d'enlever 1 si on veut que ce
-temps commence à 0.
-
+We just want the line index. Make sure that the dataset is sorted by date.
 ```{r function_add_compressed_time_variable}
+# Function
 add_compressed_time_variable <- function(data) {
   data$compressed_time <- seq_len(nrow(data))-1 #-1 to make it start with 0
   return(data)
 }
 
-
+# Test
 #data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(data_8h_21h_04_to_06_07_2022)
-```
-
-# 7. Restrictions sur la confiance
-
-```{r}
-
 ```
