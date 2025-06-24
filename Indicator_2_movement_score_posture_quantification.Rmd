@@ -52,8 +52,8 @@ posture_123 <- function(data){
 ```
 
 ```{r}
-#Test data 04 tot 06/07/2022
-data_8h_21h_04_to_06_07_2022_increasing_code <- posture_123(data_8h_21h_04_to_06_07_2022)
+# #Test data 04 tot 06/07/2022
+# data_8h_21h_04_to_06_07_2022_increasing_code <- posture_123(data_8h_21h_04_to_06_07_2022)
 ```
 
 ```{r}
@@ -90,9 +90,9 @@ amount_activity <- function(data, interval_seconds) {
 ```
 
 ```{r}
-# Test every 900 seconds (15 minutes)
-amount_activity_04_to_06_07_2022 <- amount_activity(data = data_8h_21h_04_to_06_07_2022_increasing_code,
-                                              interval_seconds = 900)
+# # Test every 900 seconds (15 minutes)
+# amount_activity_04_to_06_07_2022 <- amount_activity(data = data_8h_21h_04_to_06_07_2022_increasing_code,
+# interval_seconds = 900)
 ```
 
 ```{r}
@@ -105,12 +105,12 @@ filter_8h_21h <- function(data, time_column){
 ```
 
 ```{r}
-# remove the 21h-8h gap
-amount_activity_8h_21h_04_to_06_07_2022 <- filter_8h_21h(
-  data = amount_activity_04_to_06_07_2022,
-  time_column = interval_start)
-
-rm(amount_activity_04_to_06_07_2022, data_8h_21h_04_to_06_07_2022_increasing_code)  #useless now, data with the 21h-8h gap
+# # remove the 21h-8h gap
+# amount_activity_8h_21h_04_to_06_07_2022 <- filter_8h_21h(
+#   data = amount_activity_04_to_06_07_2022,
+#   time_column = interval_start)
+# 
+# rm(amount_activity_04_to_06_07_2022, data_8h_21h_04_to_06_07_2022_increasing_code)  #useless now, data with the 21h-8h gap
 ```
 
 ## 2. Chronologic series
@@ -124,10 +124,10 @@ add_compressed_time_variable <- function(data) {
 ```
 
 ```{r}
-# Compressed time variable to skip parts between 21h and 8h
-amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h_04_to_06_07_2022)
-
-rm(amount_activity_8h_21h_04_to_06_07_2022)  #useless now, data without compressed time variable
+# # Compressed time variable to skip parts between 21h and 8h
+# amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h_04_to_06_07_2022)
+# 
+# rm(amount_activity_8h_21h_04_to_06_07_2022)  #useless now, data without compressed time variable
 ```
 
 ```{r}
@@ -214,41 +214,41 @@ get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
 ```
 
 ```{r}
-areas <- get_areas_color(data = amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time,
-                          times_vector_xmin =
-                            c("2022-07-04 08:00:00", #No data
-                              "2022-07-04 18:57:00",
-                              "2022-07-05 18:57:00",
-                              "2022-07-04 10:47:00", #Inactive
-                              "2022-07-04 13:17:00",
-                              "2022-07-05 08:13:00",
-                              "2022-07-06 08:50:00",
-                              "2022-07-04 17:07:00", #Active
-                              "2022-07-05 09:13:00",
-                              "2022-07-06 09:50:00",
-                              "2022-07-04 11:56:00"),#Out for implant
-                          times_vector_xmax = 
-                            c("2022-07-04 10:47:00", #No data
-                              "2022-07-05 08:13:00",
-                              "2022-07-06 08:50:00",
-                              "2022-07-04 11:56:00", #Inactive
-                              "2022-07-04 15:08:00",
-                              "2022-07-05 09:13:00",
-                              "2022-07-06 09:50:00",
-                              "2022-07-04 18:57:00", #Active
-                              "2022-07-05 10:22:00",
-                              "2022-07-06 12:31:00",
-                              "2022-07-04 13:17:00"),#Out for implant
-                          fill =
-                            c("No data", "No data", "No data",
-                              "Inactive", "Inactive", "Inactive", "Inactive",
-                              "Active", "Active", "Active",
-                              "Out for implant"))
+# areas <- get_areas_color(data = amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time,
+#                           times_vector_xmin =
+#                             c("2022-07-04 08:00:00", #No data
+#                               "2022-07-04 18:57:00",
+#                               "2022-07-05 18:57:00",
+#                               "2022-07-04 10:47:00", #Inactive
+#                               "2022-07-04 13:17:00",
+#                               "2022-07-05 08:13:00",
+#                               "2022-07-06 08:50:00",
+#                               "2022-07-04 17:07:00", #Active
+#                               "2022-07-05 09:13:00",
+#                               "2022-07-06 09:50:00",
+#                               "2022-07-04 11:56:00"),#Out for implant
+#                           times_vector_xmax = 
+#                             c("2022-07-04 10:47:00", #No data
+#                               "2022-07-05 08:13:00",
+#                               "2022-07-06 08:50:00",
+#                               "2022-07-04 11:56:00", #Inactive
+#                               "2022-07-04 15:08:00",
+#                               "2022-07-05 09:13:00",
+#                               "2022-07-06 09:50:00",
+#                               "2022-07-04 18:57:00", #Active
+#                               "2022-07-05 10:22:00",
+#                               "2022-07-06 12:31:00",
+#                               "2022-07-04 13:17:00"),#Out for implant
+#                           fill =
+#                             c("No data", "No data", "No data",
+#                               "Inactive", "Inactive", "Inactive", "Inactive",
+#                               "Active", "Active", "Active",
+#                               "Out for implant"))
 ```
 
 ```{r}
 
-plot_activity_with_areas <- function(data, nb_min) {
+plot_activity_with_areas <- function(data, nb_min, areas) {
 
   # Créer le plot
   ggplot(data, aes(x = compressed_time, y = activity_proportion)) +
@@ -264,8 +264,75 @@ plot_activity_with_areas <- function(data, nb_min) {
 }
 
 
-plot_activity_with_areas(amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time, nb_min = 15)
+# plot_activity_with_areas(amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time, nb_min = 15)
 ```
 
 On a un gros trou au milieu au niveau de la quantité d'activité : c'est
 cohérent, parce que le renard était sous anesthésie.
+
+```{r}
+from_data_to_plot <- function(data_8h_21h,
+                              interval_seconds,
+                              time_column = interval_start){
+  
+#Test data 04 tot 06/07/2022
+  data_8h_21h_increasing_code <- posture_123(data_8h_21h)
+
+# Test every 900 seconds (15 minutes)
+  amount_activity_data <- amount_activity(data = data_8h_21h_increasing_code,
+                                     interval_seconds = interval_seconds)
+
+# remove the 21h-8h gap
+  amount_activity_8h_21h <- filter_8h_21h(
+    data = amount_activity_data,
+    time_column = interval_start)
+
+
+# Compressed time variable to skip parts between 21h and 8h
+  amount_activity_x_minutes_8h_21h_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h)
+
+  areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
+                            times_vector_xmin =
+                              c("2022-07-04 08:00:00", #No data
+                                "2022-07-04 18:57:00",
+                                "2022-07-05 18:57:00",
+                                "2022-07-04 10:47:00", #Inactive
+                                "2022-07-04 13:17:00",
+                                "2022-07-05 08:13:00",
+                                "2022-07-06 08:50:00",
+                                "2022-07-04 17:07:00", #Active
+                                "2022-07-05 09:13:00",
+                                "2022-07-06 09:50:00",
+                                "2022-07-04 11:56:00"),#Out for implant
+                            times_vector_xmax = 
+                              c("2022-07-04 10:47:00", #No data
+                                "2022-07-05 08:13:00",
+                                "2022-07-06 08:50:00",
+                                "2022-07-04 11:56:00", #Inactive
+                                "2022-07-04 15:08:00",
+                                "2022-07-05 09:13:00",
+                                "2022-07-06 09:50:00",
+                                "2022-07-04 18:57:00", #Active
+                                "2022-07-05 10:22:00",
+                                "2022-07-06 12:31:00",
+                                "2022-07-04 13:17:00"),#Out for implant
+                            fill =
+                              c("No data", "No data", "No data",
+                                "Inactive", "Inactive", "Inactive", "Inactive",
+                                "Active", "Active", "Active",
+                                "Out for implant"))
+  
+  plot <- plot_activity_with_areas(
+    amount_activity_x_minutes_8h_21h_compressed_time,
+    nb_min = interval_seconds/60,
+    areas = areas)
+  
+  return(plot)
+
+  }
+```
+
+```{r}
+from_data_to_plot(data_8h_21h = data_8h_21h_04_to_06_07_2022,
+                  interval_seconds = 3600)
+```
