@@ -149,7 +149,6 @@ get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
 ```
 
 ```{r}
-
 plot_activity_with_areas <- function(data, nb_min, areas) {
 
   # Créer le plot
@@ -167,6 +166,7 @@ plot_activity_with_areas <- function(data, nb_min, areas) {
 
 
 # plot_activity_with_areas(amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time, nb_min = 15)
+
 ```
 
 On a un gros trou au milieu au niveau de la quantité d'activité : c'est

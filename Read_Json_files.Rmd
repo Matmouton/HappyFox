@@ -19,6 +19,7 @@ editor_options:
 ## 1.1 Packages & data
 
 I used the **jsonlite** package.
+
 ```{r packages, message=FALSE, warning=FALSE}
 library(jsonlite)
 library(purrr)
@@ -31,6 +32,7 @@ library(patchwork)
 ```
 
 Run the whole chunk at the same time (WD & fromJSON).
+
 ```{r data_sample, message=FALSE}
 
 #6 test data
@@ -101,7 +103,9 @@ rm(datatest1)
 
 
 ```
+
 If no prediction available in the JSON file :
+
 ```{r}
 #Chargement d'un Json vide pour voir 
 empty_json <- load_json("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_run_YOLO_10k_images", "c_f_FOX4383_06_07_2022_11_47_53_pred.json")
@@ -111,6 +115,7 @@ length(data_json_1$objects[[1]])
 ```
 
 If 2 predictions are available :
+
 ```{r}
 #Chargement d'un json à 2 prédictions
 nrow(data_json_real_10$objects[[1]])
@@ -119,10 +124,13 @@ nrow(data_json_real_1$objects[[1]]) #comparaison avec json à 1 prédiction
 
 # 2. Function to keep only a single posture per second
 
-Possible to select confidence threshold. Fox_id_limits is a vector of size 2 taking indexes of  the 1st & the last part of the fox_id. Same for date_time_limits.
+Possible to select confidence threshold. Fox_id_limits is a vector of size 2
+taking indexes of the 1st & the last part of the fox_id. Same for
+date_time_limits.
 
 [Example]{.underline} : for a filename like :
-"blabla_fox4352_01_07_2023_14_36_02_blabla", we will have fox_id_limits = c(11,14) and date_time_limits = c(16,34).
+"blabla_fox4352_01_07_2023_14_36_02_blabla", we will have fox_id_limits =
+c(11,14) and date_time_limits = c(16,34).
 
 ```{r}
 # Function to keep only 1 posture per second
@@ -302,6 +310,7 @@ rm(list_test, line1, line2, line3, line4, line5, line6, data_json_1, data_json_2
 # 4. From JSON files to dataframe
 
 Automatize all of the above functions into a single one :
+
 ```{r from_json_to_df_function}
 
 from_json_to_df <- function(WD,
@@ -400,11 +409,15 @@ df_test <- from_json_to_df("F:/projet/2024_HAPPY_FOX/donnee/stage_mathilda/1er_r
 
 ```
 
-/!\\ Not the same date as in the filename because I changed a bit the files so that the days can vary (I used JSON files of only 1 day so I wanted to make it vary a bit).
+/!\\ Not the same date as in the filename because I changed a bit the files so
+that the days can vary (I used JSON files of only 1 day so I wanted to make it
+vary a bit).
 
 ### → Boxplots of confidence difference between 2 prédictions (for the same frame)
 
-If a frame gets 2 or 3 predictions from YOLO, does it make the highest confidence lower ?
+If a frame gets 2 or 3 predictions from YOLO, does it make the highest
+confidence lower ?
+
 ```{r}
 #Highest confidence rate when there is :
 
@@ -421,9 +434,11 @@ mean(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence) #0.54
 boxplot(data_04_07_22[data_04_07_22$number_of_predictions == 3,]$confidence)
 
 ```
-=> Yes
+
+=\> Yes
 
 Descriptive statistics of confidence gap when 2 predictions :
+
 ```{r}
 library(jsonlite)
 
@@ -466,19 +481,22 @@ boxplot(confidences_test)
 # 5. Aggregate several days & filter between 8h and 21h
 
 /!\\ Check if the id_fox is always the same, if not : set it manually !
+
 ```{r}
 #data$fox_id <- "4313"
 ```
 
-
 Aggregate dataframes :
+
 ```{r}
 #dplyr::bind_rows() is more flexible than base::rbind(). We need flexibility because there are dataframes within the dataframe.
 
 data_04_to_06_07_2022 <- bind_rows(data_04_07_2022, data_05_07_2022, data_06_07_2022)
 ```
 
-Adapt dataframe so that there is only (and mandatory) data between 8h and 21h. No matter if we have to create NAs/ loose data.
+Adapt dataframe so that there is only (and mandatory) data between 8h and 21h.
+No matter if we have to create NAs/ loose data.
+
 ```{r function_rescale_8h_21h}
 rescale_8h_21h <- function(data){
 
@@ -507,6 +525,7 @@ return (data_8h_21h)
 # 6. Add variable to replace time so that we can skip the unavailable part between 21h and 8h.
 
 We just want the line index. Make sure that the dataset is sorted by date.
+
 ```{r function_add_compressed_time_variable}
 # Function
 add_compressed_time_variable <- function(data) {

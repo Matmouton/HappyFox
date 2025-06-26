@@ -72,7 +72,23 @@ frequency_position_04_to_12_07_2022 <- frequency_position(data = data_8h_21h_04_
 ### 1.1.2 Chart
 
 ```{r}
-# Put data in the long format (instead of wide) : pivot function
+# Pivot the data : 4 lines/time unit
+
+pivot_data <- function(data,
+                       variables_to_drop,       #useless variables
+                       variables_to_merge,      #variables we want to merge into 1 var
+                       str_name_merged_labels,  #column of the former colnames : rename
+                       str_name_merged_values){  #column of the former values : rename
+  
+  data <- data %>% 
+    select (-{{variables_to_drop}}) %>%   #eg : column end_time
+    pivot_longer(
+      cols = {{variables_to_merge}},      #eg : all the columns except start_time
+      names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
+      values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
+    )
+} 
+
 
 frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
@@ -96,12 +112,15 @@ ggplot(data = frequency_position_04_to_12_07_2022_PIVOT,
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
 
+frequency_position_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_12_07_2022,
+                   variables_to_drop = end_time,
+                   variables_to_merge = c(lying, standing, sitting, not_visible),
+                   str_name_merged_labels = "Posture",
+                   str_name_merged_values = "Count")
 ```
 
-### 1.1.3 Chronologic series without 21h-8h gap
-
 ```{r}
-# Remove data between 21h-8h
+  #Remove data between 21h-8h
 
 filter_8h_21h <- function(data, time_column){
   data <- data %>% 
@@ -111,51 +130,57 @@ filter_8h_21h <- function(data, time_column){
 ```
 
 ```{r}
-# Test
+  # Test
+#/!\ idk which line to keep
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_12_07_2022_PIVOT, start_time)
+
+rm(frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
 
 frequency_position_8h_21h_04_to_12_07_2022 <- filter_8h_21h(frequency_position_04_to_12_07_2022, start_time)
-```
-
-```{r}
-# Clean up useless datasets
-
-rm(frequency_position_04_to_12_07_2022, frequency_position_04_to_12_07_2022_PIVOT)
-```
-
-```{r}
-# Pivot the data : 4 lines/time unit
-
-pivot_data <- function(data,
-                       variables_to_drop,       #useless variables
-                       variables_to_merge,      #variables we want to merge into 1 var
-                       str_name_merged_labels,  #column of the former colnames : rename
-                       str_name_merged_values,  #column of the former values : rename
-                       add_compressed_time_variable){ #"yes" or "no"
-  
-  if(add_compressed_time_variable == "yes") {
-    
-   data <- add_compressed_time_variable(data)   #add a compressed time : 1111 2222 3333 ...
-  }
-  
-  data <- data %>% 
-    select (-{{variables_to_drop}}) %>%   #eg : column end_time
-    pivot_longer(
-      cols = {{variables_to_merge}},      #eg : all the columns except start_time
-      names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
-      values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
-    )
-} 
 
 ```
 
 ```{r}
-  # Add a new time variable to replace the real time
+# Add the compressed time variable to to replace the real time in order to skip the 21h-8h gap
+# Needs to repeat each number 4 times because of the 4 possible postures
 
-add_compressed_time_variable <- function(data) {
-  data$compressed_time <- seq_len(nrow(data))-1
+#/!\ idk which line to keep
+add_compressed_time_variable_PIVOT_data <- function(data) {
+  data$compressed_time <- rep(seq_len(nrow(data)/4)-1, each = 4)
   return(data)
 }
+
+rm(frequency_position_04_to_12_07_2022, frequency_position_04_to_12_07_2022_PIVOT)
+
 ```
+
+```{r}
+# Test
+
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+
+#remove useless data : no compressed time
+rm(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+```
+
+```{r}
+# Chart for count
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+       aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+```
+
+
+### 1.1.3 Chronologic series without 21h-8h gap
 
 ```{r}
 # Test
@@ -167,6 +192,7 @@ frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_
                    str_name_merged_values = "Count",
                    add_compressed_time_variable = "yes")
 ```
+
 
 ```{r}
 # Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
@@ -183,7 +209,11 @@ add_proportion <- function(data,
 ```{r}
 # Test
 
+#/!\ idk which line to keep
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+
 frequency_position_8h_21h_04_to_12_07_2022_PIVOT<- add_proportion(frequency_position_8h_21h_04_to_12_07_2022_PIVOT,
+
                       count_variable = Count,
                       period_duration = 900)  #15 mintues by time period = 900 seconds
 
@@ -192,30 +222,86 @@ frequency_position_8h_21h_04_to_12_07_2022_PIVOT<- add_proportion(frequency_posi
 Plots :
 
 ```{r}
+#/!\ idk which line to keep
+  #Areas we want to color
+
+#blue : no data available (corrupted videos)
+#purple : out of the cage to put him the implant
+#red : active
+#green : inactive
+
+areas <- data.frame(
+  xmin = c(0, 43, 96,
+           11, 21, 53, 109,
+           36, 57, 113,
+           15),
+  xmax = c(11, 53, 109,
+           15, 28, 57, 113,
+           43, 62, 124,
+           21),
+  fill = c("No data", "No data", "No data",
+           "Inactive", "Inactive", "Inactive", "Inactive",
+           "Active", "Active", "Active",
+           "Out for implant")
+)
+
+  # Counts
+ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+
 # Counts
 ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT,
+
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
   scale_color_manual(name = "Posture",
                      labels = c("lying", "sitting", "standing", "not_visible"),
                      values = c("lying" = "lightgreen", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
+#/!\ idk which line to keep
+                               "not_visible" = "lightgrey"))+
+  scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
+                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  ylab("Quantité de secondes passé dans chaque posture") +
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 12 juillet 2022, toutes les 15 minutes") 
+
+  # Frequencies
+ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+
                                "not_visible" = "lightgrey"))
 
 # Frequencies
 ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT,
+
        aes(x = compressed_time, y = proportion)) +
   geom_line(aes(color= factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
   scale_color_manual(name = "Posture",
                      labels = c("Lying", "Sitting", "Standing", "Not visible"),
                      values = c("lying" = "lightgreen", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
-                               "not_visible" = "lightgrey"))
+                               "not_visible" = "lightgrey")) +
+  scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
+                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  ylab("Proportion de temps passé dans chaque posture") +
+  ggtitle("Proportion de postures du renard 4313", subtitle = "Du 4 au 12 juillet 2022, toutes les 15 minutes") 
+
+
 ```
+
+
+
+
