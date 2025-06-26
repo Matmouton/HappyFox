@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_only_8h_21h_04_to_06_07_2022.Rdata")
+load("data_8h_21h_04_to_12_07_2022.Rdata")
 ```
 
 ## 1.1 Number & proportion of each posture by time unit
@@ -66,7 +66,7 @@ frequency_position <- function(data, interval_seconds) {
 ```{r}
 # Test for 900 seconds (15 minutes)
 
-frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
+frequency_position_04_to_12_07_2022 <- frequency_position(data = data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
 ```
 
 ### 1.1.2 Chart
@@ -94,7 +94,7 @@ pivot_data <- function(data,
 ```{r}
 # Test
 
-frequency_position_04_to_06_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_06_07_2022,
+frequency_position_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_12_07_2022,
                    variables_to_drop = end_time,
                    variables_to_merge = c(lying, standing, sitting, not_visible),
                    str_name_merged_labels = "Posture",
@@ -114,9 +114,9 @@ filter_8h_21h <- function(data, time_column){
 ```{r}
   # Test
 
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_06_07_2022_PIVOT, start_time)
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_12_07_2022_PIVOT, start_time)
 
-rm(frequency_position_04_to_06_07_2022_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
 ```
 
 ```{r}
@@ -132,15 +132,15 @@ add_compressed_time_variable_PIVOT_data <- function(data) {
 ```{r}
 # Test
 
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_06_07_2022_PIVOT)
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
 
 #remove useless data : no compressed time
-rm(frequency_position_8h_21h_04_to_06_07_2022_PIVOT)
+rm(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
 ```
 
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
@@ -171,7 +171,7 @@ add_proportion <- function(data,
 ```{r}
 # Test
 
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
                       count_variable = Count,
                       period_duration = 900)  #15 mintues by time period = 900 seconds
 
@@ -203,7 +203,7 @@ areas <- data.frame(
 )
 
   # Counts
-ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
+ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
@@ -220,12 +220,12 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))+
   scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
-                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150)) +
+                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Quantité de secondes passé dans chaque posture") +
-  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") 
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 12 juillet 2022, toutes les 15 minutes") 
 
   # Frequencies
-ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
+ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(x = compressed_time, y = proportion)) +
   geom_line(aes(color= factor(Posture,
                          #re-order the labels
@@ -241,9 +241,9 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT_compressed_time,
                                "standing" = "tomato",
                                "not_visible" = "lightgrey")) +
   scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
-                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150)) +
+                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Proportion de temps passé dans chaque posture") +
-  ggtitle("Proportion de postures du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") 
+  ggtitle("Proportion de postures du renard 4313", subtitle = "Du 4 au 12 juillet 2022, toutes les 15 minutes") 
 
 
 ```
