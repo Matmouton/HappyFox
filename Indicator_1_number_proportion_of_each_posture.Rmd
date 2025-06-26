@@ -160,7 +160,7 @@ add_compressed_time_variable <- function(data) {
 ```{r}
 # Test
 
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT <- pivot_data(data = frequency_position_8h_21h_04_to_06_07_2022,
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_8h_21h_04_to_12_07_2022,
                    variables_to_drop = end_time,
                    variables_to_merge = c(lying, standing, sitting, not_visible),
                    str_name_merged_labels = "Posture",
@@ -183,7 +183,7 @@ add_proportion <- function(data,
 ```{r}
 # Test
 
-frequency_position_8h_21h_04_to_06_07_2022_PIVOT<- add_proportion(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT<- add_proportion(frequency_position_8h_21h_04_to_12_07_2022_PIVOT,
                       count_variable = Count,
                       period_duration = 900)  #15 mintues by time period = 900 seconds
 
@@ -193,7 +193,7 @@ Plots :
 
 ```{r}
 # Counts
-ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT,
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
@@ -207,7 +207,7 @@ ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
                                "not_visible" = "lightgrey"))
 
 # Frequencies
-ggplot(frequency_position_8h_21h_04_to_06_07_2022_PIVOT,
+ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT,
        aes(x = compressed_time, y = proportion)) +
   geom_line(aes(color= factor(Posture,
                          #re-order the labels
