@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_only_8h_21h_04_to_06_07_2022.Rdata")
+load("data_8h_21h_04_to_12_07_2022.Rdata")
 ```
 
 ## 1.1 Number & proportion of each posture by time unit
@@ -66,7 +66,7 @@ frequency_position <- function(data, interval_seconds) {
 ```{r}
 # Test for 900 seconds (15 minutes)
 
-frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_to_06_07_2022, interval_seconds = 900)
+frequency_position_04_to_12_07_2022 <- frequency_position(data = data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
 ```
 
 ### 1.1.2 Chart
@@ -74,7 +74,7 @@ frequency_position_04_to_06_07_2022 <- frequency_position(data = data_8h_21h_04_
 ```{r}
 # Put data in the long format (instead of wide) : pivot function
 
-frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022[,-2] %>% #drop the end_time column
+frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
     names_to = "Posture", 
@@ -84,7 +84,7 @@ frequency_position_04_to_06_07_2022_PIVOT <- frequency_position_04_to_06_07_2022
 
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_04_to_06_07_2022_PIVOT,
+ggplot(data = frequency_position_04_to_12_07_2022_PIVOT,
        aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
@@ -113,13 +113,13 @@ filter_8h_21h <- function(data, time_column){
 ```{r}
 # Test
 
-frequency_position_8h_21h_04_to_06_07_2022 <- filter_8h_21h(frequency_position_04_to_06_07_2022, start_time)
+frequency_position_8h_21h_04_to_12_07_2022 <- filter_8h_21h(frequency_position_04_to_12_07_2022, start_time)
 ```
 
 ```{r}
 # Clean up useless datasets
 
-rm(frequency_position_04_to_06_07_2022, frequency_position_04_to_06_07_2022_PIVOT)
+rm(frequency_position_04_to_12_07_2022, frequency_position_04_to_12_07_2022_PIVOT)
 ```
 
 ```{r}
