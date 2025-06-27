@@ -90,6 +90,10 @@ pivot_data <- function(data,
 } 
 
 
+```
+
+```{r}
+
 frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
@@ -97,6 +101,7 @@ frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022
     values_to = "Count"
   )
 ```
+
 
 ```{r}
 # Chart for count
@@ -375,6 +380,94 @@ ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
 
 ```
 
+
+# Comparison with or without no reliable predictions
+
+```{r}
+#Load data
+reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+           #if only 1 prediction : keep only data with a confidence >= 0.34
+  filter((number_of_predictions == 1 & confidence >= 0.34) | 
+           #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
+           (number_of_predictions >1 & confidence >= 0.34 & confidence_gap >= 0.2) |
+           #keep the NA values also
+           is.na(confidence_gap))
+
+#Calculate frequency position
+reliable_frequency_position_04_to_12_07_2022 <- frequency_position(data = reliable_data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
+
+#Pivot data
+reliable_frequency_position_04_to_12_07_2022_PIVOT <- reliable_frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
+  pivot_longer(
+    cols = !start_time, 
+    names_to = "Posture", 
+    values_to = "Count"
+  )
+
+#Remove data outside 8h-21h range
+reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(reliable_frequency_position_04_to_12_07_2022_PIVOT, start_time)
+
+rm(reliable_frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
+
+#Add compressed time variable
+reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+
+#remove useless data : no compressed time
+rm(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+
+
+```
+
+```{r}
+library(gridExtra)
+
+# With unreliable predictions
+plot1 <- ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
+  geom_boxplot() +
+  xlab("Posture") +
+  ylab("Nombre d'occurences toutes les 15 minutes") +
+  theme(legend.position = "right")
+
+# Without unreliable predictions
+plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
+  geom_boxplot() +
+  xlab("Posture") +
+  ylab("Nombre d'occurences toutes les 15 minutes") +
+  theme(legend.position = "right")
+
+grid.arrange(plot1, plot2, ncol=2)
+```
+```{r}
+# Chart for count
+
+plot1 <- ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+       aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
+          subtitle = "With all data") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+plot2 <- ggplot(data = reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+       aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
+          subtitle = "Without non-reliable data") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+
+grid.arrange(plot1, plot2, ncol = 2)
+```
 
 
 

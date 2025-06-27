@@ -99,4 +99,180 @@ between 8-21h didn't change its distribution.
 But idk if it's true because the missing data contains a big part of night, so
 maybe certainty won't be the same (less certainty).
 
-## 
+# Comparison with or without no reliable predictions
+
+Functions :
+
+```{r}
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+
+
+
+# Frequency of postures lying/ sitting/ standing by timestep (chosen)
+
+frequency_position <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      lying = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0),            #count lying
+      standing = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1),            #count standing
+      sitting = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2),            #count sitting
+      not_visible = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3)             #count not visible
+    )
+  
+  return(df_counts)
+}
+
+
+
+# Pivot the data : 4 lines/time unit
+
+pivot_data <- function(data,
+                       variables_to_drop,       #useless variables
+                       variables_to_merge,      #variables we want to merge into 1 var
+                       str_name_merged_labels,  #column of the former colnames : rename
+                       str_name_merged_values){  #column of the former values : rename
+  
+  data <- data %>% 
+    select (-{{variables_to_drop}}) %>%   #eg : column end_time
+    pivot_longer(
+      cols = {{variables_to_merge}},      #eg : all the columns except start_time
+      names_to = str_name_merged_labels,  #eg : "Posture" for the former lying/standing/...
+      values_to = str_name_merged_values  #eg : "Count" for the former amounts of lying/...
+    )
+} 
+
+  #Remove data between 21h-8h
+
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
+
+
+
+add_compressed_time_variable_PIVOT_data <- function(data) {
+  data$compressed_time <- rep(seq_len(nrow(data)/4)-1, each = 4)
+  return(data)
+}
+
+
+```
+
+All data :
+
+```{r}
+load("data_8h_21h_04_to_12_07_2022.Rdata")
+
+# Test for 900 seconds (15 minutes)
+
+frequency_position_04_to_12_07_2022 <- frequency_position(data = data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
+
+
+frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
+  pivot_longer(
+    cols = !start_time, 
+    names_to = "Posture", 
+    values_to = "Count"
+  )
+
+
+frequency_position_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_12_07_2022,
+                   variables_to_drop = end_time,
+                   variables_to_merge = c(lying, standing, sitting, not_visible),
+                   str_name_merged_labels = "Posture",
+                   str_name_merged_values = "Count")
+
+ # Test
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_12_07_2022_PIVOT, start_time)
+
+rm(frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
+
+
+# Test
+
+frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+
+
+
+#remove useless data : no compressed time
+rm(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+```
+
+Only reliable data :
+
+```{r}
+#Load data
+reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+           #if only 1 prediction : keep only data with a confidence >= 0.34
+  filter((number_of_predictions == 1 & confidence >= 0.34) | 
+           #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
+           (number_of_predictions >1 & confidence >= 0.34 & confidence_gap >= 0.2) |
+           #keep the NA values also
+           is.na(confidence_gap))
+
+#Calculate frequency position
+reliable_frequency_position_04_to_12_07_2022 <- frequency_position(data = reliable_data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
+
+#Pivot data
+reliable_frequency_position_04_to_12_07_2022_PIVOT <- reliable_frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
+  pivot_longer(
+    cols = !start_time, 
+    names_to = "Posture", 
+    values_to = "Count"
+  )
+
+#Remove data outside 8h-21h range
+reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(reliable_frequency_position_04_to_12_07_2022_PIVOT, start_time)
+
+rm(reliable_frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
+
+#Add compressed time variable
+reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+
+#remove useless data : no compressed time
+rm(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+
+
+```
+
+```{r}
+library(gridExtra)
+
+# With unreliable predictions
+plot1 <- ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
+  geom_boxplot() +
+  xlab("Posture") +
+  ylab("Nombre d'occurences toutes les 15 minutes") +
+  theme(legend.position = "right")
+
+# Without unreliable predictions
+plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
+  geom_boxplot() +
+  xlab("Posture") +
+  ylab("Nombre d'occurences toutes les 15 minutes") +
+  theme(legend.position = "right")
+
+grid.arrange(plot1, plot2, ncol=2)
+```
