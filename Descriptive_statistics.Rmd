@@ -101,7 +101,9 @@ maybe certainty won't be the same (less certainty).
 
 # Comparison with or without no reliable predictions
 
-Functions :
+## 1. Amount of time spent in postures : Same distribution
+
+### Functions :
 
 ```{r}
 library(jsonlite)
@@ -180,7 +182,7 @@ add_compressed_time_variable_PIVOT_data <- function(data) {
 
 ```
 
-All data :
+### All data :
 
 ```{r}
 load("data_8h_21h_04_to_12_07_2022.Rdata")
@@ -220,7 +222,7 @@ frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compress
 rm(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
 ```
 
-Only reliable data :
+### Only reliable data :
 
 ```{r}
 #Load data
@@ -275,4 +277,247 @@ plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compre
   theme(legend.position = "right")
 
 grid.arrange(plot1, plot2, ncol=2)
+```
+
+## Indicator 1 :
+
+## 2. Indicator 2 : 
+
+### Functions
+
+```{r}
+# All data
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+
+load("data_8h_21h_04_to_12_07_2022.Rdata")
+
+#Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
+posture_123 <- function(data){
+  data <- data %>% 
+  mutate(increasing_code = case_when(name=="lying" ~ 1,
+                                   name=="sitting" ~ 2,
+                                   name=="standing" ~ 3,
+                                   name=="not visible" ~ NA, #to avoid having it in the sum
+                                   TRUE ~ NA))
+}
+
+# Amount activity function
+amount_activity <- function(data, interval_seconds) {
+  data <- data %>% arrange(Date_Time)
+  
+  start_time <- min(data$Date_Time)
+  end_time <- max(data$Date_Time)
+  
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  df_counts <- data.frame(
+    interval_start = intervals[-length(intervals)],
+    interval_end = intervals[-1]
+  )
+  
+  df_counts <- df_counts %>%
+    rowwise() %>%
+    mutate(
+      total_activity =
+        sum(data$increasing_code[data$Date_Time >= interval_start
+                                 & data$Date_Time < interval_end],
+            na.rm = TRUE)/3, #divide by 3 because max score = 3 : get a max to 1
+      activity_proportion = ifelse(
+        total_activity != 0,
+        (total_activity) / nrow(data[data$Date_Time >= interval_start & data$Date_Time < interval_end, ]), #divided by 3 because score max = 3
+        0
+      )
+    )
+  
+  return(df_counts)
+}
+
+# Function to remove the 21h-8h gap that has been re-created by the amount_activity function
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
+
+# Useful to skip the 21h-8h gap when plotting/ analyzing
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1 #-1 to make it start with 0
+  return(data)
+}
+
+## Get the areas we want to color
+
+get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
+  # S'assurer que le vecteur de temps est au format POSIXct
+  times_vector_xmin <- as.POSIXct(times_vector_xmin)
+  times_vector_xmax <- as.POSIXct(times_vector_xmax)
+
+  # Initialiser le vecteur de résultats
+  result_min <- vector("numeric", length(times_vector_xmin))
+  result_max <- vector("numeric", length(times_vector_xmax))
+
+  # Pour chaque temps, trouver la ligne correspondante
+  for (i in seq_along(times_vector_xmin)) {
+    time_min <- times_vector_xmin[i]
+    matched_row_min <- data %>%
+      filter(interval_start <= time_min & interval_end >= time_min)
+
+    # Si une ligne correspond, extraire compressed_time
+    if (nrow(matched_row_min) > 0) {
+      result_min[i] <- matched_row_min$compressed_time[1]
+    } else {
+      result_min[i] <- NA  # Aucun match trouvé
+    }
+  }
+
+  # Pour chaque temps, trouver la ligne correspondante
+  for (i in seq_along(times_vector_xmax)) {
+    time_max <- times_vector_xmax[i]
+    matched_row_max <- data %>%
+      filter(interval_start <= time_max & interval_end >= time_max)
+
+    # Si une ligne correspond, extraire compressed_time
+    if (nrow(matched_row_max) > 0) {
+      result_max[i] <- matched_row_max$compressed_time[1]
+    } else {
+      result_max[i] <- NA  # Aucun match trouvé
+    }
+  }  
+  
+  df_areas <- data.frame(xmin = result_min, xmax = result_max, fill = fill)
+  
+  return(df_areas)
+}
+
+## Plot 
+
+plot_activity_with_areas <- function(data, nb_min, areas,
+                                     title, subtitle,
+                                     x_lab, y_lab) {
+
+  # Créer le plot
+  ggplot(data, aes(x = compressed_time, y = activity_proportion)) +
+    geom_rect(data = areas,
+              aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+              inherit.aes = FALSE, alpha = 0.2) +
+    geom_line() +
+    ylab(y_lab) +
+    scale_x_continuous(name = x_lab,
+                       breaks = seq(from = 0, to = nrow(data), by = 10)) +
+    ggtitle(title,
+            subtitle = paste(subtitle, "every", nb_min, "minutes."))
+}
+
+## From load to plot
+
+from_data_to_plot <- function(data_8h_21h,
+                              interval_seconds,
+                              time_column = interval_start,
+                              title,
+                              subtitle,
+                              x_lab,
+                              y_lab){
+  
+  data_8h_21h_increasing_code <- posture_123(data_8h_21h)
+
+  amount_activity_data <- amount_activity(data = data_8h_21h_increasing_code,
+                                     interval_seconds = interval_seconds) # default = 900 seconds (15 minutes)
+
+# remove the 21h-8h gap
+  amount_activity_8h_21h <- filter_8h_21h(
+    data = amount_activity_data,
+    time_column = interval_start)
+
+
+  # Compressed time variable to skip parts between 21h and 8h
+  amount_activity_x_minutes_8h_21h_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h)
+
+  areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
+                            times_vector_xmin =
+                              c("2022-07-04 08:00:00", #No data
+                                "2022-07-04 18:57:00",
+                                "2022-07-05 18:57:00",
+                                "2022-07-04 10:47:00", #Inactive
+                                "2022-07-04 13:17:00",
+                                "2022-07-05 08:13:00",
+                                "2022-07-06 08:50:00",
+                                "2022-07-04 17:07:00", #Active
+                                "2022-07-05 09:13:00",
+                                "2022-07-06 09:50:00",
+                                "2022-07-04 11:56:00"),#Out for implant
+                            times_vector_xmax = 
+                              c("2022-07-04 10:47:00", #No data
+                                "2022-07-05 08:13:00",
+                                "2022-07-06 08:50:00",
+                                "2022-07-04 11:56:00", #Inactive
+                                "2022-07-04 15:08:00",
+                                "2022-07-05 09:13:00",
+                                "2022-07-06 09:50:00",
+                                "2022-07-04 18:57:00", #Active
+                                "2022-07-05 10:22:00",
+                                "2022-07-06 12:31:00",
+                                "2022-07-04 13:17:00"),#Out for implant
+                            fill =
+                              c("No data", "No data", "No data",
+                                "Inactive", "Inactive", "Inactive", "Inactive",
+                                "Active", "Active", "Active",
+                                "Out for implant"))
+  
+  plot <- plot_activity_with_areas(
+    amount_activity_x_minutes_8h_21h_compressed_time,
+    nb_min = interval_seconds/60,
+    areas = areas,
+    title = title,
+    subtitle = subtitle,
+    x_lab = x_lab,
+    y_lab = y_lab)
+  
+  return(plot)
+
+  }
+```
+
+### All data
+
+```{r}
+from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
+                  interval_seconds = 3600,
+                  title = "Posture's score of fox 4313",
+                  subtitle = "With all data, from 04/07/2022 to 12/07/2022",
+                  x_lab = "Cumulative time of the day (only between 8h and 21h)",
+                  y_lab = "Movement score by summing posture indices")
+```
+
+### Only reliable data
+
+```{r}
+reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+           #if only 1 prediction : keep only data with a confidence >= 0.34
+  filter((number_of_predictions == 1 & confidence >= 0.34) | 
+           #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
+           (number_of_predictions >1 & confidence >= 0.34 & confidence_gap >= 0.2) |
+           #keep the NA values also
+           is.na(confidence_gap))
+
+from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_12_07_2022,
+                  interval_seconds = 3600,
+                  title = "Posture's score of fox 4313",
+                  subtitle = "Without non-reliable data, from 04/07/2022 to 12/07/2022",
+                  x_lab = "Cumulative time of the day (only between 8h and 21h)",
+                  y_lab = "Movement score by summing posture indices")
+```
+
+```{r}
+grid.arrange(from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
+                  interval_seconds = 3600), 
+             from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_12_07_2022,
+                  interval_seconds = 3600),
+             ncol=2)
 ```

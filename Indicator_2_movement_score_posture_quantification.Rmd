@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_only_8h_21h_04_to_06_07_2022.Rdata")
+load("data_8h_21h_04_to_12_07_2022.Rdata")
 ```
 
 # Movement score : quantify each posture & sum it
@@ -149,7 +149,9 @@ get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
 ```
 
 ```{r}
-plot_activity_with_areas <- function(data, nb_min, areas) {
+plot_activity_with_areas <- function(data, nb_min, areas,
+                                     title, subtitle,
+                                     x_lab, y_lab) {
 
   # Créer le plot
   ggplot(data, aes(x = compressed_time, y = activity_proportion)) +
@@ -157,15 +159,12 @@ plot_activity_with_areas <- function(data, nb_min, areas) {
               aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
               inherit.aes = FALSE, alpha = 0.2) +
     geom_line() +
-    ylab("Score de mouvement par addition des indices des postures") +
-    scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
+    ylab(y_lab) +
+    scale_x_continuous(name = x_lab,
                        breaks = seq(from = 0, to = nrow(data), by = 10)) +
-    ggtitle("Score de postures du renard 4313",
-            subtitle = paste("Du 4 au 6 juillet 2022, toutes les", nb_min, "minutes"))
+    ggtitle(title,
+            subtitle = paste(subtitle, "every", nb_min, "minutes."))
 }
-
-
-# plot_activity_with_areas(amount_activity_30min_8h_21h_04_to_06_07_2022_compressed_time, nb_min = 15)
 
 ```
 
@@ -175,14 +174,16 @@ cohérent, parce que le renard était sous anesthésie.
 ```{r}
 from_data_to_plot <- function(data_8h_21h,
                               interval_seconds,
-                              time_column = interval_start){
+                              time_column = interval_start,
+                              title,
+                              subtitle,
+                              x_lab,
+                              y_lab){
   
-#Test data 04 tot 06/07/2022
   data_8h_21h_increasing_code <- posture_123(data_8h_21h)
 
-# Test every 900 seconds (15 minutes)
   amount_activity_data <- amount_activity(data = data_8h_21h_increasing_code,
-                                     interval_seconds = interval_seconds)
+                                     interval_seconds = interval_seconds) # default = 900 seconds (15 minutes)
 
 # remove the 21h-8h gap
   amount_activity_8h_21h <- filter_8h_21h(
@@ -190,7 +191,7 @@ from_data_to_plot <- function(data_8h_21h,
     time_column = interval_start)
 
 
-# Compressed time variable to skip parts between 21h and 8h
+  # Compressed time variable to skip parts between 21h and 8h
   amount_activity_x_minutes_8h_21h_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h)
 
   areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
@@ -227,7 +228,11 @@ from_data_to_plot <- function(data_8h_21h,
   plot <- plot_activity_with_areas(
     amount_activity_x_minutes_8h_21h_compressed_time,
     nb_min = interval_seconds/60,
-    areas = areas)
+    areas = areas,
+    title = title,
+    subtitle = subtitle,
+    x_lab = x_lab,
+    y_lab = y_lab)
   
   return(plot)
 
@@ -235,6 +240,10 @@ from_data_to_plot <- function(data_8h_21h,
 ```
 
 ```{r}
-from_data_to_plot(data_8h_21h = data_8h_21h_04_to_06_07_2022,
-                  interval_seconds = 3600)
+from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
+                  interval_seconds = 3600,
+                  title = "Posture's score of fox 4313",
+                  subtitle = "With all data, from 04/07/2022 to 12/07/2022",
+                  x_lab = "Cumulative time of the day (only between 8h and 21h)",
+                  y_lab = "Movement score by summing posture indices")
 ```
