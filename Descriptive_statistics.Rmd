@@ -14,7 +14,9 @@ editor_options:
     wrap: 80
 ---
 
-```{r packages, message=FALSE, warning=FALSE}
+```{r packages_and_data, message=FALSE, warning=FALSE}
+
+#Packages
 library(jsonlite)
 library(purrr)
 library(curl)
@@ -23,6 +25,10 @@ library(lubridate)
 library(tidyr)
 library(ggplot2)
 library(patchwork)
+
+#Data
+load("data_04_to_12_07_2022.Rdata") #load all data between 04 & 12 of July
+rm(list = setdiff(ls(), c("data_04_to_12_07_2022"))) #remove useless data
 ```
 
 # Outputs of the 3 indicators on the data of the 3 first days
@@ -35,11 +41,11 @@ Original data :
 # Highest confidence rate depending on the number of predictions
 
 # New dataset with the number of predictions as a factor variable
-data_group_number_pred <- data_04_to_06_07_2022 %>%
+data_group_number_pred <- data_04_to_12_07_2022 %>%
   mutate(group = as.factor(number_of_predictions))
 
 # New dataset with a variable "group" always being "All"
-data_group_overall <- data_04_to_06_07_2022 %>%
+data_group_overall <- data_04_to_12_07_2022 %>%
   mutate(group = "Total")
 
 # Merge the 2 datasets into 1 (so it's 2 times bigger)
@@ -48,9 +54,12 @@ merged_data <- bind_rows(data_group_number_pred, data_group_overall)
 # Display boxplots
 ggplot(merged_data, aes(x = group, y = confidence, fill = group)) +
   geom_boxplot() +
-  xlab("Nombre de prédictions faites par frame (et global)") +
-  ylab("Confiance la plus haute de la prédiction pour la frame") +
-  theme(legend.position = "right")
+  xlab("Amount of predictions made for 1 frame (and total)") +
+  ylab("Highest confidence of the prediction for 1 frame") +
+  theme(legend.position = "right") +
+  ggtitle("Data from 04/07/2022 to 12/07/2022",
+          subtitle = "With all the data")
+
 
 # Clean up
 rm(data_group_number_pred, data_group_overall, merged_data)
@@ -62,12 +71,14 @@ Data between 8h and 21h only :
 ```{r}
 # Highest confidence rate depending on the number of predictions
 
+load("data_8h_21h_04_to_12_07_2022.Rdata")
+
 # New dataset with the number of predictions as a factor variable
-data_group_number_pred <- data_8h_21h_04_to_06_07_2022 %>%
+data_group_number_pred <- data_8h_21h_04_to_12_07_2022 %>%
   mutate(group = as.factor(number_of_predictions))
 
 # New dataset with a variable "group" always being "All"
-data_group_overall <- data_8h_21h_04_to_06_07_2022 %>%
+data_group_overall <- data_8h_21h_04_to_12_07_2022 %>%
   mutate(group = "Total")
 
 # Merge the 2 datasets into 1 (so it's 2 times bigger)
@@ -76,9 +87,11 @@ merged_data <- bind_rows(data_group_number_pred, data_group_overall)
 # Display boxplots
 ggplot(merged_data, aes(x = group, y = confidence, fill = group)) +
   geom_boxplot() +
-  xlab("Nombre de prédictions faites par frame (et global)") +
-  ylab("Confiance la plus haute de la prédiction pour la frame") +
-  theme(legend.position = "right")
+  xlab("Amount of predictions made for 1 frame (and total)") +
+  ylab("Highest confidence of the prediction for 1 frame") +
+  theme(legend.position = "right") +
+  ggtitle("Data from 04/07/2022 to 12/07/2022",
+          subtitle = "Only with the 8h-21h data")
 
 # Clean up
 rm(data_group_number_pred, data_group_overall, merged_data)
@@ -101,7 +114,7 @@ maybe certainty won't be the same (less certainty).
 
 # Comparison with or without no reliable predictions
 
-## 1. Amount of time spent in postures : Same distribution
+## 1. Amount of time spent in postures : same distribution
 
 ### Functions :
 
@@ -279,9 +292,43 @@ plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compre
 grid.arrange(plot1, plot2, ncol=2)
 ```
 
-## Indicator 1 :
+## 2. Indicator 1 : same distribution
 
-## 2. Indicator 2 : 
+### All data
+
+```{r}
+# Chart for count
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+       aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox 4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+```
+
+### Only reliable data
+
+```{r}
+# Chart for count
+ggplot(data = reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+       aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
+  geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
+  ggtitle("Fox 4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +                              
+  scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
+                    values = c("lying" = "lightgreen", #change legend colors
+                               "sitting" = "orange",
+                               "standing" = "tomato",
+                               "not_visible" = "lightgrey"))
+```
+
+## 3. Indicator 2 : same distribution
 
 ### Functions
 
@@ -520,4 +567,152 @@ grid.arrange(from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
              from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_12_07_2022,
                   interval_seconds = 3600),
              ncol=2)
+```
+
+## 4. Indicator 3 :
+
+### Functions
+
+```{r}
+library(jsonlite)
+library(purrr)
+library(curl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+load("data_8h_21h_04_to_12_07_2022.Rdata")
+```
+
+```{r}
+#Function 1 : detect time changes
+
+amount_posture_changes <- function(
+    data,
+    group_time){ #group_time : "number + unit" (among : second, minute, hour, day,                     week, month, bimonth, quarter, season, halfyear and year)
+  
+  # Temporary variable : not_visible & NAs replaced by NAs
+  data <- data %>% 
+    mutate(posture_no_NA = case_when(
+      name == "not visible" ~ NA,  #NA if not visible
+      is.na(name) ~ NA,            #NA if NA
+      TRUE ~ name)                 #else : posture name
+      )  
+  
+  data <- data %>%
+    fill(posture_no_NA)           #refill NAs (= real NAs + not_visible) with latest posture seen
+  
+  
+  # Detect position changes
+  data_valid <- data %>%
+    arrange(Date_Time) %>%  #Sort by date
+    # Movement : if posture != posture at previous time (skip NAs & not_visible)
+    mutate(Position_change = posture_no_NA != lag(posture_no_NA, default = first(posture_no_NA)))
+
+  # Results
+  return(changes_by_group_time(data_valid, time_gap = group_time))
+  }
+
+
+
+# Function 2 : Get the sum of posture changes by time unit
+
+changes_by_group_time <- function(data, time_gap) {
+  data %>%
+    mutate(Time_group = floor_date(Date_Time, unit = time_gap)) %>% #make time groups
+    group_by(Time_group) %>%
+    summarise(Nb_changes = sum(Position_change, na.rm = TRUE)) %>% #sum changes
+    ungroup()                                     #just in case
+}
+
+
+# Function 3 : add a new time variable to replace the real time
+
+add_compressed_time_variable <- function(data) {
+  data$compressed_time <- seq_len(nrow(data))-1
+  return(data)
+}
+
+# Areas to color
+
+#blue : no data available (corrupted videos)
+#purple : out of the cage to put him the implant
+#red : active
+#green : inactive
+
+areas <- data.frame(
+  xmin = c(0, 43, 96,
+           11, 21, 53, 109,
+           36, 57, 113,
+           15),
+  xmax = c(11, 53, 109,
+           15, 28, 57, 113,
+           43, 62, 124,
+           21),
+  fill = c("No data", "No data", "No data",
+           "Inactive", "Inactive", "Inactive", "Inactive",
+           "Active", "Active", "Active",
+           "Out for implant")
+)
+```
+
+### All data
+
+```{r}
+# Changes per 15minutes & per day
+amount_changes_data_8h_21h_04_to_12_07_2022 <- amount_posture_changes(data_8h_21h_04_to_12_07_2022, "15 minute")
+
+# Skip parts between 21h and 8h
+amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_12_07_2022)
+
+# Plot
+ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time,
+       aes(x = compressed_time, y = Nb_changes)) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
+  geom_line() +
+  #xlab("Temps entre 8h et 21h chaque jour") +
+  ylab("Amount of posture changes") +
+  ggtitle("Posture changes of fox 4313", subtitle = "All data, from 04/07/2022 to 12/07/2022, every 15 minutes") +
+  scale_x_continuous(name = "Time between 8h and 21h each day",
+                     breaks = c(0,50,100,150,200,250,300,350,400,450))
+```
+
+### Only reliable data
+
+```{r}
+#Load data
+reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+           #if only 1 prediction : keep only data with a confidence >= 0.34
+  filter((number_of_predictions == 1 & confidence >= 0.34) | 
+           #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
+           (number_of_predictions >1 & confidence >= 0.34 & confidence_gap >= 0.2) |
+           #keep the NA values also
+           is.na(confidence_gap))
+
+# Changes per 15minutes & per day
+amount_changes_data_8h_21h_04_to_12_07_2022_reliable_data <- amount_posture_changes(reliable_data_8h_21h_04_to_12_07_2022, "15 minute")
+
+# Skip parts between 21h and 8h
+amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time_reliable_data <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_12_07_2022_reliable_data)
+
+# Plot
+ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time_reliable_data,
+       aes(x = compressed_time, y = Nb_changes)) +
+  
+  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+            inherit.aes = FALSE, alpha = 0.2) +
+  
+  geom_line() +
+  #xlab("Temps entre 8h et 21h chaque jour") +
+  ylab("Amount of posture changes") +
+  ggtitle("Posture changes of fox 4313", subtitle = "Only reliable data, from 04/07/2022 to 12/07/2022, every 15 minutes") +
+  scale_x_continuous(name = "Time between 8h and 21h each day",
+                     breaks = c(0,50,100,150,200,250,300,350,400,450))
 ```
