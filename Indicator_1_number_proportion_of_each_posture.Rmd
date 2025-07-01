@@ -94,12 +94,20 @@ pivot_data <- function(data,
 
 ```{r}
 
-frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
-  pivot_longer(
-    cols = !start_time, 
-    names_to = "Posture", 
-    values_to = "Count"
-  )
+# frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
+#   pivot_longer(
+#     cols = !start_time, 
+#     names_to = "Posture", 
+#     values_to = "Count"
+#   )
+```
+
+```{r}
+frequency_position_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_12_07_2022,
+                   variables_to_drop = end_time,
+                   variables_to_merge = c(lying, standing, sitting, not_visible),
+                   str_name_merged_labels = "Posture",
+                   str_name_merged_values = "Count")
 ```
 
 
@@ -116,15 +124,10 @@ ggplot(data = frequency_position_04_to_12_07_2022_PIVOT,
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
-
-frequency_position_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_12_07_2022,
-                   variables_to_drop = end_time,
-                   variables_to_merge = c(lying, standing, sitting, not_visible),
-                   str_name_merged_labels = "Posture",
-                   str_name_merged_values = "Count")
 ```
 
 ## 3 Barplot without gaps
+
 
 ```{r}
   #Remove data between 21h-8h
@@ -172,11 +175,48 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
   xlab("Time of the day") +
   ylab("Amount of seconds spent in this posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
+                    values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
 
+```
+
+```{r}
+# Same chart but with 1 posture at a time
+
+  #lying
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %>% 
+         filter(Posture == "lying"),
+       aes(x = compressed_time, y = Count, fill = Posture)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(breaks = "lying",
+                    values = "chartreuse3")
+
+  #sitting
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %>% 
+         filter(Posture == "sitting"),
+       aes(x = compressed_time, y = Count, fill = Posture)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(breaks = "sitting",
+                    values = "orange")
+
+  #standing
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %>% 
+         filter(Posture == "standing"),
+       aes(x = compressed_time, y = Count, fill = Posture)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(breaks = "standing",
+                    values = "tomato")
+
+  #not visible
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %>% 
+         filter(Posture == "not_visible"),
+       aes(x = compressed_time, y = Count, fill = Posture)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(breaks = "not_visible",
+                    values = "darkgrey")
+  
 ```
 
 
