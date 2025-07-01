@@ -171,7 +171,7 @@ rm(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
 ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
-  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 12/07/2022") +   #title
   xlab("Time of the day") +
   ylab("Amount of seconds spent in this posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
@@ -190,6 +190,9 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %
          filter(Posture == "lying"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 12/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "lying",
                     values = "chartreuse3")
 
@@ -198,6 +201,9 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %
          filter(Posture == "sitting"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 12/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "sitting",
                     values = "orange")
 
@@ -206,6 +212,9 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %
          filter(Posture == "standing"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 12/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "standing",
                     values = "tomato")
 
@@ -214,6 +223,9 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time %
          filter(Posture == "not_visible"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 12/07/2022") +   #title
+  xlab("Time of the day") +
+  ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "not_visible",
                     values = "darkgrey")
   
@@ -385,14 +397,14 @@ ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
   
   scale_color_manual(name = "Posture",
                      labels = c("lying", "sitting", "standing", "not_visible"),
-                     values = c("lying" = "lightgreen", #change legend colors
+                     values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))+
-  scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
+  scale_x_continuous(name = "Time between 8h and 21h each day",
                      breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
-  ylab("Quantité de secondes passé dans chaque posture") +
-  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 12 juillet 2022, toutes les 15 minutes") 
+  ylab("Amount of seconds spent in each posture") +
+  ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 12 of July 2022, every 15 minutes") 
 
 
   # Frequencies
@@ -408,14 +420,14 @@ ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
   
   scale_color_manual(name = "Posture",
                      labels = c("Lying", "Sitting", "Standing", "Not visible"),
-                     values = c("lying" = "lightgreen", #change legend colors
+                     values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey")) +
-  scale_x_continuous(name = "Axe du temps entre 8h et 21h chaque jour",
+  scale_x_continuous(name = "Time between 8h and 21h each day",
                      breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
-  ylab("Proportion de temps passé dans chaque posture") +
-  ggtitle("Proportion de postures du renard 4313", subtitle = "Du 4 au 12 juillet 2022, toutes les 15 minutes") 
+  ylab("Amount of seconds spent in each posture") +
+  ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 12 of July 2022, every 15 minutes") 
 
 
 ```
@@ -465,48 +477,47 @@ library(gridExtra)
 plot1 <- ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
   geom_boxplot() +
   xlab("Posture") +
-  ylab("Nombre d'occurences toutes les 15 minutes") +
+  ylab("Amount of occurences every 15 minutes") +
   theme(legend.position = "right")
 
 # Without unreliable predictions
 plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
   geom_boxplot() +
   xlab("Posture") +
-  ylab("Nombre d'occurences toutes les 15 minutes") +
+  ylab("Amount of occurences every 15 minutes") +
   theme(legend.position = "right")
 
 grid.arrange(plot1, plot2, ncol=2)
 ```
+
 ```{r}
 # Chart for count
 
-plot1 <- ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
           subtitle = "With all data") +   #title
-  xlab("Time of the day") +
-  ylab("Amount of seconds spent in this posture") +                              
+  xlab("Cumulative time between 8h and 21h each day") +
+  ylab("Amount of seconds spent in each posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
+                    values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
 
-plot2 <- ggplot(data = reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+ggplot(data = reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
           subtitle = "Without non-reliable data") +   #title
-  xlab("Time of the day") +
-  ylab("Amount of seconds spent in this posture") +                              
+  xlab("Cumulative time between 8h and 21h each day") +
+  ylab("Amount of seconds spent in each posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
+                    values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
-
-grid.arrange(plot1, plot2, ncol = 2)
 ```
 
 
