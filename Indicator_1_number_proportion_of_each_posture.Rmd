@@ -162,14 +162,14 @@ areas_30min <- data.frame(
 
 #1 hour :
 areas_1h <- data.frame(
-  xmin = c(0, 21, 47,
-           5, 10, 26, 53,
-           18, 28, 55,
-           7),
-  xmax = c(5, 26, 53,
-           7, 14, 28, 55,
-           21, 30, 61,
-           10),
+  xmin = c(0, 10, 23,
+           2,5,13,26,
+           9,14,27,
+           3),
+  xmax = c(2, 13, 26,
+           3, 7, 14, 27,
+           10, 15, 30,
+           5),
   fill = c("No data", "No data", "No data",
            "Inactive", "Inactive", "Inactive", "Inactive",
            "Active", "Active", "Active",
@@ -796,7 +796,7 @@ ggplot(frequency_position_8h_21h_04_to_12_07_2022_StandingSitting_PIVOT_compress
   scale_x_continuous(name = "Time between 8h and 21h each day",
                      breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Time proportion spent in each posture") +
-  ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 12 of July 2022, every 30 minutes")
+  ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 12 of July 2022, every hour")
 
 ```
 
