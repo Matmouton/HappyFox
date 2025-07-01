@@ -301,11 +301,12 @@ grid.arrange(plot1, plot2, ncol=2)
 ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
-  ggtitle("Fox 4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
-  xlab("Time of the day") +
-  ylab("Amount of seconds spent in this posture") +                              
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
+          subtitle = "With all data") +   #title
+  xlab("Cumulative time between 8h and 21h each day") +
+  ylab("Amount of seconds spent in each posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
+                    values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
@@ -318,11 +319,12 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
 ggplot(data = reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
-  ggtitle("Fox 4313's posture every 15min between days 04/07/2022 and 06/07/2022") +   #title
-  xlab("Time of the day") +
-  ylab("Amount of seconds spent in this posture") +                              
+  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
+          subtitle = "Without non-reliable data") +   #title
+  xlab("Cumulative time between 8h and 21h each day") +
+  ylab("Amount of seconds spent in each posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
+                    values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))
