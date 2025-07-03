@@ -25,15 +25,20 @@ library(lubridate)
 library(tidyr)
 library(ggplot2)
 library(patchwork)
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+
+
 
 #Data
 load("data_04_to_12_07_2022.Rdata") #load all data between 04 & 12 of July
 rm(list = setdiff(ls(), c("data_04_to_12_07_2022"))) #remove useless data
 ```
 
-# Outputs of the 3 indicators on the data of the 3 first days
+# Consistency of the certainty distribution
 
-## (Useless ?) Consistency of the certainty distribution
+## Confidence depending on the number of predictions
 
 Original data :
 
@@ -111,6 +116,209 @@ between 8-21h didn't change its distribution.
 
 But idk if it's true because the missing data contains a big part of night, so
 maybe certainty won't be the same (less certainty).
+
+Let's do a test to see if the difference is true. Why running an ANOVA ? → Cf
+part "confidence_gap".
+
+```{r}
+par(mfrow = c(3, 2))
+
+# When 1 prediction
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 1) %>% #when 1 prediction made
+       select(confidence)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 1 prediction",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "chartreuse3",
+     freq = TRUE)
+
+# When 2 predictions
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 2) %>% #when 2 predictions made
+       select(confidence)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 2 predictions",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "gold",
+     freq = TRUE)
+
+# When 3 predictions
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 3) %>% #when 3 predictions made
+       select(confidence)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 3 predictions",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "orange",
+     freq = TRUE)
+
+
+# When 4 predictions
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 4) %>% #when 4 predictions made
+       select(confidence)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 4 predictions",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "firebrick2",
+     freq = TRUE)
+
+
+# Overall distribution
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       select(confidence)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Overall confidence distribution",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "lightblue",
+     freq = TRUE)
+
+
+```
+
+Kruskal-Wallis (comparison of ranks) to see if the confidence differs
+significantly between the groups (groups = number of predictions made by YOLO) :
+
+```{r}
+# Few data with 5 predictions : remove them
+data_less_5pred <- data_8h_21h_04_to_12_07_2022 %>% 
+  filter(number_of_predictions < 5) %>% 
+  select(number_of_predictions, confidence)
+
+# Kruskal Wallis because non normal distributions & more than 2 groups
+kruskal.test(data_less_5pred$confidence ~ data_less_5pred$number_of_predictions)
+
+rm(data_less_5pred)
+```
+
+There is a confidence difference between groups (p=10\^-16).
+
+## Confidence gap depending on the number of predictions
+
+```{r}
+# Confidence gap depending on the number of predictions
+
+# New dataset with the number of predictions as a factor variable
+data_group_number_pred <- data_8h_21h_04_to_12_07_2022 %>%
+  filter(number_of_predictions >= 2 & number_of_predictions <= 4) %>% 
+  mutate(group = as.factor(number_of_predictions))
+
+# New dataset with a variable "group" always being "All"
+data_group_overall <- data_04_to_12_07_2022 %>%
+  mutate(group = "Total")
+
+# Merge the 2 datasets into 1 (so it's 2 times bigger)
+merged_data <- bind_rows(data_group_number_pred, data_group_overall)
+
+# Display boxplots
+ggplot(merged_data, aes(x = group, y = confidence_gap, fill = group)) +
+  geom_boxplot() +
+  xlab("Amount of predictions made for 1 frame (and total)") +
+  ylab("Confidence gap between the 2 highest predictions of a frame") +
+  theme(legend.position = "right") +
+  ggtitle("Data from 04/07/2022 to 12/07/2022",
+          subtitle = "With all the data")
+
+
+# Clean up
+rm(data_group_number_pred, data_group_overall, merged_data)
+```
+
+→ So we can see that frames with 3 or 4 predictions have a lowest difference
+between the confidences of the 2 most likely predictions than the frames with
+only 2 predictions. So having more than 2 predictions can be linked to an
+inferior discrimination of the likely postures, which seems normal.
+
+Additional remark : it was the same boxplots with or without data outside the
+range 8h-21h so no problem on this side.
+
+Let's do a test to confirm that. Confidence_gap is a quantitative variable, and
+there is more than 30 observations. We want to compare more than 2 groups (3
+groups : 2, 3 and 4 predictions made). Samples are considered independent,
+because a frame can't have 2 and 3 predictions at the same time (so the groups
+are exclusive), and because we assume that the confidence of a frame isn't
+determined by the others'. We want to run an ANOVA :
+
+```{r}
+# Confidence gap, on data 8h-21h
+
+par(mfrow = c(2, 2))
+
+# When 2 predictions
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 2) %>% #when 2 predictions made
+       select(confidence_gap)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 2 predictions",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "gold",
+     freq = TRUE)
+
+# When 3 predictions
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 3) %>% #when 3 predictions made
+       select(confidence_gap)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 3 predictions",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "orange",
+     freq = TRUE)
+
+
+# When 4 predictions
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions == 4) %>% #when 4 predictions made
+       select(confidence_gap)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Confidence when 4 predictions",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "firebrick2",
+     freq = TRUE)
+
+
+# Overall distribution when more than 1 prediction (otherwise : nonsense)
+hist((data_8h_21h_04_to_12_07_2022 %>% 
+       filter(number_of_predictions > 1) %>%  #when >1 prediction made
+       select(confidence_gap)                 #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Overall confidence distribution",
+     xlab = "Values of confidence",
+     ylab = "Count",
+     col = "lightblue",
+     freq = TRUE)
+
+```
+
+Mann-Whitney (comparison of ranks) : because 2 groups & non normal data
+
+```{r}
+# Test of confidence_gap differences between groups (only 2 & 3 predictions)
+
+group1 <- (data_8h_21h_04_to_12_07_2022 %>% #2 pred
+  filter(number_of_predictions == 2) %>% 
+  select(confidence_gap))[[1]]
+
+group2 <- (data_8h_21h_04_to_12_07_2022 %>% #3 pred
+  filter(number_of_predictions == 3) %>%
+  select(confidence_gap))[[1]]
+
+# Mann-Whitney 
+wilcox.test(group1, group2, exact = FALSE)
+
+rm(group1, group2) #clean up
+```
+
+p\<10\^-16 : there is a difference between confidences in groups of 2 & 3
+predictions.
 
 # Comparison with or without no reliable predictions
 
