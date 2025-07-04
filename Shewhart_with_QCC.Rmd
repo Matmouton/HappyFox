@@ -4,7 +4,212 @@ author: "Mathilda Alhamadah"
 date: "2025-07-04"
 output: html_document
 ---
+# Starter
+
+## What do we do
 
 We're going to run the Shewhart algorithm using the QCC package on our data from 04 to 14th of July, 2022.
 Shewhart because it's the easiest to begin & QCC because it doesn't use a real time metric so it's useful for our incomplete data with a "false" time metric (aggregating days but skipping the 21h-8h part). Also QCC is practical because of NA management : accepted (unless it's a whole day).
+
+## Hypothesis
+
+Data = realizations of iid random variable (VA), follows a normal distribution, no trend or cyclicity in data.
+Possible with non normal data (ref : Clement, 2017) but not very clear about that.
+
+## Pros
+
+Simple to implement & interpret. Allows a quick detection of sudden & important changes in the process.
+No need to transform data : we directly plot the process. We only build upper control limit (UCL) & lower control limit (LCL)
+
+## Cons
+
+Not very sensitive to small changes.
+
+
+```{r}
+library(qcc)
+```
+
+
+
+# Try on data : 1point = 1day
+
+No need to check daily cyclicity because 1 point = 1 day so we won't see this cyclicity. We can assume that there is not trend in the data.
+
+## Timestep = 1hour
+
+```{r}
+#load data
+load("data_QCC_indicator1_1h_04_to_14_07_2022.Rdata")
+```
+
+```{r}
+#function to keep only data between 8h & 21h
+filter_8h_21h <- function(data, time_column){
+  data <- data %>% 
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
+```
+
+```{r}
+#keep only data between 8h & 21h
+frequency_position_8h_21h_04_to_14_07_2022 <- filter_8h_21h(data = frequency_position_04_to_14_07_2022,
+                                                            time_column = start_time)
+
+#create a day variable to aggregate by day
+frequency_position_8h_21h_04_to_14_07_2022 <- frequency_position_8h_21h_04_to_14_07_2022 %>% 
+  mutate(day = as.Date(start_time))
+```
+
+### xbar chart
+
+```{r}
+#Aggregate by day with QCC function
+
+  #lying
+lying_byday_1h <- qcc.groups(data = frequency_position_8h_21h_04_to_14_07_2022$lying, #lying counts only
+                             sample = frequency_position_8h_21h_04_to_14_07_2022$day) #1 day = 1 point
+
+
+  #sitting
+sitting_byday_1h <- qcc.groups(data = frequency_position_8h_21h_04_to_14_07_2022$sitting, #lying counts only
+                             sample = frequency_position_8h_21h_04_to_14_07_2022$day) #1 day = 1 point
+
+
+  #standing
+standing_byday_1h <- qcc.groups(data = frequency_position_8h_21h_04_to_14_07_2022$standing, #lying counts only
+                             sample = frequency_position_8h_21h_04_to_14_07_2022$day) #1 day = 1 point
+
+
+  #not visible
+not_visible_byday_1h <- qcc.groups(data = frequency_position_8h_21h_04_to_14_07_2022$not_visible, #lying counts only
+                             sample = frequency_position_8h_21h_04_to_14_07_2022$day) #1 day = 1 point
+```
+
+
+```{r}
+#Plot xbar charts for every posture 
+
+  #lying, timesteps = 1h, 1point = 1day
+qcc(data = lying_byday_1h[1:5,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = lying_byday_1h[6:11,])  #5-11 days = test phase
+
+
+  #sitting, timesteps = 1h, 1point = 1day
+qcc(data = sitting_byday_1h[1:5,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #standing, timesteps = 1h, 1point = 1day
+qcc(data = standing_byday_1h[1:5,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = standing_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #not visible, timesteps = 1h, 1point = 1day
+qcc(data = not_visible_byday_1h[1:5,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = not_visible_byday_1h[6:11,],  #5-11 days = test phase
+    confidence.level = 0.99,       #increase confidence level (default = 0.95)
+    add.stats = FALSE)  +          #don't display center, std & number of groups
+  scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
+```
+With a calibration phase of 5 days, every measure is within the UCL/LCL thresholds.
+
+
+### R chart
+
+```{r}
+#Plot R charts for every posture 
+
+  #lying, timesteps = 1h, 1point = 1day
+qcc(data = lying_byday_1h[1:5,], #5 first days = calibration
+    type = "R",               #chart type
+    newdata = lying_byday_1h[6:11,])  #5-11 days = test phase
+
+
+  #sitting, timesteps = 1h, 1point = 1day
+qcc(data = sitting_byday_1h[1:5,], #5 first days = calibration
+    type = "R",               #chart type
+    newdata = sitting_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #standing, timesteps = 1h, 1point = 1day
+qcc(data = standing_byday_1h[1:5,], #5 first days = calibration
+    type = "R",               #chart type
+    newdata = standing_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #not visible, timesteps = 1h, 1point = 1day
+qcc(data = not_visible_byday_1h[1:5,], #5 first days = calibration
+    type = "R",               #chart type
+    newdata = not_visible_byday_1h[6:11,])  #5-11 days = test phase
+```
+There are out-of-control data for points that are in the calibration period. This is weird, but not impossible. The UCL & LCL are created depending on the values of all the points in the calibration period. So the IC95% of a point is not created around this point only. It's supposed to be fix for every point, the only difference is that this IC is higher when we have less data for the daily observation. But a higer value doesn't mean a higher IC.
+
+### S chart
+
+```{r}
+#Plot S charts for every posture 
+
+  #lying, timesteps = 1h, 1point = 1day
+qcc(data = lying_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = lying_byday_1h[6:11,])  #5-11 days = test phase
+
+
+  #sitting, timesteps = 1h, 1point = 1day
+qcc(data = sitting_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = sitting_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #standing, timesteps = 1h, 1point = 1day
+qcc(data = standing_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = standing_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #not visible, timesteps = 1h, 1point = 1day
+qcc(data = not_visible_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = not_visible_byday_1h[6:11,])  #5-11 days = test phase
+```
+
+### p chart
+
+```{r}
+#Plot S charts for every posture 
+
+  #lying, timesteps = 1h, 1point = 1day
+qcc(data = lying_byday_1h[1:5,], #5 first days = calibration
+    type = "p",               #chart type
+    newdata = lying_byday_1h[6:11,])  #5-11 days = test phase
+
+
+  #sitting, timesteps = 1h, 1point = 1day
+qcc(data = sitting_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = sitting_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #standing, timesteps = 1h, 1point = 1day
+qcc(data = standing_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = standing_byday_1h[6:11,]) #5-11 days = test phase
+
+
+  #not visible, timesteps = 1h, 1point = 1day
+qcc(data = not_visible_byday_1h[1:5,], #5 first days = calibration
+    type = "S",               #chart type
+    newdata = not_visible_byday_1h[6:11,])  #5-11 days = test phase
+```
+
+
+
+
+
 

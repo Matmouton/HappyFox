@@ -1,5 +1,5 @@
 ---
-title: "Contrôle stat de processus avec QCC"
+title: "SCP with QCC"
 author: "Mathilda Alhamadah"
 date: "2025-03-07"
 output:
@@ -11,7 +11,7 @@ output:
     highlight: zenburn    #changer le thème des chunks
 ---
 
-# Premiers pas QCC
+# Firsts steps with QCC
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #install.packages("qcc")
@@ -23,15 +23,36 @@ library(qcc)
 Je crois bien que ces 2 charts font partie des Standard Shewhart control charts, qui peuvent être appelés directement avec la fonction qcc().\
 On a une UCL (upper cotrol limit) et une LCL (lower control limit) avec la ligne horizontale qui représente le centre. Les limites sup et inf sont égales à ce centre +/- nsigma.
 
+## Make groups
+
+We have data with 5 observations per sample, 40 samples (sample), and a measure for each observation (diameter). We also have the information if the dataset is the train or the test phase (trial).
+
 ```{r, echo=FALSE, results=FALSE}
 # Loading the piston rings data
 data(pistonrings)
-attach(pistonrings)
 head(pistonrings)
 
-diameter <- qcc.groups(diameter, sample)
+# Make groups : lines = the sample number & columns = the repeated observations
+diameter <- qcc.groups(data = pistonrings$diameter,
+                       sample = pistonrings$sample)
 head(diameter)
 summary(diameter)
+```
+
+I think for us : lines = days & columns = mean of the indicator (already aggregated every x minutes) in that day. For example :
+
+\| day 1 \| mean indicator1 8h \| mean indicator1 9h \| mean indicator1 10h \| ...
+
+\| day 2 \| mean indicator1 8h \| mean indicator1 9h \| mean indicator1 10h \| ...
+
+...
+
+So that each mean already has its own sd
+
+```{r}
+qcc(data = diameter[1:25,],      #train dataset
+    type = "xbar",               #chart type
+    newdata = diameter[26:40,])  #test dataset
 ```
 
 ### Graphique R chart
