@@ -1,0 +1,10 @@
+---
+title: "Shewhart with QCC"
+author: "Mathilda Alhamadah"
+date: "2025-07-04"
+output: html_document
+---
+
+We're going to run the Shewhart algorithm using the QCC package on our data from 04 to 14th of July, 2022.
+Shewhart because it's the easiest to begin & QCC because it doesn't use a real time metric so it's useful for our incomplete data with a "false" time metric (aggregating days but skipping the 21h-8h part). Also QCC is practical because of NA management : accepted (unless it's a whole day).
+
