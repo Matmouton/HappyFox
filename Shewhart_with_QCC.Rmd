@@ -43,22 +43,22 @@ library(patchwork)
 2 chunks to change timestep (load frequency_position data with the right timestep & remove data outside 8h-21h and then add a day variable
 
 ```{r}
-#function to keep only data between 8h & 21h
-filter_8h_21h <- function(data, time_column){
-  data <- data %>%
-    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
-  return(data)
-}
+# #function to keep only data between 8h & 21h
+# filter_8h_21h <- function(data, time_column){
+#   data <- data %>%
+#     filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+#   return(data)
+# }
 ```
 
 ```{r}
-#keep only data between 8h & 21h
-frequency_position_30min_8h_21h_04_to_14_07_2022 <- filter_8h_21h(data = frequency_position_30min_04_to_14_07_2022,
-                                                            time_column = start_time)
-
-#create a day variable to aggregate by day
-frequency_position_30min_8h_21h_04_to_14_07_2022 <- frequency_position_30min_8h_21h_04_to_14_07_2022 %>%
-  mutate(day = as.Date(start_time))
+# #keep only data between 8h & 21h
+# frequency_position_30min_8h_21h_04_to_14_07_2022 <- filter_8h_21h(data = frequency_position_30min_04_to_14_07_2022,
+#                                                             time_column = start_time)
+# 
+# #create a day variable to aggregate by day
+# frequency_position_30min_8h_21h_04_to_14_07_2022 <- frequency_position_30min_8h_21h_04_to_14_07_2022 %>%
+#   mutate(day = as.Date(start_time))
 ```
 
 ## Remove anesthesia data
@@ -67,23 +67,20 @@ When the fox is absent, we don't want it to be as if he was not visible. When he
 
 
 ```{r}
-#load data
-load("data_QCC_indicator1_15min_04_to_14_07_2022.Rdata")
-
-#remove day 04/07/2022
-frequency_position_30min_05_to_14_07_2022 <- frequency_position_30min_04_to_14_07_2022 %>% 
-  filter(date(start_time) != "2022-07-04")
-
-frequency_position_30min_8h_21h_05_to_14_07_2022 <- frequency_position_30min_8h_21h_04_to_14_07_2022 %>% 
-  filter(date(start_time) != "2022-07-04")
-
-rm(frequency_position_30min_04_to_14_07_2022, frequency_position_30min_8h_21h_04_to_14_07_2022)
+# #load data
+# load("data_QCC_indicator1_15min_04_to_14_07_2022.Rdata")
+# 
+# #remove day 04/07/2022
+# frequency_position_30min_05_to_14_07_2022 <- frequency_position_30min_04_to_14_07_2022 %>% 
+#   filter(date(start_time) != "2022-07-04")
+# 
+# frequency_position_30min_8h_21h_05_to_14_07_2022 <- frequency_position_30min_8h_21h_04_to_14_07_2022 %>% 
+#   filter(date(start_time) != "2022-07-04")
+# 
+# rm(frequency_position_30min_04_to_14_07_2022, frequency_position_30min_8h_21h_04_to_14_07_2022)
 
 ```
 
-# Timestep = 1hour
-
-## xbar chart
 
 ```{r}
 #Aggregate by day with QCC function
@@ -115,12 +112,17 @@ aggregate_by_day <- function(frequency_position_data, time) {
 
 ```
 
+
+# xbar chart
+
+## timestep = 15min
+
 ```{r}
   # aggregate with the function
 aggregate_by_day(frequency_position_15min_8h_21h_05_to_14_07_2022, time = "15min")
 ```
 
-
+Plots :
 ```{r}
 #Plot xbar charts for every posture 
 
@@ -152,8 +154,83 @@ qcc(data = not_visible_byday_15min[1:4,], #5 first days = calibration
 ```
 With a calibration phase of 5 days, every measure is within the UCL/LCL thresholds.
 
+## timestep = 30min
 
-## R chart
+```{r}
+  # aggregate with the function
+aggregate_by_day(frequency_position_30min_8h_21h_05_to_14_07_2022, time = "30min")
+```
+
+Plots :
+```{r}
+#Plot xbar charts for every posture 
+
+  #lying, timesteps = 1h, 1point = 1day
+qcc(data = lying_byday_30min[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = lying_byday_30min[5:10,])  #5-11 days = test phase
+
+
+  #sitting, timesteps = 1h, 1point = 1day
+qcc(data = sitting_byday_30min[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_byday_30min[5:10,]) #5-11 days = test phase
+
+
+  #standing, timesteps = 1h, 1point = 1day
+qcc(data = standing_byday_30min[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = standing_byday_30min[5:10,]) #5-11 days = test phase
+
+
+  #not visible, timesteps = 1h, 1point = 1day
+qcc(data = not_visible_byday_30min[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = not_visible_byday_30min[5:10,],  #5-11 days = test phase
+    confidence.level = 0.99,       #increase confidence level (default = 0.95)
+    add.stats = FALSE)  +          #don't display center, std & number of groups
+  scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
+```
+
+## timestep = 1h
+
+```{r}
+  # aggregate with the function
+aggregate_by_day(frequency_position_1h_8h_21h_05_to_14_07_2022, time = "1h")
+```
+
+Plots :
+```{r}
+#Plot xbar charts for every posture 
+
+  #lying, timesteps = 1h, 1point = 1day
+qcc(data = lying_byday_1h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = lying_byday_1h[5:10,])  #5-11 days = test phase
+
+
+  #sitting, timesteps = 1h, 1point = 1day
+qcc(data = sitting_byday_1h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_byday_1h[5:10,]) #5-11 days = test phase
+
+
+  #standing, timesteps = 1h, 1point = 1day
+qcc(data = standing_byday_1h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = standing_byday_1h[5:10,]) #5-11 days = test phase
+
+
+  #not visible, timesteps = 1h, 1point = 1day
+qcc(data = not_visible_byday_1h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = not_visible_byday_1h[5:10,],  #5-11 days = test phase
+    confidence.level = 0.99,       #increase confidence level (default = 0.95)
+    add.stats = FALSE)  +          #don't display center, std & number of groups
+  scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
+```
+
+# R chart
 
 ```{r}
 #Plot R charts for every posture 
