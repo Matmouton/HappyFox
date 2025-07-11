@@ -183,7 +183,7 @@ areas_1h <- data.frame(
 ```{r}
 # Test for 900 seconds (15 minutes)
 
-frequency_position_04_to_14_07_2022 <- frequency_position(data = data_8h_21h_04_to_14_07_2022, interval_seconds = 3600)
+frequency_position_30min_04_to_14_07_2022 <- frequency_position(data = data_8h_21h_04_to_14_07_2022, interval_seconds = 1800)
 ```
 
 ```{r}
