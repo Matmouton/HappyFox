@@ -84,39 +84,6 @@ amount_activity <- function(data, interval_seconds) {
 }
 ```
 
-```{r}
-# test2
-
-amount_activity <- function(data, interval_seconds) {
-  data <- data %>% arrange(Date_Time)
-  
-  start_time <- min(data$Date_Time)
-  end_time <- max(data$Date_Time)
-  
-  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
-  
-  df_counts <- data.frame(
-    interval_start = intervals[-length(intervals)],
-    interval_end = intervals[-1]
-  )
-  
-  df_counts <- df_counts %>%
-    rowwise() %>%
-    mutate(
-      # Filtrer les valeurs non-NA pour le calcul de total_activity
-      valid_values = data$increasing_code[data$Date_Time >= interval_start & data$Date_Time < interval_end & !is.na(data$increasing_code)],
-      total_activity = sum(valid_values, na.rm = TRUE) / 2, # Diviser par 2 pour obtenir un max de 1
-      # Calculer le nombre de valeurs non-NA
-      non_na_count = sum(!is.na(data$increasing_code[data$Date_Time >= interval_start & data$Date_Time < interval_end])),
-      # Calculer activity_proportion en fonction du nombre de valeurs non-NA
-      activity_proportion = ifelse(non_na_count > 0, total_activity / non_na_count, NA)
-    ) %>%
-    select(-valid_values, -non_na_count) # Supprimer les colonnes temporaires
-  
-  return(df_counts)
-}
-
-```
 
 ```{r}
 # test 3
@@ -126,7 +93,7 @@ amount_activity <- function(data, interval_seconds) {
   start_time <- min(data$Date_Time)
   end_time <- max(data$Date_Time)
   
-  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  intervals <- seq(from = start_time, to = end_time, by = as.difftime(interval_seconds, units = "secs"))
   
   df_counts <- data.frame(
     interval_start = intervals[-length(intervals)],
