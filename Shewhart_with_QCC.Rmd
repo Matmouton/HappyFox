@@ -37,6 +37,10 @@ library(tidyr)
 library(ggplot2)
 library(patchwork)
 ```
+```{r}
+load("")
+```
+
 
 ## How to change timestep
 
@@ -63,7 +67,7 @@ library(patchwork)
 
 ## Remove anesthesia data
 
-When the fox is absent, we don't want it to be as if he was not visible. When he wakes up from anesthesia, we don't want it to be as if he was always lying in free will. We have to delete the 1st day because it was almost only anesthesia or a wake up from anesthesia.
+When the fox is absent, we don't want it to be as if he was not visible. When he wakes up from anesthesia, we don't want it to be as if he was always lying in free will. We have to delete the 1st day because it was almost only anesthesia or a wake up from anesthesia. We also remove from 9h7m to 10h14m of day 08/07/2022 because there was a mini anesthesia + injection of rabies.
 
 
 ```{r}

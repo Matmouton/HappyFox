@@ -32,13 +32,13 @@ library(rstatix)
 
 
 #Data
-load("data_04_to_12_07_2022.Rdata") #load all data between 04 & 12 of July
-rm(list = setdiff(ls(), c("data_04_to_12_07_2022"))) #remove useless data
+load("data_04_to_14_07_2022.Rdata") #load all data between 04 & 14 of July
+rm(list = setdiff(ls(), c("data_04_to_14_07_2022"))) #remove useless data
 ```
 
-# Consistency of the certainty distribution
+# A. Consistency of the certainty distribution
 
-## Confidence depending on the number of predictions
+## 1. Confidence depending on the number of predictions
 
 Original data :
 
@@ -46,11 +46,11 @@ Original data :
 # Highest confidence rate depending on the number of predictions
 
 # New dataset with the number of predictions as a factor variable
-data_group_number_pred <- data_04_to_12_07_2022 %>%
+data_group_number_pred <- data_04_to_14_07_2022 %>%
   mutate(group = as.factor(number_of_predictions))
 
 # New dataset with a variable "group" always being "All"
-data_group_overall <- data_04_to_12_07_2022 %>%
+data_group_overall <- data_04_to_14_07_2022 %>%
   mutate(group = "Total")
 
 # Merge the 2 datasets into 1 (so it's 2 times bigger)
@@ -62,7 +62,7 @@ ggplot(merged_data, aes(x = group, y = confidence, fill = group)) +
   xlab("Amount of predictions made for 1 frame (and total)") +
   ylab("Highest confidence of the prediction for 1 frame") +
   theme(legend.position = "right") +
-  ggtitle("Data from 04/07/2022 to 12/07/2022",
+  ggtitle("Data from 04/07/2022 to 14/07/2022",
           subtitle = "With all the data")
 
 
@@ -76,14 +76,14 @@ Data between 8h and 21h only :
 ```{r}
 # Highest confidence rate depending on the number of predictions
 
-load("data_8h_21h_04_to_12_07_2022.Rdata")
+load("data_8h_21h_04_to_14_07_2022.Rdata")
 
 # New dataset with the number of predictions as a factor variable
-data_group_number_pred <- data_8h_21h_04_to_12_07_2022 %>%
+data_group_number_pred <- data_8h_21h_04_to_14_07_2022 %>%
   mutate(group = as.factor(number_of_predictions))
 
 # New dataset with a variable "group" always being "All"
-data_group_overall <- data_8h_21h_04_to_12_07_2022 %>%
+data_group_overall <- data_8h_21h_04_to_14_07_2022 %>%
   mutate(group = "Total")
 
 # Merge the 2 datasets into 1 (so it's 2 times bigger)
@@ -95,7 +95,7 @@ ggplot(merged_data, aes(x = group, y = confidence, fill = group)) +
   xlab("Amount of predictions made for 1 frame (and total)") +
   ylab("Highest confidence of the prediction for 1 frame") +
   theme(legend.position = "right") +
-  ggtitle("Data from 04/07/2022 to 12/07/2022",
+  ggtitle("Data from 04/07/2022 to 14/07/2022",
           subtitle = "Only with the 8h-21h data")
 
 # Clean up
@@ -124,7 +124,7 @@ part "confidence_gap".
 par(mfrow = c(3, 2))
 
 # When 1 prediction
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 1) %>% #when 1 prediction made
        select(confidence)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -135,7 +135,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
      freq = TRUE)
 
 # When 2 predictions
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 2) %>% #when 2 predictions made
        select(confidence)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -146,7 +146,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
      freq = TRUE)
 
 # When 3 predictions
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 3) %>% #when 3 predictions made
        select(confidence)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -158,7 +158,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
 
 
 # When 4 predictions
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 4) %>% #when 4 predictions made
        select(confidence)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -170,7 +170,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
 
 
 # Overall distribution
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        select(confidence)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
      main = "Overall confidence distribution",
@@ -187,7 +187,7 @@ significantly between the groups (groups = number of predictions made by YOLO) :
 
 ```{r}
 # Few data with 5 predictions : remove them
-data_less_5pred <- data_8h_21h_04_to_12_07_2022 %>% 
+data_less_5pred <- data_8h_21h_04_to_14_07_2022 %>% 
   filter(number_of_predictions < 5) %>% 
   select(number_of_predictions, confidence)
 
@@ -199,18 +199,18 @@ rm(data_less_5pred)
 
 There is a confidence difference between groups (p=10\^-16).
 
-## Confidence gap depending on the number of predictions
+## 2. Confidence gap depending on the number of predictions
 
 ```{r}
 # Confidence gap depending on the number of predictions
 
 # New dataset with the number of predictions as a factor variable
-data_group_number_pred <- data_8h_21h_04_to_12_07_2022 %>%
+data_group_number_pred <- data_8h_21h_04_to_14_07_2022 %>%
   filter(number_of_predictions >= 2 & number_of_predictions <= 4) %>% 
   mutate(group = as.factor(number_of_predictions))
 
 # New dataset with a variable "group" always being "All"
-data_group_overall <- data_04_to_12_07_2022 %>%
+data_group_overall <- data_04_to_14_07_2022 %>%
   mutate(group = "Total")
 
 # Merge the 2 datasets into 1 (so it's 2 times bigger)
@@ -222,7 +222,7 @@ ggplot(merged_data, aes(x = group, y = confidence_gap, fill = group)) +
   xlab("Amount of predictions made for 1 frame (and total)") +
   ylab("Confidence gap between the 2 highest predictions of a frame") +
   theme(legend.position = "right") +
-  ggtitle("Data from 04/07/2022 to 12/07/2022",
+  ggtitle("Data from 04/07/2022 to 14/07/2022",
           subtitle = "With all the data")
 
 
@@ -251,7 +251,7 @@ determined by the others'. We want to run an ANOVA :
 par(mfrow = c(2, 2))
 
 # When 2 predictions
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 2) %>% #when 2 predictions made
        select(confidence_gap)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -262,7 +262,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
      freq = TRUE)
 
 # When 3 predictions
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 3) %>% #when 3 predictions made
        select(confidence_gap)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -274,7 +274,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
 
 
 # When 4 predictions
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions == 4) %>% #when 4 predictions made
        select(confidence_gap)                     #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -286,7 +286,7 @@ hist((data_8h_21h_04_to_12_07_2022 %>%
 
 
 # Overall distribution when more than 1 prediction (otherwise : nonsense)
-hist((data_8h_21h_04_to_12_07_2022 %>% 
+hist((data_8h_21h_04_to_14_07_2022 %>% 
        filter(number_of_predictions > 1) %>%  #when >1 prediction made
        select(confidence_gap)                 #get the confidence
       )[[1]],                                 #only 1st object of the output
@@ -303,11 +303,11 @@ Mann-Whitney (comparison of ranks) : because 2 groups & non normal data
 ```{r}
 # Test of confidence_gap differences between groups (only 2 & 3 predictions)
 
-group1 <- (data_8h_21h_04_to_12_07_2022 %>% #2 pred
+group1 <- (data_8h_21h_04_to_14_07_2022 %>% #2 pred
   filter(number_of_predictions == 2) %>% 
   select(confidence_gap))[[1]]
 
-group2 <- (data_8h_21h_04_to_12_07_2022 %>% #3 pred
+group2 <- (data_8h_21h_04_to_14_07_2022 %>% #3 pred
   filter(number_of_predictions == 3) %>%
   select(confidence_gap))[[1]]
 
@@ -320,7 +320,7 @@ rm(group1, group2) #clean up
 p\<10\^-16 : there is a difference between confidences in groups of 2 & 3
 predictions.
 
-# Comparison with or without no reliable predictions
+# B. Comparison with or without no reliable predictions
 
 ## 1. Amount of time spent in postures : same distribution
 
@@ -406,14 +406,14 @@ add_compressed_time_variable_PIVOT_data <- function(data) {
 ### All data :
 
 ```{r}
-load("data_8h_21h_04_to_12_07_2022.Rdata")
+load("data_8h_21h_04_to_14_07_2022.Rdata")
 
 # Test for 900 seconds (15 minutes)
 
-frequency_position_04_to_12_07_2022 <- frequency_position(data = data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
+frequency_position_04_to_14_07_2022 <- frequency_position(data = data_8h_21h_04_to_14_07_2022, interval_seconds = 3600)
 
 
-frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
+frequency_position_04_to_14_07_2022_PIVOT <- frequency_position_04_to_14_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
     names_to = "Posture", 
@@ -421,33 +421,33 @@ frequency_position_04_to_12_07_2022_PIVOT <- frequency_position_04_to_12_07_2022
   )
 
 
-frequency_position_04_to_12_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_12_07_2022,
+frequency_position_04_to_14_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_14_07_2022,
                    variables_to_drop = end_time,
                    variables_to_merge = c(lying, standing, sitting, not_visible),
                    str_name_merged_labels = "Posture",
                    str_name_merged_values = "Count")
 
  # Test
-frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_12_07_2022_PIVOT, start_time)
+frequency_position_8h_21h_04_to_14_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_14_07_2022_PIVOT, start_time)
 
-rm(frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_04_to_14_07_2022_PIVOT)  #remove data with the 21h-8h gap
 
 
 # Test
 
-frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_14_07_2022_PIVOT)
 
 
 
 #remove useless data : no compressed time
-rm(frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+rm(frequency_position_8h_21h_04_to_14_07_2022_PIVOT)
 ```
 
 ### Only reliable data :
 
 ```{r}
 #Load data
-reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+reliable_data_8h_21h_04_to_14_07_2022 <- data_8h_21h_04_to_14_07_2022 %>% 
            #if only 1 prediction : keep only data with a confidence >= 0.34
   filter((number_of_predictions == 1 & confidence >= 0.34) | 
            #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
@@ -456,10 +456,10 @@ reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>%
            is.na(confidence_gap))
 
 #Calculate frequency position
-reliable_frequency_position_04_to_12_07_2022 <- frequency_position(data = reliable_data_8h_21h_04_to_12_07_2022, interval_seconds = 900)
+reliable_frequency_position_04_to_14_07_2022 <- frequency_position(data = reliable_data_8h_21h_04_to_14_07_2022, interval_seconds = 900)
 
 #Pivot data
-reliable_frequency_position_04_to_12_07_2022_PIVOT <- reliable_frequency_position_04_to_12_07_2022[,-2] %>% #drop the end_time column
+reliable_frequency_position_04_to_14_07_2022_PIVOT <- reliable_frequency_position_04_to_14_07_2022[,-2] %>% #drop the end_time column
   pivot_longer(
     cols = !start_time, 
     names_to = "Posture", 
@@ -467,15 +467,15 @@ reliable_frequency_position_04_to_12_07_2022_PIVOT <- reliable_frequency_positio
   )
 
 #Remove data outside 8h-21h range
-reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT <- filter_8h_21h(reliable_frequency_position_04_to_12_07_2022_PIVOT, start_time)
+reliable_frequency_position_8h_21h_04_to_14_07_2022_PIVOT <- filter_8h_21h(reliable_frequency_position_04_to_14_07_2022_PIVOT, start_time)
 
-rm(reliable_frequency_position_04_to_12_07_2022_PIVOT)  #remove data with the 21h-8h gap
+rm(reliable_frequency_position_04_to_14_07_2022_PIVOT)  #remove data with the 21h-8h gap
 
 #Add compressed time variable
-reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+reliable_frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(reliable_frequency_position_8h_21h_04_to_14_07_2022_PIVOT)
 
 #remove useless data : no compressed time
-rm(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
+rm(reliable_frequency_position_8h_21h_04_to_14_07_2022_PIVOT)
 
 
 ```
@@ -484,14 +484,14 @@ rm(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT)
 library(gridExtra)
 
 # With unreliable predictions
-plot1 <- ggplot(frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
+plot1 <- ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
   geom_boxplot() +
   xlab("Posture") +
   ylab("Nombre d'occurences toutes les 15 minutes") +
   theme(legend.position = "right")
 
 # Without unreliable predictions
-plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
+plot2 <- ggplot(reliable_frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
   geom_boxplot() +
   xlab("Posture") +
   ylab("Nombre d'occurences toutes les 15 minutes") +
@@ -506,7 +506,7 @@ grid.arrange(plot1, plot2, ncol=2)
 
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+ggplot(data = frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
@@ -524,7 +524,7 @@ ggplot(data = frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
 
 ```{r}
 # Chart for count
-ggplot(data = reliable_frequency_position_8h_21h_04_to_12_07_2022_PIVOT_compressed_time,
+ggplot(data = reliable_frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 06/07/2022",
@@ -553,7 +553,7 @@ library(tidyr)
 library(ggplot2)
 library(patchwork)
 
-load("data_8h_21h_04_to_12_07_2022.Rdata")
+load("data_8h_21h_04_to_14_07_2022.Rdata")
 
 #Change posture code to lying-sitting-standing (instead of lying-standing-sitting)
 posture_123 <- function(data){
@@ -744,10 +744,10 @@ from_data_to_plot <- function(data_8h_21h,
 ### All data
 
 ```{r}
-from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
+from_data_to_plot(data_8h_21h = data_8h_21h_04_to_14_07_2022,
                   interval_seconds = 3600,
                   title = "Posture's score of fox 4313",
-                  subtitle = "With all data, from 04/07/2022 to 12/07/2022",
+                  subtitle = "With all data, from 04/07/2022 to 14/07/2022",
                   x_lab = "Cumulative time of the day (only between 8h and 21h)",
                   y_lab = "Movement score by summing posture indices")
 ```
@@ -755,7 +755,7 @@ from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
 ### Only reliable data
 
 ```{r}
-reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+reliable_data_8h_21h_04_to_14_07_2022 <- data_8h_21h_04_to_14_07_2022 %>% 
            #if only 1 prediction : keep only data with a confidence >= 0.34
   filter((number_of_predictions == 1 & confidence >= 0.34) | 
            #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
@@ -763,23 +763,23 @@ reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>%
            #keep the NA values also
            is.na(confidence_gap))
 
-from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_12_07_2022,
+from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_14_07_2022,
                   interval_seconds = 3600,
                   title = "Posture's score of fox 4313",
-                  subtitle = "Without non-reliable data, from 04/07/2022 to 12/07/2022",
+                  subtitle = "Without non-reliable data, from 04/07/2022 to 14/07/2022",
                   x_lab = "Cumulative time of the day (only between 8h and 21h)",
                   y_lab = "Movement score by summing posture indices")
 ```
 
 ```{r}
-grid.arrange(from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
+grid.arrange(from_data_to_plot(data_8h_21h = data_8h_21h_04_to_14_07_2022,
                   interval_seconds = 3600), 
-             from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_12_07_2022,
+             from_data_to_plot(data_8h_21h = reliable_data_8h_21h_04_to_14_07_2022,
                   interval_seconds = 3600),
              ncol=2)
 ```
 
-## 4. Indicator 3 :
+## 4. Indicator 3 : same distribution
 
 ### Functions
 
@@ -795,7 +795,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_8h_21h_04_to_12_07_2022.Rdata")
+load("data_8h_21h_04_to_14_07_2022.Rdata")
 ```
 
 ```{r}
@@ -874,13 +874,13 @@ areas <- data.frame(
 
 ```{r}
 # Changes per 15minutes & per day
-amount_changes_data_8h_21h_04_to_12_07_2022 <- amount_posture_changes(data_8h_21h_04_to_12_07_2022, "15 minute")
+amount_changes_data_8h_21h_04_to_14_07_2022 <- amount_posture_changes(data_8h_21h_04_to_14_07_2022, "15 minute")
 
 # Skip parts between 21h and 8h
-amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_12_07_2022)
+amount_changes_data_8h_21h_04_to_14_07_2022_compressed_time <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_14_07_2022)
 
 # Plot
-ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time,
+ggplot(amount_changes_data_8h_21h_04_to_14_07_2022_compressed_time,
        aes(x = compressed_time, y = Nb_changes)) +
   
   geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
@@ -889,7 +889,7 @@ ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time,
   geom_line() +
   #xlab("Temps entre 8h et 21h chaque jour") +
   ylab("Amount of posture changes") +
-  ggtitle("Posture changes of fox 4313", subtitle = "All data, from 04/07/2022 to 12/07/2022, every 15 minutes") +
+  ggtitle("Posture changes of fox 4313", subtitle = "All data, from 04/07/2022 to 14/07/2022, every 15 minutes") +
   scale_x_continuous(name = "Time between 8h and 21h each day",
                      breaks = c(0,50,100,150,200,250,300,350,400,450))
 ```
@@ -898,7 +898,7 @@ ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time,
 
 ```{r}
 #Load data
-reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>% 
+reliable_data_8h_21h_04_to_14_07_2022 <- data_8h_21h_04_to_14_07_2022 %>% 
            #if only 1 prediction : keep only data with a confidence >= 0.34
   filter((number_of_predictions == 1 & confidence >= 0.34) | 
            #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
@@ -907,13 +907,13 @@ reliable_data_8h_21h_04_to_12_07_2022 <- data_8h_21h_04_to_12_07_2022 %>%
            is.na(confidence_gap))
 
 # Changes per 15minutes & per day
-amount_changes_data_8h_21h_04_to_12_07_2022_reliable_data <- amount_posture_changes(reliable_data_8h_21h_04_to_12_07_2022, "15 minute")
+amount_changes_data_8h_21h_04_to_14_07_2022_reliable_data <- amount_posture_changes(reliable_data_8h_21h_04_to_14_07_2022, "15 minute")
 
 # Skip parts between 21h and 8h
-amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time_reliable_data <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_12_07_2022_reliable_data)
+amount_changes_data_8h_21h_04_to_14_07_2022_compressed_time_reliable_data <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_14_07_2022_reliable_data)
 
 # Plot
-ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time_reliable_data,
+ggplot(amount_changes_data_8h_21h_04_to_14_07_2022_compressed_time_reliable_data,
        aes(x = compressed_time, y = Nb_changes)) +
   
   geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
@@ -922,7 +922,15 @@ ggplot(amount_changes_data_8h_21h_04_to_12_07_2022_compressed_time_reliable_data
   geom_line() +
   #xlab("Temps entre 8h et 21h chaque jour") +
   ylab("Amount of posture changes") +
-  ggtitle("Posture changes of fox 4313", subtitle = "Only reliable data, from 04/07/2022 to 12/07/2022, every 15 minutes") +
+  ggtitle("Posture changes of fox 4313", subtitle = "Only reliable data, from 04/07/2022 to 14/07/2022, every 15 minutes") +
   scale_x_continuous(name = "Time between 8h and 21h each day",
                      breaks = c(0,50,100,150,200,250,300,350,400,450))
 ```
+
+# C. Descriptive statistics for each indicator
+
+## 1. Indicator 1
+
+## 2. Indicator 2
+
+## 3. Indicator 3
