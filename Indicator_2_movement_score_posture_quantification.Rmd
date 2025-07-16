@@ -33,9 +33,9 @@ load("data_8h_21h_04_to_14_07_2022.Rdata")
 
 What we do have : 0 = lying, 1 = standing, 2 = sitting.
 
-What we want : 1 = lying, 2= sitting, 3= standing (so that 0 is only for missing
+What we want : 0 = lying, 1= sitting, 2= standing (so that NA is only for missing
 data & fox not visible). What we did is equevalent of multiplying the proportion
-of time spent in a posture by the index of this posture (1 2 or 3).
+of time spent in a posture by the index of this posture (1 2 or 3), but with a removal of NA values.
 
 ## 1. Function
 
@@ -51,6 +51,7 @@ posture_123 <- function(data){
 }
 ```
 
+
 ```{r}
 # Amount activity function
 amount_activity <- function(data, interval_seconds) {
@@ -60,40 +61,6 @@ amount_activity <- function(data, interval_seconds) {
   end_time <- max(data$Date_Time)
   
   intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
-  
-  df_counts <- data.frame(
-    interval_start = intervals[-length(intervals)],
-    interval_end = intervals[-1]
-  )
-  
-  df_counts <- df_counts %>%
-    rowwise() %>%
-    mutate(
-      total_activity =
-        sum(data$increasing_code[data$Date_Time >= interval_start
-                                 & data$Date_Time < interval_end],
-            na.rm = TRUE)/2, #divide by 2 because max score = 2 : get a max to 1
-      activity_proportion = ifelse(
-        total_activity != 0,
-        (total_activity) / nrow(data[data$Date_Time >= interval_start & data$Date_Time < interval_end, ]), #divided by 2 because score max = 2
-        0
-      )
-    )
-  
-  return(df_counts)
-}
-```
-
-
-```{r}
-# test 3
-amount_activity <- function(data, interval_seconds) {
-  data <- data %>% arrange(Date_Time)
-  
-  start_time <- min(data$Date_Time)
-  end_time <- max(data$Date_Time)
-  
-  intervals <- seq(from = start_time, to = end_time, by = as.difftime(interval_seconds, units = "secs"))
   
   df_counts <- data.frame(
     interval_start = intervals[-length(intervals)],
@@ -117,43 +84,6 @@ amount_activity <- function(data, interval_seconds) {
   return(df_counts)
 }
 
-```
-
-```{r}
-#test amount_activity
-
-data_8h_21h_04_to_14_07_2022 <- posture_123(data_8h_21h_04_to_14_07_2022)
-
-amount_activity(data_8h_21h_04_to_14_07_2022)
-
-datatest <- data_8h_21h_04_to_14_07_2022 %>% arrange(Date_Time)
-
-#interval_seconds <- 900
-  
-  start_time <- min(datatest$Date_Time)
-  end_time <- max(datatest$Date_Time)
-  
-  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
-  
-  df_counts <- data.frame(
-    interval_start = intervals[-length(intervals)], #enlever le dernier
-    interval_end = intervals[-1]                    #enlever le premier
-  )
-  
-  df_counts <- df_counts %>%
-    rowwise() %>%
-    mutate(
-      # Filtrer les valeurs non-NA pour le calcul de total_activity
-      valid_values = list(datatest$increasing_code[datatest$Date_Time >= interval_start & datatest$Date_Time < interval_end & !is.na(datatest$increasing_code)]),
-      total_activity = sum(valid_values,
-                           na.rm = FALSE) / 2, # Diviser par 2 pour obtenir un max de 1. Normalement pas de NA
-      # Calculer le nombre de valeurs non-NA
-      no_na_count = length(valid_values),
-      # Calculer activity_proportion en fonction du nombre de valeurs non-NA
-      activity_proportion = ifelse(no_na_count > 0, total_activity / no_na_count, NA)
-    ) %>%
-    select(-valid_values, -no_na_count) # Supprimer les colonnes temporaires
-  
 ```
 
 
