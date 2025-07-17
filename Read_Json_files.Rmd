@@ -553,6 +553,7 @@ data_8h_21h_05_to_14_07_2022 <- data_8h_21h_04_to_14_07_2022 %>%
 # 8. Remove uncertain data
 
 Uncertain data = data with 1 prediction & confidence > 1/3 or data with > 1 predictions & confidence > 1/3 & at least 0.2 confidence_gap between the 2 most reliable predictions.
+
 ```{r}
 reliable_data_8h_21h_05_to_14_07_2022 <- data_8h_21h_05_to_14_07_2022 %>% 
            #if only 1 prediction : keep only data with a confidence >= 0.34

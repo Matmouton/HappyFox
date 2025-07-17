@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_8h_21h_04_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
 ```
 
 # Indicator 1.1 : Number & proportion of each posture by time unit
@@ -183,21 +183,20 @@ areas_1h <- data.frame(
 ```{r}
 # Test for 900 seconds (15 minutes)
 
-frequency_position_30min_04_to_14_07_2022 <- frequency_position(data = data_8h_21h_04_to_14_07_2022, interval_seconds = 1800)
+frequency_position_6h_05_to_14_07_2022 <- frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, interval_seconds = 21600)
 ```
 
 ```{r}
-frequency_position_04_to_14_07_2022_PIVOT <- pivot_data(data = frequency_position_04_to_14_07_2022,
+frequency_position_15min_05_to_14_07_2022_PIVOT <- pivot_data(data = frequency_position_15min_05_to_14_07_2022,
                    variables_to_drop = end_time,
                    variables_to_merge = c(lying, standing, sitting, not_visible),
                    str_name_merged_labels = "Posture",
                    str_name_merged_values = "Count")
 ```
 
-
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_04_to_14_07_2022_PIVOT,
+ggplot(data = frequency_position_15min_05_to_14_07_2022_PIVOT,
        aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
@@ -215,25 +214,22 @@ ggplot(data = frequency_position_04_to_14_07_2022_PIVOT,
 
 
 ```{r}
-  # Test
-frequency_position_8h_21h_04_to_14_07_2022_PIVOT <- filter_8h_21h(frequency_position_04_to_14_07_2022_PIVOT, start_time)
+frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT <- filter_8h_21h(frequency_position_15min_05_to_14_07_2022_PIVOT, start_time)
 
-rm(frequency_position_04_to_14_07_2022_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_15min_05_to_14_07_2022_PIVOT)  #remove data with the 21h-8h gap
 
 ```
 
 ```{r}
-# Test
-
-frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_04_to_14_07_2022_PIVOT, nbrep = 4)
+frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT, nbrep = 4)
 
 #remove useless data : no compressed time
-rm(frequency_position_8h_21h_04_to_14_07_2022_PIVOT)
+rm(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT)
 ```
 
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
+ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
@@ -303,7 +299,7 @@ ggplot(data = frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %
 ```{r}
 # Test
 
-frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
+frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time<- add_proportion(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time,
                       count_variable = Count,
                       period_duration = 900)  #15 mintues by time period = 900 seconds
 
@@ -427,7 +423,7 @@ Plots :
 
 
   # Counts
-ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
+ggplot(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time,
        
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=

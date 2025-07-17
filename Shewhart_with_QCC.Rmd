@@ -38,53 +38,93 @@ library(ggplot2)
 library(patchwork)
 ```
 ```{r}
-load("")
+
 ```
 
+# Load data
 
-## How to change timestep
+## But how to get this data ?
 
-2 chunks to change timestep (load frequency_position data with the right timestep & remove data outside 8h-21h and then add a day variable
+Start from the data directly obtained with YOLO (see doc Read_Json_files) :
+* But without anesthesia data (= data of the 05/07 + data of the 08/07 only between 9h6m57 and 10h14m09s)
+* And without non reliable data (= data with a confidence < 1/3 ~ 0.34, and if > 2 predictions data with a confidence_gap < 0.2 between the 2 most reliable predictions)
+* And without data outside 8h-21h
 
 ```{r}
-# #function to keep only data between 8h & 21h
-# filter_8h_21h <- function(data, time_column){
-#   data <- data %>%
-#     filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
-#   return(data)
-# }
+#You can load it here :
+load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
 ```
+
+Then go to file Indicator_1 and run the whole "Functions" part. Now for each timestep you want, run this (example with 15min) :
 
 ```{r}
-# #keep only data between 8h & 21h
-# frequency_position_30min_8h_21h_04_to_14_07_2022 <- filter_8h_21h(data = frequency_position_30min_04_to_14_07_2022,
-#                                                             time_column = start_time)
-# 
-# #create a day variable to aggregate by day
-# frequency_position_30min_8h_21h_04_to_14_07_2022 <- frequency_position_30min_8h_21h_04_to_14_07_2022 %>%
-#   mutate(day = as.Date(start_time))
+#interval_seconds = the timestep you want in seconds. Here : 15min*60 = 900 seconds.
+frequency_position_15min_05_to_14_07_2022 <- frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+                                                                interval_seconds = 900)                       #15min
 ```
 
-## Remove anesthesia data
-
-When the fox is absent, we don't want it to be as if he was not visible. When he wakes up from anesthesia, we don't want it to be as if he was always lying in free will. We have to delete the 1st day because it was almost only anesthesia or a wake up from anesthesia. We also remove from 9h7m to 10h14m of day 08/07/2022 because there was a mini anesthesia + injection of rabies.
-
+But this made us have lines outside the 8h-21h gap again. We want to remove them :
 
 ```{r}
-# #load data
-# load("data_QCC_indicator1_15min_04_to_14_07_2022.Rdata")
-# 
-# #remove day 04/07/2022
-# frequency_position_30min_05_to_14_07_2022 <- frequency_position_30min_04_to_14_07_2022 %>% 
-#   filter(date(start_time) != "2022-07-04")
-# 
-# frequency_position_30min_8h_21h_05_to_14_07_2022 <- frequency_position_30min_8h_21h_04_to_14_07_2022 %>% 
-#   filter(date(start_time) != "2022-07-04")
-# 
-# rm(frequency_position_30min_04_to_14_07_2022, frequency_position_30min_8h_21h_04_to_14_07_2022)
+#function
+filter_8h_21h <- function(data, time_column){
+  data <- data %>%
+    filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
+  return(data)
+}
+
+#apply function
+frequency_position_6h_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = frequency_position_6h_05_to_14_07_2022,
+                                                            time_column = start_time)
+
+rm(frequency_position_6h_05_to_14_07_2022) #remove useless data
+```
+
+Now we need to remove again data of day 08/07 between 9h6m57 and 10h14m09s. Since they have already been removed in the original "reliable_data...", their value is 0 for each variable. But we don't want to have zeros if we removed the data, we want to have NAs. So we are just going to assign "NA" to these data so that it won't mess up because of missing lines :
+
+```{r}
+frequency_position_6h_8h_21h_05_to_14_07_2022 <- frequency_position_6h_8h_21h_05_to_14_07_2022 %>%
+  mutate(
+      #Define what's in the time we want to drop
+    in_interval = end_time >= as.POSIXct("2022-07-08 09:06:57") & start_time <= as.POSIXct("2022-07-08 10:14:09"),
+      #If in the time : NA, else : normal value
+    sitting = if_else(in_interval, NA, sitting),
+    standing = if_else(in_interval, NA, standing),
+    lying = if_else(in_interval, NA, lying),
+    not_visible = if_else(in_interval, NA, not_visible)
+  ) %>%
+  select(-in_interval)  #Remove temporary variable
 
 ```
 
+Warning : this is the most restrictive removal we can do. For example if the timestep is 2hours it will make the whole line go to NA. But if we want to be less restrictive, we just have to switch end_time and start_time : it will remove only lines that have both end_time and start_time in the interval. Whereas here, we remove lines if they have at least one time in the interval. I know it sounds weird but it works, the difference is about overlap of intervals : does it have to be partial or total to be NA ? Most restrictive (our case) = partial.
+
+Now we want to create a day variable to aggregate by day :
+
+```{r}
+frequency_position_6h_8h_21h_05_to_14_07_2022 <- frequency_position_6h_8h_21h_05_to_14_07_2022 %>%
+  mutate(day = as.Date(start_time))
+```
+
+Now we're all done ! Do that for every timestep you want to try. You can load the final data here :
+
+```{r}
+#15 min
+load()
+#30 min
+load()
+#1 hour
+load()
+#2 hours
+load()
+#4 hours
+load()
+#6 hours
+load()
+```
+
+
+# QCC charts
 
 ```{r}
 #Aggregate by day with QCC function
@@ -123,7 +163,7 @@ aggregate_by_day <- function(frequency_position_data, time) {
 
 ```{r}
   # aggregate with the function
-aggregate_by_day(frequency_position_15min_8h_21h_05_to_14_07_2022, time = "15min")
+aggregate_by_day(frequency_position_15min_05_to_14_07_2022, time = "15min")
 ```
 
 Plots :
