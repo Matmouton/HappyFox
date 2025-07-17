@@ -142,10 +142,10 @@ get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
     } else {
       result_max[i] <- NA  # Aucun match trouvé
     }
-  }  
-  
+  }
+
   df_areas <- data.frame(xmin = result_min, xmax = result_max, fill = fill)
-  
+
   return(df_areas)
 }
 
@@ -156,8 +156,11 @@ plot_activity_with_areas <- function(data, nb_min, areas,
                                      title, subtitle,
                                      x_lab, y_lab) {
 
-  # Créer le plot
+  # Create the plot
   ggplot(data, aes(x = compressed_time, y = activity_proportion)) +
+    
+    # Uncomment to get the areas
+    
     geom_rect(data = areas,
               aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
               inherit.aes = FALSE, alpha = 0.2) +
@@ -243,10 +246,19 @@ from_data_to_plot <- function(data_8h_21h,
 ```
 
 ```{r}
-from_data_to_plot(data_8h_21h = data_8h_21h_04_to_12_07_2022,
+from_data_to_plot(data_8h_21h = data_8h_21h_04_to_14_07_2022,
                   interval_seconds = 3600,
                   title = "Posture's score of fox 4313",
-                  subtitle = "With all data, from 04/07/2022 to 12/07/2022",
+                  subtitle = "With all data, from 04/07/2022 to 14/07/2022",
                   x_lab = "Cumulative time of the day (only between 8h and 21h)",
                   y_lab = "Movement score by summing posture indices")
 ```
+```{r}
+nrow(data_8h_21h_04_to_14_07_2022 %>% 
+  filter((Date_Time > "2022-07-05 08:13:00" & Date_Time < "2022-07-05 08:28:33" | 
+           Date_Time > "2022-07-05 08:36:23" & Date_Time < "2022-07-05 09:13:00") &
+           name == "not visible")) %>% 
+    arrange(class_id)
+
+```
+

@@ -33,7 +33,7 @@ library(rstatix)
 
 #Data
 load("data_04_to_14_07_2022.Rdata") #load all data between 04 & 14 of July
-rm(list = setdiff(ls(), c("data_04_to_14_07_2022"))) #remove useless data
+#rm(list = setdiff(ls(), c("data_04_to_14_07_2022"))) #remove useless data
 ```
 
 # A. Consistency of the certainty distribution
