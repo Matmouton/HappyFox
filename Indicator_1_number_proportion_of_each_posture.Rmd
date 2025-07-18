@@ -760,6 +760,7 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_co
 
 ## time = 1h
 
+
 ```{r}
 # Load the data
 load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
@@ -821,8 +822,74 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compr
   scale_x_continuous(name = "Time between 8h and 21h each day",
                      breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Time proportion spent in each posture") +
-  ggtitle("Postures of fox fox 4313", subtitle = "From 5 to 14 of July 2022, every hour")
+  ggtitle("Postures of fox fox 4313", subtitle = "From 5 to 14 of July 2022, every hour, max 50% NA data")
+
+```
+
+## time = 2h
+
+
+```{r}
+# Load the data
+load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+
+# Compute the frequency of each posture
+frequency_position_05_to_14_07_2022_2h <-
+  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+                     interval_seconds = 7200, #2h
+                     existing_data_percent = 50)  #max 50% of NA data
+
+
+# Sum the standing & sitting occurences
+frequency_position_05_to_14_07_2022_StandingSitting_2h <- frequency_position_05_to_14_07_2022_2h %>% 
+  mutate(sitting_standing = sum(sitting, standing),
+         lying_not_visible = sum(lying, not_visible)) #maybe useless but maybe not
+
+# Pivot the data
+frequency_position_05_to_14_07_2022_StandingSitting_2h_PIVOT <- pivot_data(data = frequency_position_05_to_14_07_2022_StandingSitting_2h,
+                   variables_to_drop = c(end_time, lying, sitting, standing, not_visible),
+                   variables_to_merge = c(sitting_standing, lying_not_visible),
+                   str_name_merged_labels = "Aggregated_postures",
+                   str_name_merged_values = "Count")
+
+# Keep only the 8h-21h part
+frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT <- filter_8h_21h(frequency_position_05_to_14_07_2022_StandingSitting_2h_PIVOT, start_time)
+# Remove useless
+rm(frequency_position_05_to_14_07_2022_StandingSitting_2h_PIVOT)  #remove data with the 21h-8h gap
+
+# Add a compressed_time variable
+frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT, nbrep = 2)
+
+# Add a proportion variable
+frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time,
+                      count_variable = Count,
+                      period_duration = 900)  #15 mintues by time period = 900 seconds
 
 ```
 
 
+```{r}
+
+  # Only sitting_standing indicator (Frequencies)
+
+ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time %>% 
+         filter(Aggregated_postures == "sitting_standing"),
+       
+       aes(x = compressed_time, y = proportion)) +
+  geom_line(aes(color=
+                  factor(Aggregated_postures,
+                         #re-order the labels
+                         levels = c("sitting_standing")))) +
+  
+  # geom_rect(data = areas_2h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+  #           inherit.aes = FALSE, alpha = 0.2) +
+  
+  scale_color_manual(name = "Posture",
+                     labels = c( "sitting_standing"),
+                     values = c("sitting_standing" = "black"))+
+  scale_x_continuous(name = "Time between 8h and 21h each day",
+                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  ylab("Time proportion spent in each posture") +
+  ggtitle("Postures of fox fox 4313", subtitle = "From 5 to 14 of July 2022, every 2 hours, max 50% NA data")
+
+```

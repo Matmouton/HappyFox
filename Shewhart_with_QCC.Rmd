@@ -57,14 +57,14 @@ Start from the data directly obtained with YOLO (see doc Read_Json_files) :
 load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
 ```
 
-Then go to file Indicator_1 and run the whole "Functions" part. Now for each timestep you want, run this (example with 15min) :
+Then go to file Indicator_1 and run the whole "frequency_position" function. Now for each timestep you want, run this (example with 15min) :
 
 ```{r}
 #interval_seconds = the timestep you want in seconds. Here : 15min*60 = 900 seconds.
 frequency_position_15min_05_to_14_07_2022 <-
   frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
                      interval_seconds = 900, #15min
-                     existing_data_percent = 10)  #at least 10% of not NA data                     
+                     existing_data_percent = 95)  #at least 95% of not NA data                     
 ```
 
 But this made us have lines outside the 8h-21h gap again. We want to remove them :
