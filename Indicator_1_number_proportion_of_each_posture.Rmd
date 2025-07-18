@@ -46,8 +46,9 @@ frequency_position <- function(data,
   start_time <- min(data$Date_Time)   #oldest frame
   end_time <- max(data$Date_Time)     #newest frame
   
-  #cut between these 2 frames depending on the time interval
+  #Cut between these 2 frames depending on the time interval
   intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
   
   df_counts <- data.frame(                       #create the new df
     start_time = intervals[-length(intervals)],  #drop the last time
@@ -69,7 +70,7 @@ frequency_position <- function(data,
     #for those 4 columns
     mutate(across(c(sitting, standing, lying, not_visible),
                   #if less than x% of existing data
-                  ~ if_else(sum(sitting, lying, standing, not_visible)/interval_seconds < (existing_data_percent / 100),
+                  ~ if_else(sum(sitting, lying, standing, not_visible, na.rm = TRUE)/interval_seconds < (existing_data_percent / 100),
                             #then assign NA to each variable
                             NA,
                             #else : do nothing
@@ -585,7 +586,9 @@ load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
 frequency_position_05_to_14_07_2022_15min <-
   frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
                      interval_seconds = 7200, #15min
-                     existing_data_percent = 10)  #at least 10% of not NA data 
+                     existing_data_percent = 50,  #at least 10% of not NA data 
+                     seconds_during_day = 46800,
+                     number_of_days = 10)
 
 
 # Sum the standing & sitting occurences
@@ -619,9 +622,6 @@ frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compresse
 
 ```{r}
 # Plots 
-
-
-
 
   # Counts
 ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time,
