@@ -37,11 +37,13 @@ library(tidyr)
 library(ggplot2)
 library(patchwork)
 ```
-```{r}
-
-```
 
 # Load data
+
+```{r}
+load("temporaire - QCC data mais trop de NA - regarder si faut enlever na.rm=FALSE dans la fonction de indicator1.Rdata")
+```
+
 
 ## But how to get this data ?
 
@@ -59,8 +61,10 @@ Then go to file Indicator_1 and run the whole "Functions" part. Now for each tim
 
 ```{r}
 #interval_seconds = the timestep you want in seconds. Here : 15min*60 = 900 seconds.
-frequency_position_15min_05_to_14_07_2022 <- frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
-                                                                interval_seconds = 900)                       #15min
+frequency_position_15min_05_to_14_07_2022 <-
+  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+                     interval_seconds = 900, #15min
+                     existing_data_percent = 10)  #at least 10% of not NA data                     
 ```
 
 But this made us have lines outside the 8h-21h gap again. We want to remove them :
@@ -74,16 +78,16 @@ filter_8h_21h <- function(data, time_column){
 }
 
 #apply function
-frequency_position_6h_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = frequency_position_6h_05_to_14_07_2022,
+frequency_position_15min_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = frequency_position_15min_05_to_14_07_2022,
                                                             time_column = start_time)
 
-rm(frequency_position_6h_05_to_14_07_2022) #remove useless data
+rm(frequency_position_15min_05_to_14_07_2022) #remove useless data
 ```
 
 Now we need to remove again data of day 08/07 between 9h6m57 and 10h14m09s. Since they have already been removed in the original "reliable_data...", their value is 0 for each variable. But we don't want to have zeros if we removed the data, we want to have NAs. So we are just going to assign "NA" to these data so that it won't mess up because of missing lines :
 
 ```{r}
-frequency_position_6h_8h_21h_05_to_14_07_2022 <- frequency_position_6h_8h_21h_05_to_14_07_2022 %>%
+frequency_position_15min_8h_21h_05_to_14_07_2022 <- frequency_position_15min_8h_21h_05_to_14_07_2022 %>%
   mutate(
       #Define what's in the time we want to drop
     in_interval = end_time >= as.POSIXct("2022-07-08 09:06:57") & start_time <= as.POSIXct("2022-07-08 10:14:09"),
@@ -102,7 +106,7 @@ Warning : this is the most restrictive removal we can do. For example if the tim
 Now we want to create a day variable to aggregate by day :
 
 ```{r}
-frequency_position_6h_8h_21h_05_to_14_07_2022 <- frequency_position_6h_8h_21h_05_to_14_07_2022 %>%
+frequency_position_15min_8h_21h_05_to_14_07_2022 <- frequency_position_15min_8h_21h_05_to_14_07_2022 %>%
   mutate(day = as.Date(start_time))
 ```
 
