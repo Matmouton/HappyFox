@@ -1,5 +1,5 @@
 ---
-title: "Shewhart with QCC"
+title: "Shewhart indicator 1.1"
 author: "Mathilda Alhamadah"
 date: "2025-07-04"
 output: html_document
@@ -16,13 +16,13 @@ Shewhart because it's the easiest to begin & QCC because it doesn't use a real t
 Data = realizations of iid random variable (VA), follows a normal distribution, no trend or cyclicity in data.
 Possible with non normal data (ref : Clement, 2017) but not very clear about that.
 
-## Pros
+## Pros & cons
 
+*Pros :*
 Simple to implement & interpret. Allows a quick detection of sudden & important changes in the process.
 No need to transform data : we directly plot the process. We only build upper control limit (UCL) & lower control limit (LCL)
 
-## Cons
-
+*Cons :*
 Not very sensitive to small changes.
 
 
@@ -38,14 +38,16 @@ library(ggplot2)
 library(patchwork)
 ```
 
-# Load data
+
+# A. Indicator 1.1
+
+## A.1 Load data
 
 ```{r}
 load("data_QCC_indicator1_reliable_15min_to_6h.Rdata")
 ```
 
-
-## But how to get this data ?
+### How to get this data ?
 
 Start from the data directly obtained with YOLO (see doc Read_Json_files) :
 * But without anesthesia data (= data of the 05/07 + data of the 08/07 only between 9h6m57 and 10h14m09s)
@@ -165,7 +167,7 @@ load("data_QCC_indicator1_reliable_15min_to_6h.Rdata")
 ```
 
 
-# QCC charts
+## A.2 QCC charts
 
 ```{r}
 #Aggregate by day with QCC function
@@ -198,9 +200,9 @@ aggregate_by_day <- function(frequency_position_data, time) {
 ```
 
 
-# xbar chart
+## A.3 xbar chart
 
-## timestep = 15min
+### timestep = 15min
 
 ```{r}
   # aggregate with the function
@@ -239,7 +241,7 @@ qcc(data = not_visible_byday_15min[1:4,], #5 first days = calibration
 ```
 With a calibration phase of 5 days, every measure is within the UCL/LCL thresholds.
 
-## timestep = 30min
+### timestep = 30min
 
 ```{r}
   # aggregate with the function
@@ -277,7 +279,7 @@ qcc(data = not_visible_byday_30min[1:4,], #5 first days = calibration
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
 ```
 
-## timestep = 1h
+### timestep = 1h
 
 ```{r}
   # aggregate with the function
@@ -315,7 +317,7 @@ qcc(data = not_visible_byday_1h[1:4,], #5 first days = calibration
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
 ```
 
-# R chart
+## A.4 R chart
 
 ```{r}
 #Plot R charts for every posture 
@@ -345,7 +347,7 @@ qcc(data = not_visible_byday_15min[1:4,], #5 first days = calibration
 ```
 There are out-of-control data for points that are in the calibration period. This is weird, but not impossible. The UCL & LCL are created depending on the values of all the points in the calibration period. So the IC95% of a point is not created around this point only. It's supposed to be fix for every point, the only difference is that this IC is higher when we have less data for the daily observation. But a higer value doesn't mean a higher IC.
 
-## S chart
+## A.5 S chart
 
 ```{r}
 #Plot S charts for every posture 
@@ -374,7 +376,7 @@ qcc(data = not_visible_byday_15min[1:4,], #5 first days = calibration
     newdata = not_visible_byday_15min[5:10,])  #5-11 days = test phase
 ```
 
-## p chart
+## A.6 p chart
 
 ```{r}
 #Plot S charts for every posture 
@@ -402,8 +404,6 @@ qcc(data = not_visible_byday_15min[1:4,], #5 first days = calibration
     type = "S",               #chart type
     newdata = not_visible_byday_15min[5:10,])  #5-11 days = test phase
 ```
-
-
 
 
 
