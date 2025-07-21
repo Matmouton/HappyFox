@@ -81,7 +81,7 @@ frequency_position <- function(data,
 ```
 
 ```{r}
-# Pivot the data : 4 lines/time unit
+# Pivot the data : 4 lines/time unit (if 4 postures, otherwise : number of postures)
 
 pivot_data <- function(data,
                        variables_to_drop,       #useless variables
@@ -101,9 +101,8 @@ pivot_data <- function(data,
 
 ```
 
-
 ```{r}
-  #Remove data between 21h-8h
+#Remove data between 21h-8h
 
 filter_8h_21h <- function(data, time_column){
   data <- data %>% 
@@ -114,7 +113,7 @@ filter_8h_21h <- function(data, time_column){
 
 ```{r}
 # Add the compressed time variable to to replace the real time in order to skip the 21h-8h gap
-# Needs to repeat each number 4 times because of the 4 possible postures
+# Needs to repeat each number as many times as there are different postures (here : nbrep = 4 times)
 
 add_compressed_time_variable_PIVOT_data <- function(data, nbrep) {
   data$compressed_time <- rep(seq_len(nrow(data)/nbrep)-1, each = nbrep)
@@ -123,7 +122,7 @@ add_compressed_time_variable_PIVOT_data <- function(data, nbrep) {
 ```
 
 ```{r}
-# Proportions : pour chaque groupe de temps on veut le Count divisé par le nombre de secondes, et le reste NA/ pas noté ?
+# Proportions : for each time group we want the Count divided by the number of seconds, and if count = NA it's NA
 
 add_proportion <- function(data,
                            count_variable,    #variable of the count for each time period
@@ -493,7 +492,7 @@ ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
 ```
 # Indicator 1.2 : Individual plots
 
-Only frequencies in this one
+We only want frequencies in this indicator
 
 ```{r}
 # Frequencies
@@ -575,6 +574,14 @@ ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %>%
 ```
 
 # Indicator 1.3 : Standing & sitting vs lying & not visible
+
+Load data at : 
+```{r}
+load("data_indicator1.3_reliable_15min_to_6h.Rdata")
+```
+
+
+Or re-create it as following : 
 
 ## time = 15min
 

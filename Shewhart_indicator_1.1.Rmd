@@ -112,7 +112,7 @@ Now for each timestep you want, run this (example with 15min) :
 frequency_position_15min_05_to_14_07_2022 <-
   frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
                      interval_seconds = 900, #15min
-                     existing_data_percent = 95)  #at least 95% of not NA data                     
+                     existing_data_percent = 95)  #max 5% NA for 15-30min, max 50% for 1h & more
 ```
 
 But this made us have lines outside the 8h-21h gap again. We want to remove them :
@@ -165,14 +165,12 @@ load("data_QCC_indicator1_reliable_15min_to_6h.Rdata")
 ```
 
 
-# 2. Prepare data
+# 2. Aggregate by day
 
 ```{r}
 #Aggregate by day with QCC function
 
-  # function
-
-aggregate_by_day <- function(frequency_position_data, time) {
+aggregate_by_day_1.1 <- function(frequency_position_data, time) {
   
   variable_name <- paste("lying_byday", time, sep = "_")
   assign(variable_name, qcc.groups(data = frequency_position_data$lying, #lying counts only
@@ -198,14 +196,15 @@ aggregate_by_day <- function(frequency_position_data, time) {
 ```
 
 
+```{r}
+# Apply function
+aggregate_by_day_1.1(frequency_position_15min_05_to_14_07_2022, time = "15min")
+```
+
 # 3. Xbar chart
 
 ## a) timestep = 15min
 
-```{r}
-  # aggregate with the function
-aggregate_by_day(frequency_position_15min_05_to_14_07_2022, time = "15min")
-```
 
 Plots :
 ```{r}
