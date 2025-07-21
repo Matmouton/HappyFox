@@ -9,6 +9,124 @@ output: html_document
 
 # 1. Load data
 
+Load the data here :
+
+```{r}
+
+```
+
+
+## → But how to get this data ?
+
+1st load or create the data from 05 to 14 of July with only reliable data & without anesthesia data :
+
+```{r}
+# Load the 05-14 of July data
+load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+```
+
+Then load the frequency_position function from file indicator_1 :
+
+```{r}
+# Frequency of postures lying/ sitting/ standing by timestep (chosen)
+
+frequency_position <- function(data,
+                               interval_seconds,
+                               existing_data_percent) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #Cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  #Create the 4 posture variables
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      lying = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0, na.rm = TRUE),       #count lying
+      standing = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1, na.rm = TRUE),       #count standing
+      sitting = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2, na.rm = TRUE),       #count sitting
+      not_visible = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3, na.rm = TRUE)      #count not visible
+    )
+  
+  #But keep it as numbers only if at least x% of data are not NA
+  df_counts <- df_counts %>%
+    #for those 4 columns
+    mutate(across(c(sitting, standing, lying, not_visible),
+                  #if less than x% of existing data
+                  ~ if_else(sum(sitting, lying, standing, not_visible, na.rm = TRUE)/interval_seconds < (existing_data_percent / 100),
+                            #then assign NA to each variable
+                            NA,
+                            #else : do nothing
+                            .)))
+
+  return(df_counts)
+}
+```
+
+Then apply it to the data :
+
+```{r}
+# Compute the frequency of each posture
+frequency_position_05_to_14_07_2022_15min <-
+  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+                     interval_seconds = 900, #15min
+                     existing_data_percent = 95)  #max 5% of NA data
+```
+
+Then sum the sitting & standing occurences (vs lying & not visible) :
+
+```{r}
+# Sum the standing & sitting occurences
+frequency_position_05_to_14_07_2022_StandingSitting_15min <- frequency_position_05_to_14_07_2022_15min %>% 
+  mutate(sitting_standing = sum(sitting, standing),
+         lying_not_visible = sum(lying, not_visible)) #maybe useless but maybe not
+```
+
+Then we want each line to be a posture (sitting & standing vs lying & not_visible)
+
+```{r}
+# Pivot the data
+frequency_position_05_to_14_07_2022_StandingSitting_15min_PIVOT <- pivot_data(data = frequency_position_05_to_14_07_2022_StandingSitting_15min,
+                   variables_to_drop = c(end_time, lying, sitting, standing, not_visible),
+                   variables_to_merge = c(sitting_standing, lying_not_visible),
+                   str_name_merged_labels = "Aggregated_postures",
+                   str_name_merged_values = "Count")
+```
+
+Then we want to remove the 21h-8h part that we unvolontary recreated :
+
+```{r}
+# Keep only the 8h-21h part
+frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT <- filter_8h_21h(frequency_position_05_to_14_07_2022_StandingSitting_15min_PIVOT, start_time)
+# Remove useless
+rm(frequency_position_05_to_14_07_2022_StandingSitting_15min_PIVOT)  #remove data with the 21h-8h gap
+```
+
+Than we want a new variable to replace the time since we have time gaps to fill :
+
+```{r}
+# Add a compressed_time variable
+frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT, nbrep = 2)
+```
+
+And finally we want to have the time spent sitting/ standing but as a proportion :
+
+```{r}
+# Add a proportion variable
+frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time,
+                      count_variable = Count,
+                      period_duration = 900)  #15 mintues by time period = 900 seconds
+```
+
 # 2. Prepare data
 
 # 3. Xbar chart
