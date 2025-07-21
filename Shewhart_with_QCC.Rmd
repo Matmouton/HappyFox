@@ -41,7 +41,7 @@ library(patchwork)
 # Load data
 
 ```{r}
-load("temporaire - QCC data mais trop de NA - regarder si faut enlever na.rm=FALSE dans la fonction de indicator1.Rdata")
+load("data_QCC_indicator1_reliable_15min_to_6h.Rdata")
 ```
 
 
@@ -57,7 +57,55 @@ Start from the data directly obtained with YOLO (see doc Read_Json_files) :
 load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
 ```
 
-Then go to file Indicator_1 and run the whole "frequency_position" function. Now for each timestep you want, run this (example with 15min) :
+Then run the whole "frequency_position" function from file indicator_1 :
+
+```{r}
+# Frequency of postures lying/ sitting/ standing by timestep (chosen)
+
+frequency_position <- function(data,
+                               interval_seconds,
+                               existing_data_percent) {
+  data <- data %>% arrange(Date_Time) #sort by date
+  
+  start_time <- min(data$Date_Time)   #oldest frame
+  end_time <- max(data$Date_Time)     #newest frame
+  
+  #Cut between these 2 frames depending on the time interval
+  intervals <- seq(from = start_time, to = end_time, by = interval_seconds)
+  
+  
+  df_counts <- data.frame(                       #create the new df
+    start_time = intervals[-length(intervals)],  #drop the last time
+    end_time = intervals[-1]                     #drop the first time
+  )
+  
+  #Create the 4 posture variables
+  df_counts <- df_counts %>%
+    rowwise() %>%               #for each line
+    mutate(
+      lying = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 0, na.rm = TRUE),       #count lying
+      standing = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 1, na.rm = TRUE),       #count standing
+      sitting = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 2, na.rm = TRUE),       #count sitting
+      not_visible = sum(data$Date_Time >= start_time & data$Date_Time < end_time & data$class_id == 3, na.rm = TRUE)      #count not visible
+    )
+  
+  #But keep it as numbers only if at least x% of data are not NA
+  df_counts <- df_counts %>%
+    #for those 4 columns
+    mutate(across(c(sitting, standing, lying, not_visible),
+                  #if less than x% of existing data
+                  ~ if_else(sum(sitting, lying, standing, not_visible, na.rm = TRUE)/interval_seconds < (existing_data_percent / 100),
+                            #then assign NA to each variable
+                            NA,
+                            #else : do nothing
+                            .)))
+
+  return(df_counts)
+}
+```
+
+
+Now for each timestep you want, run this (example with 15min) :
 
 ```{r}
 #interval_seconds = the timestep you want in seconds. Here : 15min*60 = 900 seconds.
@@ -110,21 +158,10 @@ frequency_position_15min_8h_21h_05_to_14_07_2022 <- frequency_position_15min_8h_
   mutate(day = as.Date(start_time))
 ```
 
-Now we're all done ! Do that for every timestep you want to try. You can load the final data here :
+Now we're all done ! Do that for every timestep you want to try. You can still load the final data here :
 
 ```{r}
-#15 min
-load()
-#30 min
-load()
-#1 hour
-load()
-#2 hours
-load()
-#4 hours
-load()
-#6 hours
-load()
+load("data_QCC_indicator1_reliable_15min_to_6h.Rdata")
 ```
 
 
