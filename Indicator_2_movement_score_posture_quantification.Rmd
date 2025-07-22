@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_8h_21h_04_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
 ```
 
 # Movement score : quantify each posture & sum it
@@ -177,6 +177,7 @@ plot_activity_with_areas <- function(data, nb_min, areas,
 On a un gros trou au milieu au niveau de la quantité d'activité : c'est
 cohérent, parce que le renard était sous anesthésie.
 
+Do everything in 1 chunk from data to plot :
 ```{r}
 from_data_to_plot <- function(data_8h_21h,
                               interval_seconds,

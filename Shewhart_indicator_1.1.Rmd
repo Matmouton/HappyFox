@@ -228,7 +228,7 @@ qcc(data = standing_byday_15min[1:4,], #5 first days = calibration
     newdata = standing_byday_15min[5:10,]) #5-11 days = test phase
 
 
-  #not visible, timesteps = 1h, 1point = 1day
+  #not visible, timesteps = 1h, 1point = 1day, with more control of the outputs
 qcc(data = not_visible_byday_15min[1:4,], #5 first days = calibration
     type = "xbar",               #chart type
     newdata = not_visible_byday_15min[5:10,],  #5-11 days = test phase

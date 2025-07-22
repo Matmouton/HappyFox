@@ -161,35 +161,96 @@ load("data_QCC_indicator1.3_reliable_15min_to_6h.Rdata")
 
 # 2. Aggregate by day
 
-```{r}
-#Aggregate by day with QCC function
-
-aggregate_by_day_1.3 <- function(frequency_position_data, time) {
-  
-  variable_name <- paste("standing_sitting_byday", time, sep = "_")
-  assign(variable_name, qcc.groups(data = frequency_position_data$standing_sitting, #lying counts only
-                                   sample = frequency_position_data$day), 
-         envir = .GlobalEnv)
-  
-  variable_name <- paste("lying_not_visible_byday", time, sep = "_")
-  assign(variable_name, qcc.groups(data = frequency_position_data$lying_not_visible, #sitting counts only
-                                   sample = frequency_position_data$day), 
-         envir = .GlobalEnv)
-}
+```{r eval=FALSE}
+# This function doesn't work idk why so I'm doing it manually
+# 
+# aggregate_by_day_1.3 <- function(frequency_position_data, time) {
+#   
+#   variable_name <- paste("standing_sitting_byday", time, sep = "_")
+#   assign(variable_name, qcc.groups(data = frequency_position_data$standing_sitting, #lying counts only
+#                                    sample = frequency_position_data$day), 
+#          envir = .GlobalEnv)
+#   
+#   variable_name <- paste("lying_not_visible_byday", time, sep = "_")
+#   assign(variable_name, qcc.groups(data = frequency_position_data$lying_not_visible, #sitting counts only
+#                                    sample = frequency_position_data$day), 
+#          envir = .GlobalEnv)
+# }
 
 ```
 
 
 ```{r}
-# ça marche : 
-qcc.groups(data = frequency_position_15min_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
-           sample = frequency_position_15min_8h_21h_05_to_14_07_2022_StandingSitting$day)
+#Aggregate by day with QCC function
 
-#pourtant ça marche pas : 
+  #15min
+sitting_standing_byday_15min <- qcc.groups(data = frequency_position_15min_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
+                                     sample = frequency_position_15min_8h_21h_05_to_14_07_2022_StandingSitting$day)
 
-# Apply function
-aggregate_by_day_1.3(frequency_position_15min_8h_21h_05_to_14_07_2022_StandingSitting, time = "15min")
+  #30min
+sitting_standing_byday_30min <- qcc.groups(data = frequency_position_30min_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
+                                     sample = frequency_position_30min_8h_21h_05_to_14_07_2022_StandingSitting$day)
+
+  #1h
+sitting_standing_byday_1h <- qcc.groups(data = frequency_position_1h_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
+                                     sample = frequency_position_1h_8h_21h_05_to_14_07_2022_StandingSitting$day)
+
+  #2h
+sitting_standing_byday_2h <- qcc.groups(data = frequency_position_2h_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
+                                     sample = frequency_position_2h_8h_21h_05_to_14_07_2022_StandingSitting$day)
+
+  #4h
+sitting_standing_byday_4h <- qcc.groups(data = frequency_position_4h_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
+                                     sample = frequency_position_4h_8h_21h_05_to_14_07_2022_StandingSitting$day)
+
+  #6h
+sitting_standing_byday_6h<- qcc.groups(data = frequency_position_6h_8h_21h_05_to_14_07_2022_StandingSitting$sitting_standing,
+                                     sample = frequency_position_6h_8h_21h_05_to_14_07_2022_StandingSitting$day)
+
 ```
 
 
 # 3. Xbar chart
+
+```{r}
+#Plot xbar charts for sitting_standing postures
+
+  #timesteps = 15min, 1point = 1day
+qcc(data = sitting_standing_byday_15min[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_standing_byday_15min[5:10,])  #5-11 days = test phase
+
+
+  #timesteps = 30min, 1point = 1day
+qcc(data = sitting_standing_byday_30min[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_standing_byday_30min[5:10,]) #5-11 days = test phase
+
+
+  #timesteps = 1h, 1point = 1day
+qcc(data = sitting_standing_byday_1h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_standing_byday_1h[5:10,]) #5-11 days = test phase
+
+  #timesteps = 2h, 1point = 1day
+qcc(data = sitting_standing_byday_2h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_standing_byday_2h[5:10,])  #5-11 days = test phase
+
+
+  #timesteps = 4h, 1point = 1day
+qcc(data = sitting_standing_byday_4h[1:4,], #5 first days = calibration
+    type = "xbar",               #chart type
+    newdata = sitting_standing_byday_4h[5:10,]) #5-11 days = test phase
+
+
+  #timesteps = 6h, 1point = 1day : it doesn't work because this aggregation causes some days to have only 1 time interval : not enough !
+# qcc(data = sitting_standing_byday_6h[1:4,], #5 first days = calibration
+#     type = "xbar",               #chart type
+#     newdata = sitting_standing_byday_6h[5:10,]) #5-11 days = test phase
+
+```
+
+
+
+
