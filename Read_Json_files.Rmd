@@ -550,11 +550,24 @@ data_8h_21h_05_to_14_07_2022 <- data_8h_21h_04_to_14_07_2022 %>%
   
 ```
 
+We also want to remove data after death. The fox has been euthanized after an inspection from the carers, so the data should be taken into account only before this inspection and the euthanasia : at ~18h25m30s.
+
+```{r}
+load("F:/stagiaire/2025_ALHAMADAH_Mathilda_HappyFox/script_R/HappyFox/data_8h_21h_05_to_08_08_2022.RData")
+
+data_8h_21h_05_to_08_08_2022 <- data_8h_21h_05_to_08_08_2022 %>% 
+  filter(Date_Time < "2022-08-08 18:25:30")
+```
+
+
+
 # 8. Remove uncertain data
 
 Uncertain data = data with 1 prediction & confidence > 1/3 or data with > 1 predictions & confidence > 1/3 & at least 0.2 confidence_gap between the 2 most reliable predictions.
 
 ```{r}
+# Data beginning of the trial
+
 reliable_data_8h_21h_05_to_14_07_2022 <- data_8h_21h_05_to_14_07_2022 %>% 
            #if only 1 prediction : keep only data with a confidence >= 0.34
   filter((number_of_predictions == 1 & confidence >= 0.34) | 
@@ -564,4 +577,22 @@ reliable_data_8h_21h_05_to_14_07_2022 <- data_8h_21h_05_to_14_07_2022 %>%
            is.na(confidence_gap))
 ```
 
+```{r}
+# Data end of the trial
+
+reliable_data_8h_21h_05_to_08_08_2022 <- data_8h_21h_05_to_08_08_2022 %>% 
+           #if only 1 prediction : keep only data with a confidence >= 0.34
+  filter((number_of_predictions == 1 & confidence >= 0.34) | 
+           #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
+           (number_of_predictions >1 & confidence >= 0.34 & confidence_gap >= 0.2) |
+           #keep the NA values also
+           is.na(confidence_gap))
+```
+
+# 9. Merge calibration and test data
+
+```{r}
+reliable_data_8h_21h_05_07_to_08_08_2022 <- rbind(reliable_data_8h_21h_05_to_14_07_2022,
+      reliable_data_8h_21h_05_to_08_08_2022)
+```
 
