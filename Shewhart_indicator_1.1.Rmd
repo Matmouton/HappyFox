@@ -533,7 +533,7 @@ qcc(data = not_visible_byday_2h[1:10,], #5 first days = calibration
 
 ```{r}
   #4h
-aggregate_by_day_1.1(frequency_position_4h_8h_21h_05_to_14_07_2022, time = "4h")
+aggregate_by_day_1.1(frequency_position_4h_8h_21h_05_07_to_08_08_2022, time = "4h")
 ```
 
 Plots :
