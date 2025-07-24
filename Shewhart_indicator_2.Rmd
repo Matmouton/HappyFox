@@ -24,7 +24,7 @@ library(patchwork)
 
 You can load the data here :
 ```{r}
-load("data_QCC_indicator2_reliable_15min_to_6h.Rdata")
+load("")
 ```
 
 ## → How to get this data ?
@@ -32,7 +32,7 @@ load("data_QCC_indicator2_reliable_15min_to_6h.Rdata")
 Load the data without days of anesthesia and without non reliable data :
 
 ```{r}
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
 ```
 
 Create the code for each posture : 
@@ -50,7 +50,7 @@ posture_123 <- function(data){
 
 ```{r}
 # Apply function
-reliable_data_8h_21h_05_to_14_07_2022_posture_code <- posture_123(reliable_data_8h_21h_05_to_14_07_2022)
+reliable_data_8h_21h_05_07_to_08_08_2022_posture_code <- posture_123(reliable_data_8h_21h_05_07_to_08_08_2022)
 ```
 
 Create the activity score :
@@ -92,31 +92,31 @@ amount_activity <- function(data, interval_seconds) {
 # Apply function
 
   #15min
-activity_score_15min_05_to_14_07_2022 <- amount_activity(data = reliable_data_8h_21h_05_to_14_07_2022_posture_code,
+activity_score_15min_05_07_to_08_08_2022 <- amount_activity(data = reliable_data_8h_21h_05_07_to_08_08_2022_posture_code,
                                                                         interval_seconds = 900)
 
   #30min
-activity_score_30min_05_to_14_07_2022 <- amount_activity(data = reliable_data_8h_21h_05_to_14_07_2022_posture_code,
+activity_score_30min_05_07_to_08_08_2022 <- amount_activity(data = reliable_data_8h_21h_05_07_to_08_08_2022_posture_code,
                                                                         interval_seconds = 1800)
 
   #1h
-activity_score_1h_05_to_14_07_2022 <- amount_activity(data = reliable_data_8h_21h_05_to_14_07_2022_posture_code,
+activity_score_1h_05_07_to_08_08_2022 <- amount_activity(data = reliable_data_8h_21h_05_07_to_08_08_2022_posture_code,
                                                                         interval_seconds = 3600)
 
   #2h
-activity_score_2h_05_to_14_07_2022 <- amount_activity(data = reliable_data_8h_21h_05_to_14_07_2022_posture_code,
+activity_score_2h_05_07_to_08_08_2022 <- amount_activity(data = reliable_data_8h_21h_05_07_to_08_08_2022_posture_code,
                                                                         interval_seconds = 7200)
 
   #4h
-activity_score_4h_05_to_14_07_2022 <- amount_activity(data = reliable_data_8h_21h_05_to_14_07_2022_posture_code,
+activity_score_4h_05_07_to_08_08_2022 <- amount_activity(data = reliable_data_8h_21h_05_07_to_08_08_2022_posture_code,
                                                                         interval_seconds = 14400)
 
   #6h
-activity_score_6h_05_to_14_07_2022 <- amount_activity(data = reliable_data_8h_21h_05_to_14_07_2022_posture_code,
+activity_score_6h_05_07_to_08_08_2022 <- amount_activity(data = reliable_data_8h_21h_05_07_to_08_08_2022_posture_code,
                                                                         interval_seconds = 21600)
 
 # Remove useless data
-rm(reliable_data_8h_21h_05_to_14_07_2022_posture_code)
+rm(reliable_data_8h_21h_05_07_to_08_08_2022_posture_code)
 ```
 
 Remove again the 21h-8h gap :
@@ -134,32 +134,32 @@ filter_8h_21h <- function(data, time_column){
 # Apply function
 
   #15min
-activity_score_15min_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = activity_score_15min_05_to_14_07_2022,
+activity_score_15min_8h_21h_05_07_to_08_08_2022 <- filter_8h_21h(data = activity_score_15min_05_07_to_08_08_2022,
                                                               time_column = interval_start)
 
   #30min
-activity_score_30min_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = activity_score_30min_05_to_14_07_2022,
+activity_score_30min_8h_21h_05_07_to_08_08_2022 <- filter_8h_21h(data = activity_score_30min_05_07_to_08_08_2022,
                                                               time_column = interval_start)
 
   #1h
-activity_score_1h_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = activity_score_1h_05_to_14_07_2022,
+activity_score_1h_8h_21h_05_07_to_08_08_2022 <- filter_8h_21h(data = activity_score_1h_05_07_to_08_08_2022,
                                                               time_column = interval_start)
   
   #2h
-activity_score_2h_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = activity_score_2h_05_to_14_07_2022,
+activity_score_2h_8h_21h_05_07_to_08_08_2022 <- filter_8h_21h(data = activity_score_2h_05_07_to_08_08_2022,
                                                               time_column = interval_start)
 
   #4h
-activity_score_4h_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = activity_score_4h_05_to_14_07_2022,
+activity_score_4h_8h_21h_05_07_to_08_08_2022 <- filter_8h_21h(data = activity_score_4h_05_07_to_08_08_2022,
                                                               time_column = interval_start)
 
   #6h
-activity_score_6h_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = activity_score_6h_05_to_14_07_2022,
+activity_score_6h_8h_21h_05_07_to_08_08_2022 <- filter_8h_21h(data = activity_score_6h_05_07_to_08_08_2022,
                                                               time_column = interval_start)
   
   
 # Remove useless data :
-rm(activity_score_15min_05_to_14_07_2022, activity_score_30min_05_to_14_07_2022, activity_score_1h_05_to_14_07_2022, activity_score_2h_05_to_14_07_2022, activity_score_4h_05_to_14_07_2022, activity_score_6h_05_to_14_07_2022)
+rm(activity_score_15min_05_07_to_08_08_2022, activity_score_30min_05_07_to_08_08_2022, activity_score_1h_05_07_to_08_08_2022, activity_score_2h_05_07_to_08_08_2022, activity_score_4h_05_07_to_08_08_2022, activity_score_6h_05_07_to_08_08_2022)
 
 ```
 
@@ -177,45 +177,45 @@ add_compressed_time_variable <- function(data) {
 # Apply function
 
   #15min
-activity_score_15min_8h_21h_05_to_14_07_2022_compressed_time <- add_compressed_time_variable(activity_score_15min_8h_21h_05_to_14_07_2022)
+activity_score_15min_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(activity_score_15min_8h_21h_05_07_to_08_08_2022)
 
   #30min
-activity_score_30min_8h_21h_05_to_14_07_2022_compressed_time <- add_compressed_time_variable(activity_score_30min_8h_21h_05_to_14_07_2022)
+activity_score_30min_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(activity_score_30min_8h_21h_05_07_to_08_08_2022)
 
   #1h
-activity_score_1h_8h_21h_05_to_14_07_2022_compressed_time <- add_compressed_time_variable(activity_score_1h_8h_21h_05_to_14_07_2022)
+activity_score_1h_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(activity_score_1h_8h_21h_05_07_to_08_08_2022)
   
   #2h
-activity_score_2h_8h_21h_05_to_14_07_2022_compressed_time <- add_compressed_time_variable(activity_score_2h_8h_21h_05_to_14_07_2022)
+activity_score_2h_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(activity_score_2h_8h_21h_05_07_to_08_08_2022)
 
   #4h
-activity_score_4h_8h_21h_05_to_14_07_2022_compressed_time <- add_compressed_time_variable(activity_score_4h_8h_21h_05_to_14_07_2022)
+activity_score_4h_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(activity_score_4h_8h_21h_05_07_to_08_08_2022)
 
   #6h
-activity_score_6h_8h_21h_05_to_14_07_2022_compressed_time <- add_compressed_time_variable(activity_score_6h_8h_21h_05_to_14_07_2022)
+activity_score_6h_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(activity_score_6h_8h_21h_05_07_to_08_08_2022)
   
-rm(activity_score_15min_8h_21h_05_to_14_07_2022, activity_score_30min_8h_21h_05_to_14_07_2022, activity_score_1h_8h_21h_05_to_14_07_2022, activity_score_2h_8h_21h_05_to_14_07_2022, activity_score_4h_8h_21h_05_to_14_07_2022, activity_score_6h_8h_21h_05_to_14_07_2022)
+rm(activity_score_15min_8h_21h_05_07_to_08_08_2022, activity_score_30min_8h_21h_05_07_to_08_08_2022, activity_score_1h_8h_21h_05_07_to_08_08_2022, activity_score_2h_8h_21h_05_07_to_08_08_2022, activity_score_4h_8h_21h_05_07_to_08_08_2022, activity_score_6h_8h_21h_05_07_to_08_08_2022)
 ```
 
 Add a day variable to aggregate :
 
 ```{r}
-activity_score_15min_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_15min_8h_21h_05_to_14_07_2022_compressed_time %>%
+activity_score_15min_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_15min_8h_21h_05_07_to_08_08_2022_compressed_time %>%
   mutate(day = as.Date(interval_start))
 
-activity_score_30min_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_30min_8h_21h_05_to_14_07_2022_compressed_time %>%
+activity_score_30min_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_30min_8h_21h_05_07_to_08_08_2022_compressed_time %>%
   mutate(day = as.Date(interval_start))
 
-activity_score_1h_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_1h_8h_21h_05_to_14_07_2022_compressed_time %>%
+activity_score_1h_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_1h_8h_21h_05_07_to_08_08_2022_compressed_time %>%
   mutate(day = as.Date(interval_start))
 
-activity_score_2h_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_2h_8h_21h_05_to_14_07_2022_compressed_time %>%
+activity_score_2h_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_2h_8h_21h_05_07_to_08_08_2022_compressed_time %>%
   mutate(day = as.Date(interval_start))
 
-activity_score_4h_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_4h_8h_21h_05_to_14_07_2022_compressed_time %>%
+activity_score_4h_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_4h_8h_21h_05_07_to_08_08_2022_compressed_time %>%
   mutate(day = as.Date(interval_start))
 
-activity_score_6h_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_6h_8h_21h_05_to_14_07_2022_compressed_time %>%
+activity_score_6h_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_6h_8h_21h_05_07_to_08_08_2022_compressed_time %>%
   mutate(day = as.Date(interval_start))
 ```
 
@@ -225,12 +225,12 @@ activity_score_6h_8h_21h_05_to_14_07_2022_compressed_time <- activity_score_6h_8
 
 ```{r}
 # Function to do it
-aggregate_by_day_2 <- function(activity_score_data_list = list(activity_score_15min_8h_21h_05_to_14_07_2022_compressed_time,
-                                                              activity_score_30min_8h_21h_05_to_14_07_2022_compressed_time,
-                                                              activity_score_1h_8h_21h_05_to_14_07_2022_compressed_time,
-                                                              activity_score_2h_8h_21h_05_to_14_07_2022_compressed_time,
-                                                              activity_score_4h_8h_21h_05_to_14_07_2022_compressed_time,
-                                                              activity_score_6h_8h_21h_05_to_14_07_2022_compressed_time) ,
+aggregate_by_day_2 <- function(activity_score_data_list = list(activity_score_15min_8h_21h_05_07_to_08_08_2022_compressed_time,
+                                                              activity_score_30min_8h_21h_05_07_to_08_08_2022_compressed_time,
+                                                              activity_score_1h_8h_21h_05_07_to_08_08_2022_compressed_time,
+                                                              activity_score_2h_8h_21h_05_07_to_08_08_2022_compressed_time,
+                                                              activity_score_4h_8h_21h_05_07_to_08_08_2022_compressed_time,
+                                                              activity_score_6h_8h_21h_05_07_to_08_08_2022_compressed_time) ,
                                times_vector = c("15min", "30min", "1h", "2h", "4h", "6h")) {
   
   for(i in seq(1,6,1)) { #for i in 1:6
@@ -257,32 +257,32 @@ aggregate_by_day_2()
 #Plot xbar charts for sitting_standing postures
 
   #timesteps = 15min, 1point = 1day
-qcc(data = activity_score_byday_15min[1:4,], #5 first days = calibration
+qcc(data = activity_score_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_15min[5:10,])  #5-11 days = test phase
+    newdata = activity_score_byday_15min[32:35,])  #5-11 days = test phase
 
 
   #timesteps = 30min, 1point = 1day
-qcc(data = activity_score_byday_30min[1:4,], #5 first days = calibration
+qcc(data = activity_score_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_30min[5:10,]) #5-11 days = test phase
+    newdata = activity_score_byday_30min[32:35,]) #5-11 days = test phase
 
 
   #timesteps = 1h, 1point = 1day
-qcc(data = activity_score_byday_1h[1:4,], #5 first days = calibration
+qcc(data = activity_score_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_1h[5:10,]) #5-11 days = test phase
+    newdata = activity_score_byday_1h[32:35,]) #5-11 days = test phase
 
   #timesteps = 2h, 1point = 1day
-qcc(data = activity_score_byday_2h[1:4,], #5 first days = calibration
+qcc(data = activity_score_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_2h[5:10,])  #5-11 days = test phase
+    newdata = activity_score_byday_2h[32:35,])  #5-11 days = test phase
 
 
   #timesteps = 4h, 1point = 1day
 qcc(data = activity_score_byday_4h[1:4,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_4h[5:10,]) #5-11 days = test phase
+    newdata = activity_score_byday_4h[32:35,]) #5-11 days = test phase
 ```
 
 

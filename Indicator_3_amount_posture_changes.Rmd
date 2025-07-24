@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("data_only_8h_21h_04_to_06_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
 ```
 
 ## 1.3 Amount of posture changes by time unit
@@ -42,7 +42,7 @@ changes.
 
 amount_posture_changes <- function(
     data,
-    group_time){ #group_time : "number + unit" (among : second, minute, hour, day,                     week, month, bimonth, quarter, season, halfyear and year)
+    time_seconds){ 
   
   # Temporary variable : not_visible & NAs replaced by NAs
   data <- data %>% 
@@ -52,8 +52,37 @@ amount_posture_changes <- function(
       TRUE ~ name)                 #else : posture name
       )  
   
+  # Refill NAs (= real NAs + not_visible) with latest posture seen
   data <- data %>%
-    fill(posture_no_NA)           #refill NAs (= real NAs + not_visible) with latest posture seen
+    fill(posture_no_NA)           
+  
+  
+ 
+  
+  
+  # # If more than 10 following NAs : don't consider these data
+  # 
+  #   # Set count to 0 & get data length
+  # counter <- 0
+  # n <- nrow(data)
+  # 
+  #   # Spot too much NAs
+  # for (i in 1:n) {
+  #   if (is.na(data$name[i])) {
+  #     counter <- counter + 1
+  #     if (counter > max_na) {
+  #       data$data_no_NA[(i-max_na):i] <- NA
+  #     }
+  #   } else {
+  #     counter <- 0  # Réinitialisation du compteur
+  #   }
+  # 
+  #   # Si le compteur est déjà > 10, on continue à mettre NA
+  #   if (counter > max_na) {
+  #     reliable_data_8h_21h_05_07_to_08_08_2022$data_no_NA[i] <- NA
+  #   }
+  # }
+
   
   
   # Detect position changes
@@ -62,8 +91,29 @@ amount_posture_changes <- function(
     # Movement : if posture != posture at previous time (skip NAs & not_visible)
     mutate(Position_change = posture_no_NA != lag(posture_no_NA, default = first(posture_no_NA)))
 
-  # Results
-  return(changes_by_group_time(data_valid, time_gap = group_time))
+  # Final dataset
+  result <- changes_by_group_time(data_valid, time_gap = time_seconds)
+  
+  # Remove data if too many NAs
+    
+    
+      # Set the allowed % of NAs depending on time intervals
+    if(time_seconds < 3600){      #if groups < 1h
+      proportion_NA <- 0.05               #max 5% of NA
+    }else{
+      proportion_NA <- 0.5                #else : max 50% of NA
+    }
+    
+      # Maximum amount of NAs by interval, depending on interval length
+    max_na <- floor(time_seconds*proportion_NA) #round if not integer
+    
+      # If too much NAs in interval : interval is NA
+    result <- result %>% 
+      mutate(Nb_changes = ifelse(Nb_NA > max_na, NA, Nb_changes))
+    
+      # Return result
+      return(result)
+  
   }
 
 
@@ -72,19 +122,37 @@ amount_posture_changes <- function(
 
 changes_by_group_time <- function(data, time_gap) {
   data %>%
-    mutate(Time_group = floor_date(Date_Time, unit = time_gap)) %>% #make time groups
+    mutate(Time_group = floor_date(Date_Time, unit = paste0(time_gap, " secs"))) %>% #make time groups
     group_by(Time_group) %>%
-    summarise(Nb_changes = sum(Position_change, na.rm = TRUE)) %>% #sum changes
+    summarise(Nb_changes = sum(Position_change, na.rm = TRUE), #sum changes
+              Nb_NA = sum(is.na(name))) %>% #sum NAs
     ungroup()                                     #just in case
+  
 }
+
+# Code GPTouze
+
+changes_by_group_time <- function(data, time_gap) {
+  data %>%
+    arrange(Date_Time) %>%
+    mutate(Time_group = as.POSIXct(floor(as.numeric(Date_Time) / time_gap) * time_gap, origin = "1970-01-01")) %>%
+    group_by(Time_group) %>%
+    summarise(
+      Nb_changes = sum(Position_change, na.rm = TRUE),
+      Nb_NA = sum(is.na(name))
+    ) %>%
+    ungroup()
+}
+
 
 ```
 
+
 ```{r}
 # Changes per 15minutes & per day
-amount_changes_data_8h_21h_04_to_06_07_2022 <- amount_posture_changes(data_8h_21h_04_to_06_07_2022, "15 minute")
+amount_changes_15min_data_8h_21h_05_07_to_08_08_2022 <- amount_posture_changes(reliable_data_8h_21h_05_07_to_08_08_2022, 900)
 
-amount_posture_changes(data_8h_21h_04_to_06_07_2022, "1 day")
+amount_posture_changes(reliable_data_8h_21h_05_07_to_08_08_2022, "1 day")
 ```
 
 ### 1.3.2 Chart : Skip parts between 21h and 8h
@@ -101,7 +169,7 @@ add_compressed_time_variable <- function(data) {
 ```{r}
  # Dataset
 
-amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time <- add_compressed_time_variable(amount_changes_data_8h_21h_04_to_06_07_2022)
+amount_changes_15min_data_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(amount_changes_15min_data_8h_21h_05_07_to_08_08_2022)
 ```
 
 ```{r}
@@ -218,7 +286,7 @@ areas <- data.frame(
 
   # Plot
 
-ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
+ggplot(amount_changes_15min_data_8h_21h_05_07_to_08_08_2022_compressed_time,
        aes(x = compressed_time, y = Nb_changes)) +
   
   geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
@@ -231,6 +299,10 @@ ggplot(amount_changes_data_8h_21h_04_to_06_07_2022_compressed_time,
   scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
                      breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150))
 ```
+```{r}
+
+```
+
 
 Spike between 28&36 : because the fox is waking up from anesthesia & he's trying
 to get up, but it doesn't work well. So a lot of alternates between lying &
