@@ -492,6 +492,7 @@ Aggregate dataframes :
 #dplyr::bind_rows() is more flexible than base::rbind(). We need flexibility because there are dataframes within the dataframe.
 
 data_04_to_06_07_2022 <- bind_rows(data_04_07_2022, data_05_07_2022, data_06_07_2022)
+
 ```
 
 Adapt dataframe so that there is only (and mandatory) data between 8h and 21h.
@@ -539,15 +540,26 @@ add_compressed_time_variable <- function(data) {
 
 # 7. Remove inoculation times
 
+```{r}
+# Load all the data we have
+load("data_8h_21h_03_08_2022.RData")
+load("data_8h_21h_04_to_14_07_2022.RData")
+load("data_8h_21h_05_to_08_08_2022.RData")
+
+# Merge it
+data_8h_21h_04_07_to_08_08_2022 <- bind_rows(data_8h_21h_04_to_14_07_2022, data_8h_21h_03_08_2022, data_8h_21h_05_to_08_08_2022)
+```
+
+
 We want to remove the whole day 04/07/22 and a part of the day 08/07/2022 (from
 9h6m57s to 10h14m19).
 
 ```{r}
-load("data_8h_21h_04_to_14_07_2022.Rdata")
+load("data_8h_21h_04_07_to_08_08_2022.Rdata")
 
-data_8h_21h_05_to_14_07_2022 <- data_8h_21h_04_to_14_07_2022 %>% 
+data_8h_21h_05_07_to_08_08_2022 <- data_8h_21h_04_07_to_08_08_2022 %>% 
   filter(date != "2022-07-04") %>%  #remove first day
-  filter(Date_Time < "2022-07-08 9:06:57" | Date_Time > "2022-07-08 10:14:09")
+  filter(Date_Time < "2022-07-08 9:06:57" | Date_Time > "2022-07-08 10:14:09") #remove inoculation time
   
 ```
 
@@ -558,7 +570,7 @@ predictions & confidence \> 1/3 & at least 0.2 confidence_gap between the 2 most
 reliable predictions.
 
 ```{r}
-reliable_data_8h_21h_05_to_14_07_2022 <- data_8h_21h_05_to_14_07_2022 %>% 
+reliable_data_8h_21h_05_07_to_08_08_2022 <- data_8h_21h_05_07_to_08_08_2022 %>% 
            #if only 1 prediction : keep only data with a confidence >= 0.34
   filter((number_of_predictions == 1 & confidence >= 0.34) | 
            #if >1 predictions : keep only data with  a confidence >= 0.34 & a gap >0.2 between the 2 best predictions' confidences
