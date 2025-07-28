@@ -54,9 +54,6 @@ Start from the data directly obtained with YOLO (see doc Read_Json_files) :
 
 ```{r}
 #You can load it here :
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
-
-#Complete data
 load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
 ```
 
@@ -108,18 +105,10 @@ frequency_position <- function(data,
 ```
 
 
-Now for each timestep you want, run this (example with 15min) :
+Now for each timestep you want, run this :
 
 ```{r}
-#interval_seconds = the timestep you want in seconds. Here : 15min*60 = 900 seconds.
-frequency_position_15min_05_to_14_07_2022 <-
-  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
-                     interval_seconds = 900, #15min
-                     existing_data_percent = 95)  #max 5% NA for 15-30min, max 50% for 1h & more
-```
-
-```{r}
-# With all data (05/07 to 08/08)
+# interval_seconds = the timestep you want in seconds. Example : 15min*60 = 900 seconds.
 
 frequency_position_15min_05_07_to_08_08_2022 <-
   frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022,
@@ -152,8 +141,6 @@ frequency_position_6h_05_07_to_08_08_2022 <-
                      existing_data_percent = 50)
 ```
 
-
-
 But this made us have lines outside the 8h-21h gap again. We want to remove them :
 
 ```{r}
@@ -163,16 +150,10 @@ filter_8h_21h <- function(data, time_column){
     filter(hour({{time_column}}) >= 8 & hour({{time_column}}) < 21)
   return(data)
 }
-
-#apply function
-frequency_position_15min_8h_21h_05_to_14_07_2022 <- filter_8h_21h(data = frequency_position_15min_05_to_14_07_2022,
-                                                            time_column = start_time)
-
-rm(frequency_position_15min_05_to_14_07_2022) #remove useless data
 ```
 
 ```{r}
-# With all data (05/07 to 08/08)
+# apply function
 
 frequency_position_15min_8h_21h_05_07_to_08_08_2022 <-
   filter_8h_21h(data = frequency_position_15min_05_07_to_08_08_2022,
@@ -198,6 +179,7 @@ frequency_position_6h_8h_21h_05_07_to_08_08_2022 <-
   filter_8h_21h(data = frequency_position_6h_05_07_to_08_08_2022,
                 time_column = start_time)
 
+# Remove useless data
 rm(frequency_position_15min_05_07_to_08_08_2022,
    frequency_position_30min_05_07_to_08_08_2022,
    frequency_position_1h_05_07_to_08_08_2022,
@@ -205,7 +187,6 @@ rm(frequency_position_15min_05_07_to_08_08_2022,
    frequency_position_4h_05_07_to_08_08_2022,
    frequency_position_6h_05_07_to_08_08_2022)
 ```
-
 
 Now we need to remove again data of day 08/07 between 9h6m57 and 10h14m09s. Since they have already been removed in the original "reliable_data...", their value is 0 for each variable. But we don't want to have zeros if we removed the data, we want to have NAs. So we are just going to assign "NA" to these data so that it won't mess up because of missing lines :
 
@@ -253,11 +234,7 @@ Warning : this is the most restrictive removal we can do. For example if the tim
 Now we want to create a day variable to aggregate by day :
 
 ```{r}
-# With data at the beginning of the trial
-frequency_position_15min_8h_21h_05_to_14_07_2022 <- frequency_position_15min_8h_21h_05_to_14_07_2022 %>%
-  mutate(day = as.Date(start_time))
-
-# With data just before death (05 to 08/08/22) : 
+# Add day variable
 frequency_position_15min_8h_21h_05_07_to_08_08_2022 <- 
   frequency_position_15min_8h_21h_05_07_to_08_08_2022 %>% 
   mutate(day = as.Date(start_time))
@@ -286,13 +263,7 @@ frequency_position_6h_8h_21h_05_07_to_08_08_2022 <-
 Now we're all done ! Do that for every timestep you want to try. You can still load the final data here :
 
 ```{r}
-# Data of the beginning of the trial
-load("data_QCC_indicator1.1_calibration_reliable_15min_to_6h.Rdata")
-
-# Data just before death
-load("data_QCC_indicator1.1_test_reliable_15min_to_6h")
-
-# All data 
+# Load data
 load("data_QCC_indicator1.1_complete_reliable_15min_to_6h.RData")
 ```
 
@@ -327,47 +298,8 @@ aggregate_by_day_1.1 <- function(frequency_position_data, time) {
 
 ```
 
+We will apply this function in the following parts :
 
-```{r}
-# Apply function
-# 
-#   #15min
-# aggregate_by_day_1.1(frequency_position_15min_8h_21h_05_to_14_07_2022, time = "15min")
-# 
-#   #30min
-# aggregate_by_day_1.1(frequency_position_30min_8h_21h_05_to_14_07_2022, time = "30min")
-# 
-# 
-#   #1h
-# aggregate_by_day_1.1(frequency_position_1h_8h_21h_05_to_14_07_2022, time = "1h")
-# 
-# 
-#   #2h
-# aggregate_by_day_1.1(frequency_position_2h_8h_21h_05_to_14_07_2022, time = "2h")
-# 
-# 
-#   #4h
-# aggregate_by_day_1.1(frequency_position_4h_8h_21h_05_to_14_07_2022, time = "4h")
-# 
-# 
-#   #6h
-# aggregate_by_day_1.1(frequency_position_6h_8h_21h_05_to_14_07_2022, time = "6h")
-
-
-
-# With data just before death (05 to 08/08/22) : 
-# aggregate_by_day_1.1(frequency_position_15min_8h_21h_05_to_08_08_2022, "15min")
-# 
-# aggregate_by_day_1.1(frequency_position_30min_8h_21h_05_to_08_08_2022, "30min")
-# 
-# aggregate_by_day_1.1(frequency_position_1h_8h_21h_05_to_08_08_2022, "1h")
-# 
-# aggregate_by_day_1.1(frequency_position_2h_8h_21h_05_to_08_08_2022, "2h")
-# 
-# aggregate_by_day_1.1(frequency_position_4h_8h_21h_05_to_08_08_2022, "4h")
-# 
-# aggregate_by_day_1.1(frequency_position_6h_8h_21h_05_to_08_08_2022, "6h")
-```
 
 # 3. Xbar chart
 
@@ -388,25 +320,25 @@ Plots :
   #lying, timesteps = 15min, 1point = 1day
 qcc(data = lying_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_byday_15min[32:35,])  #5-11 days = test phase
+    newdata = lying_byday_15min[c(30, 32:35),])  #5-11 days = test phase
 
 
   #sitting, timesteps = 15min, 1point = 1day
 qcc(data = sitting_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_byday_15min[32:35,]) #5-11 days = test phase
+    newdata = sitting_byday_15min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #standing, timesteps = 15min, 1point = 1day
 qcc(data = standing_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = standing_byday_15min[32:35,]) #5-11 days = test phase
+    newdata = standing_byday_15min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #not visible, timesteps = 15min, 1point = 1day, with more control of the outputs
 qcc(data = not_visible_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = not_visible_byday_15min[32:35,],  #5-11 days = test phase
+    newdata = not_visible_byday_15min[c(30, 32:35),],  #5-11 days = test phase
     confidence.level = 0.99,       #increase confidence level (default = 0.95)
     add.stats = FALSE)  +          #don't display center, std & number of groups
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
@@ -428,25 +360,25 @@ Plots :
   #lying, timesteps = 30min, 1point = 1day
 qcc(data = lying_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_byday_30min[32:35,])  #5-11 days = test phase
+    newdata = lying_byday_30min[c(30, 32:35),])  #5-11 days = test phase
 
 
   #sitting, timesteps = 30min, 1point = 1day
 qcc(data = sitting_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_byday_30min[32:35,]) #5-11 days = test phase
+    newdata = sitting_byday_30min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #standing, timesteps = 30min, 1point = 1day
 qcc(data = standing_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = standing_byday_30min[32:35,]) #5-11 days = test phase
+    newdata = standing_byday_30min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #not visible, timesteps = 30min, 1point = 1day
 qcc(data = not_visible_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = not_visible_byday_30min[32:35,],  #5-11 days = test phase
+    newdata = not_visible_byday_30min[c(30, 32:35),],  #5-11 days = test phase
     confidence.level = 0.99,       #increase confidence level (default = 0.95)
     add.stats = FALSE)  +          #don't display center, std & number of groups
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
@@ -466,25 +398,25 @@ Plots :
   #lying, timesteps = 1h, 1point = 1day
 qcc(data = lying_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_byday_1h[32:35,])  #5-11 days = test phase
+    newdata = lying_byday_1h[c(30, 32:35),])  #5-11 days = test phase
 
 
   #sitting, timesteps = 1h, 1point = 1day
 qcc(data = sitting_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_byday_1h[32:35,]) #5-11 days = test phase
+    newdata = sitting_byday_1h[c(30, 32:35),]) #5-11 days = test phase
 
 
   #standing, timesteps = 1h, 1point = 1day
 qcc(data = standing_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = standing_byday_1h[32:35,]) #5-11 days = test phase
+    newdata = standing_byday_1h[c(30, 32:35),]) #5-11 days = test phase
 
 
   #not visible, timesteps = 1h, 1point = 1day
 qcc(data = not_visible_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = not_visible_byday_1h[32:35,],  #5-11 days = test phase
+    newdata = not_visible_byday_1h[c(30, 32:35),],  #5-11 days = test phase
     confidence.level = 0.99,       #increase confidence level (default = 0.95)
     add.stats = FALSE)  +          #don't display center, std & number of groups
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
@@ -504,25 +436,25 @@ Plots :
   #lying, timesteps = 2h, 1point = 1day
 qcc(data = lying_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_byday_2h[32:35,])  #5-11 days = test phase
+    newdata = lying_byday_2h[c(30, 32:35),])  #5-11 days = test phase
 
 
   #sitting, timesteps = 2h, 1point = 1day
 qcc(data = sitting_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_byday_2h[32:35,]) #5-11 days = test phase
+    newdata = sitting_byday_2h[c(30, 32:35),]) #5-11 days = test phase
 
 
   #standing, timesteps = 2h, 1point = 1day
 qcc(data = standing_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = standing_byday_2h[32:35,]) #5-11 days = test phase
+    newdata = standing_byday_2h[c(30, 32:35),]) #5-11 days = test phase
 
 
   #not visible, timesteps = 2h, 1point = 1day
 qcc(data = not_visible_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = not_visible_byday_2h[32:35,],  #5-11 days = test phase
+    newdata = not_visible_byday_2h[c(30, 32:35),],  #5-11 days = test phase
     confidence.level = 0.99,       #increase confidence level (default = 0.95)
     add.stats = FALSE)  +          #don't display center, std & number of groups
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
@@ -543,25 +475,25 @@ Plots :
   #lying, timesteps = 4h, 1point = 1day
 qcc(data = lying_byday_4h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_byday_4h[32:35,])  #5-11 days = test phase
+    newdata = lying_byday_4h[c(30, 32:35),])  #5-11 days = test phase
 
 
   #sitting, timesteps = 4h, 1point = 1day
 qcc(data = sitting_byday_4h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_byday_4h[32:35,]) #5-11 days = test phase
+    newdata = sitting_byday_4h[c(30, 32:35),]) #5-11 days = test phase
 
 
   #standing, timesteps = 4h, 1point = 1day
 qcc(data = standing_byday_4h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = standing_byday_4h[32:35,]) #5-11 days = test phase
+    newdata = standing_byday_4h[c(30, 32:35),]) #5-11 days = test phase
 
 
   #not visible, timesteps = 4h, 1point = 1day
 qcc(data = not_visible_byday_4h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = not_visible_byday_4h[32:35,],  #5-11 days = test phase
+    newdata = not_visible_byday_4h[c(30, 32:35),],  #5-11 days = test phase
     confidence.level = 0.99,       #increase confidence level (default = 0.95)
     add.stats = FALSE)  +          #don't display center, std & number of groups
   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
@@ -574,35 +506,35 @@ This part does not work because some days only have 1 group of 6 hours filled, a
 
 ```{r}
   #6h
-aggregate_by_day_1.1(frequency_position_6h_8h_21h_05_to_14_07_2022, time = "6h")
+aggregate_by_day_1.1(frequency_position_6h_8h_21h_05_07_to_08_08_2022, time = "6h")
 ```
 
 Plots (doesn't work because no data enough) :
 ```{r}
-# #Plot xbar charts for every posture 
+# #Plot xbar charts for every posture
 # 
 #   #lying, timesteps = 6h, 1point = 1day
 # qcc(data = lying_byday_6h[1:10,], #5 first days = calibration
 #     type = "xbar",               #chart type
-#     newdata = lying_byday_6h[32:35,])  #5-11 days = test phase
+#     newdata = lying_byday_6h[c(30, 32:35),])  #5-11 days = test phase
 # 
 # 
 #   #sitting, timesteps = 6h, 1point = 1day
 # qcc(data = sitting_byday_6h[1:10,], #5 first days = calibration
 #     type = "xbar",               #chart type
-#     newdata = sitting_byday_6h[32:35,]) #5-11 days = test phase
+#     newdata = sitting_byday_6h[c(30, 32:35),]) #5-11 days = test phase
 # 
 # 
 #   #standing, timesteps = 6h, 1point = 1day
 # qcc(data = standing_byday_6h[1:10,], #5 first days = calibration
 #     type = "xbar",               #chart type
-#     newdata = standing_byday_6h[32:35,]) #5-11 days = test phase
+#     newdata = standing_byday_6h[c(30, 32:35),]) #5-11 days = test phase
 # 
 # 
 #   #not visible, timesteps = 6h, 1point = 1day
 # qcc(data = not_visible_byday_6h[1:10,], #5 first days = calibration
 #     type = "xbar",               #chart type
-#     newdata = not_visible_byday_6h[32:35,],  #5-11 days = test phase
+#     newdata = not_visible_byday_6h[c(30, 32:35),],  #5-11 days = test phase
 #     confidence.level = 0.99,       #increase confidence level (default = 0.95)
 #     add.stats = FALSE)  +          #don't display center, std & number of groups
 #   scale_x_date(date_breaks = "3 days", date_labels = "%d-%b") #none of these commands work
