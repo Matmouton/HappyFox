@@ -934,3 +934,91 @@ ggplot(amount_changes_data_8h_21h_04_to_14_07_2022_compressed_time_reliable_data
 ## 2. Indicator 2
 
 ## 3. Indicator 3
+
+# D. Piechart postures calibration phase
+
+Piechart of postures post-infection but without symptoms (= data from 09/07 to
+14/07) compared to the symptomatic phase when moving a lot (05/08) & biting
+himself while lying all day long (06/08).
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Data
+
+  # Reference piechart (from 09/07 to 14/07)
+group <- c("Lying", "Sitting", "Standing", "Not visible", "NA")
+value <- c(52, 5, 9, 11, 23)
+
+data_piechart_ref <- data.frame(group, value) %>%
+  arrange(desc(group)) %>%
+  mutate(
+    prop = value / sum(value),
+    ypos = cumsum(prop) - 0.5 * prop
+  )
+
+  # Very active day (05/08)
+group <- c("Lying", "Sitting", "Standing", "Not visible", "NA")
+value <- c(24, 7, 40, 11, 18)
+
+data_piechart_05_08 <- data.frame(group, value) %>%
+  arrange(desc(group)) %>%
+  mutate(
+    prop = value / sum(value),
+    ypos = cumsum(prop) - 0.5 * prop
+  )
+
+  # Identified as lying, but in fact biting himself while lied (06/08)
+group <- c("Lying", "Sitting", "Standing", "Not visible", "NA")
+value <- c(58, 1, 5, 10, 26)
+
+data_piechart_06_08 <- data.frame(group, value) %>%
+  arrange(desc(group)) %>%
+  mutate(
+    prop = value / sum(value),
+    ypos = cumsum(prop) - 0.5 * prop
+  )
+
+# Couleurs personnalisées
+custom_colors <- c(
+  "Lying" = "chartreuse3",
+  "Sitting" = "orange",
+  "Standing" = "tomato",
+  "Not visible" = "darkseagreen", #in green because he's supposed to be lying
+  "NA" = "lightgrey"
+)
+
+# Graph reference
+ggplot(data_piechart_ref, aes(x = "", y = prop, fill = group)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(y = ypos, label = paste0(value)), color = "white", size = 6) +
+  scale_fill_manual(values = custom_colors) +
+  guides(fill = guide_legend(title = "Posture")) +
+  ggtitle("Amount of each posture for fox 4313",
+          subtitle = "During the infected pre-symptomatic phase (09/07-14/07)")
+
+# Graph 05/08
+ggplot(data_piechart_05_08, aes(x = "", y = prop, fill = group)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(y = ypos, label = paste0(value)), color = "white", size = 6) +
+  scale_fill_manual(values = custom_colors) +
+  guides(fill = guide_legend(title = "Posture")) +
+  ggtitle("Amount of each posture for fox 4313",
+          subtitle = "During the symptomatic phase, active day (05/08)")
+
+# Graph 06/08
+ggplot(data_piechart_06_08, aes(x = "", y = prop, fill = group)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(y = ypos, label = paste0(value)), color = "white", size = 6) +
+  scale_fill_manual(values = custom_colors) +
+  guides(fill = guide_legend(title = "Posture"))+
+  ggtitle("Amount of each posture for fox 4313",
+          subtitle = "During the symptomatic phase, inactive day (06/08)")
+```

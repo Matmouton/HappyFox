@@ -236,3 +236,6 @@ qcc(data = posture_changes_byday_6h[1:10,],     #first 10 days = calibration
     newdata = posture_changes_byday_6h[11:14,]) #last 4 days = test
 ```
 => We do have an alert during the symptomatic phase, good thing. But afterwards the indicator is very normal. However, we do have an alert just before the death, so even if it's not soon enough to do someting to prevent it, it's good to see that we can see the problem when it occurs.
+
+
+
