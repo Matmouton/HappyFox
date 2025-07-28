@@ -935,11 +935,71 @@ ggplot(amount_changes_data_8h_21h_04_to_14_07_2022_compressed_time_reliable_data
 
 ## 3. Indicator 3
 
-# D. Piechart postures calibration phase
+# D. Piechart postures calibration phase vs symptomatic phase
 
-Piechart of postures post-infection but without symptoms (= data from 09/07 to
+Piecharts of postures post-infection but without symptoms (= data from 09/07 to
 14/07) compared to the symptomatic phase when moving a lot (05/08) & biting
-himself while lying all day long (06/08).
+himself while lying all day long (06/08) i.e. considered lying a lot.
+
+Get data :
+
+```{r}
+# Load data
+load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
+
+
+### For "reference" period (09/07-14/07) :
+
+# Get number of rows for these days
+nrow(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+  filter(Date_Time >= as.POSIXct("2022-07-09 08:00:00") & Date_Time <= as.POSIXct("2022-07-14 21:00:00"))) #274105 rows
+
+# Get the proportion of each posture on these days
+table(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+        filter(Date_Time >= as.POSIXct("2022-07-09 08:00:00") & Date_Time <= as.POSIXct("2022-07-14 21:00:00")) %>%
+        select(name))/274105  #divide by total to get proportion
+
+# The remaining rows = NAs :
+nrow(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+  filter(Date_Time >= as.POSIXct("2022-07-09 08:00:00") & Date_Time <= as.POSIXct("2022-07-14 21:00:00")) %>% 
+  filter(is.na(name)))/274105  #64713 rows = 23,6%
+
+
+
+### For day 05/08
+
+nrow(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+  filter(date == "2022-08-05")) #45110 rows
+
+# Get the proportion of each posture on these days
+table(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+        filter(date == "2022-08-05") %>%
+        select(name))/45110  #divide by total to get proportion
+
+# The remaining rows = NAs :
+nrow(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+  filter(date == "2022-08-05") %>% 
+  filter(is.na(name)))/45110  #8135 rows = 18,0%
+
+
+
+### For day 06/08
+
+nrow(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+  filter(date == "2022-08-06")) #45032 rows
+
+# Get the proportion of each posture on these days
+table(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+        filter(date == "2022-08-06") %>%
+        select(name))/45032  #divide by total to get proportion
+
+# The remaining rows = NAs :
+nrow(reliable_data_8h_21h_05_07_to_08_08_2022 %>% 
+  filter(date == "2022-08-06") %>% 
+  filter(is.na(name)))/45032  #64713 rows = 25,9%
+```
+
+Plots :
 
 ```{r}
 library(ggplot2)
@@ -949,7 +1009,7 @@ library(dplyr)
 
   # Reference piechart (from 09/07 to 14/07)
 group <- c("Lying", "Sitting", "Standing", "Not visible", "NA")
-value <- c(52, 5, 9, 11, 23)
+value <- c(52, 5, 9, 11, 23)    #values of the table, in % (rounded)
 
 data_piechart_ref <- data.frame(group, value) %>%
   arrange(desc(group)) %>%
@@ -960,7 +1020,7 @@ data_piechart_ref <- data.frame(group, value) %>%
 
   # Very active day (05/08)
 group <- c("Lying", "Sitting", "Standing", "Not visible", "NA")
-value <- c(24, 7, 40, 11, 18)
+value <- c(24, 7, 40, 11, 18)    #values of the table, in % (rounded)
 
 data_piechart_05_08 <- data.frame(group, value) %>%
   arrange(desc(group)) %>%
@@ -971,7 +1031,7 @@ data_piechart_05_08 <- data.frame(group, value) %>%
 
   # Identified as lying, but in fact biting himself while lied (06/08)
 group <- c("Lying", "Sitting", "Standing", "Not visible", "NA")
-value <- c(58, 1, 5, 10, 26)
+value <- c(58, 1, 5, 10, 26)    #values of the table, in % (rounded)
 
 data_piechart_06_08 <- data.frame(group, value) %>%
   arrange(desc(group)) %>%
