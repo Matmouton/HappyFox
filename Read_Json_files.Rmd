@@ -550,7 +550,6 @@ load("data_8h_21h_05_to_08_08_2022.RData")
 data_8h_21h_04_07_to_08_08_2022 <- bind_rows(data_8h_21h_04_to_14_07_2022, data_8h_21h_03_08_2022, data_8h_21h_05_to_08_08_2022)
 ```
 
-
 We want to remove the whole day 04/07/22 and a part of the day 08/07/2022 (from
 9h6m57s to 10h14m19).
 

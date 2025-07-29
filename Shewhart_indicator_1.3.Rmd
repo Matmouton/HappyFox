@@ -270,25 +270,6 @@ load("data_QCC_indicator1.3_complete_reliable_15min_to_6h.Rdata")
 
 # 2. Aggregate by day
 
-```{r eval=FALSE}
-# This function doesn't work idk why so I'm doing it manually
-# 
-# aggregate_by_day_1.3 <- function(frequency_position_data, time) {
-#   
-#   variable_name <- paste("standing_sitting_byday", time, sep = "_")
-#   assign(variable_name, qcc.groups(data = frequency_position_data$standing_sitting, #lying counts only
-#                                    sample = frequency_position_data$day), 
-#          envir = .GlobalEnv)
-#   
-#   variable_name <- paste("lying_not_visible_byday", time, sep = "_")
-#   assign(variable_name, qcc.groups(data = frequency_position_data$lying_not_visible, #sitting counts only
-#                                    sample = frequency_position_data$day), 
-#          envir = .GlobalEnv)
-# }
-
-```
-
-
 ```{r}
 #Aggregate by day with QCC function
 
@@ -327,36 +308,39 @@ sitting_standing_byday_6h<- qcc.groups(data = frequency_position_6h_8h_21h_05_07
   #timesteps = 15min, 1point = 1day
 qcc(data = sitting_standing_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_standing_byday_15min[32:35,])  #5-11 days = test phase
+    newdata = sitting_standing_byday_15min[c(30, 32:35),])  #5-11 days = test phase
 
 
   #timesteps = 30min, 1point = 1day
 qcc(data = sitting_standing_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_standing_byday_30min[32:35,]) #5-11 days = test phase
+    newdata = sitting_standing_byday_30min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #timesteps = 1h, 1point = 1day
 qcc(data = sitting_standing_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_standing_byday_1h[32:35,]) #5-11 days = test phase
+    newdata = sitting_standing_byday_1h[c(30, 32:35),]) #5-11 days = test phase
 
   #timesteps = 2h, 1point = 1day
 qcc(data = sitting_standing_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_standing_byday_2h[32:35,])  #5-11 days = test phase
+    newdata = sitting_standing_byday_2h[c(30, 32:35),])  #5-11 days = test phase
 
 
   #timesteps = 4h, 1point = 1day
 qcc(data = sitting_standing_byday_4h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = sitting_standing_byday_4h[32:35,]) #5-11 days = test phase
+    newdata = sitting_standing_byday_4h[c(30, 32:35),]) #5-11 days = test phase
 
 
 # timesteps = 6h, 1point = 1day : it doesn't work because this aggregation causes some days to have only 1 time interval : not enough !
 # qcc(data = sitting_standing_byday_6h[1:10,], #5 first days = calibration
 #     type = "xbar",               #chart type
-#     newdata = sitting_standing_byday_6h[32:35,]) #5-11 days = test phase
+#     newdata = sitting_standing_byday_6h[c(30, 32:35),]) #5-11 days = test phase
+
+# Remove useless data
+rm(sitting_standing_byday_15min, sitting_standing_byday_30min, sitting_standing_byday_1h, sitting_standing_byday_2h, sitting_standing_byday_4h, sitting_standing_byday_6h)
 
 ```
 # 4. Results for lying_not_visible
@@ -398,29 +382,33 @@ lying_not_visible_byday_6h<- qcc.groups(data = frequency_position_6h_8h_21h_05_0
   #timesteps = 15min, 1point = 1day
 qcc(data = lying_not_visible_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_not_visible_byday_15min[32:35,])  #5-11 days = test phase
+    newdata = lying_not_visible_byday_15min[c(30, 32:35),])  #5-11 days = test phase
 
 
   #timesteps = 30min, 1point = 1day
 qcc(data = lying_not_visible_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_not_visible_byday_30min[32:35,]) #5-11 days = test phase
+    newdata = lying_not_visible_byday_30min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #timesteps = 1h, 1point = 1day
 qcc(data = lying_not_visible_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_not_visible_byday_1h[32:35,]) #5-11 days = test phase
+    newdata = lying_not_visible_byday_1h[c(30, 32:35),]) #5-11 days = test phase
 
   #timesteps = 2h, 1point = 1day
 qcc(data = lying_not_visible_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_not_visible_byday_2h[32:35,])  #5-11 days = test phase
+    newdata = lying_not_visible_byday_2h[c(30, 32:35),])  #5-11 days = test phase
 
 
   #timesteps = 4h, 1point = 1day
 qcc(data = lying_not_visible_byday_4h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = lying_not_visible_byday_4h[32:35,]) #5-11 days = test phase
+    newdata = lying_not_visible_byday_4h[c(30, 32:35),]) #5-11 days = test phase
+
+# Remove useless data
+rm(lying_not_visible_byday_15min, lying_not_visible_byday_30min, lying_not_visible_byday_1h, lying_not_visible_byday_2h, lying_not_visible_byday_4h, lying_not_visible_byday_6h)
 ```
+
 => No, the reciproc indicator is exactly the same but in the other direction. Doesn't allow to see anything new compared to the standing_sitting indicator.
