@@ -24,7 +24,7 @@ library(patchwork)
 
 You can load the data here :
 ```{r}
-load("")
+load("data_QCC_indicator2_complete_reliable_15min_to_6h.RData")
 ```
 
 ## → How to get this data ?
@@ -219,6 +219,11 @@ activity_score_6h_8h_21h_05_07_to_08_08_2022_compressed_time <- activity_score_6
   mutate(day = as.Date(interval_start))
 ```
 
+And we finally have the data : 
+```{r}
+load("data_QCC_indicator2_complete_reliable_15min_to_6h.RData")
+```
+
 
 
 # 2. Aggregate by day
@@ -248,6 +253,7 @@ aggregate_by_day_2 <- function(activity_score_data_list = list(activity_score_15
 # Apply function
 aggregate_by_day_2()
 ```
+
 
 
 # 3. Xbar chart
