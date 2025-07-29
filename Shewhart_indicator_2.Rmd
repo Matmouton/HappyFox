@@ -265,30 +265,30 @@ aggregate_by_day_2()
   #timesteps = 15min, 1point = 1day
 qcc(data = activity_score_byday_15min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_15min[32:35,])  #5-11 days = test phase
+    newdata = activity_score_byday_15min[c(30, 32:35),])  #5-11 days = test phase
 
 
   #timesteps = 30min, 1point = 1day
 qcc(data = activity_score_byday_30min[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_30min[32:35,]) #5-11 days = test phase
+    newdata = activity_score_byday_30min[c(30, 32:35),]) #5-11 days = test phase
 
 
   #timesteps = 1h, 1point = 1day
 qcc(data = activity_score_byday_1h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_1h[32:35,]) #5-11 days = test phase
+    newdata = activity_score_byday_1h[c(30, 32:35),]) #5-11 days = test phase
 
   #timesteps = 2h, 1point = 1day
 qcc(data = activity_score_byday_2h[1:10,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_2h[32:35,])  #5-11 days = test phase
+    newdata = activity_score_byday_2h[c(30, 32:35),])  #5-11 days = test phase
 
 
   #timesteps = 4h, 1point = 1day
 qcc(data = activity_score_byday_4h[1:4,], #5 first days = calibration
     type = "xbar",               #chart type
-    newdata = activity_score_byday_4h[32:35,]) #5-11 days = test phase
+    newdata = activity_score_byday_4h[c(30, 32:35),]) #5-11 days = test phase
 ```
 
 
