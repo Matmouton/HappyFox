@@ -22,7 +22,7 @@ library(patchwork)
 # 1. Load data
 
 ```{r}
-
+load("data_QCC_indicator3_complete_reliable_15min_to_6h.RData")
 ```
 
 
@@ -162,6 +162,11 @@ amount_changes_6h_data_8h_21h_05_07_to_08_08_2022 <- amount_changes_6h_data_8h_2
   mutate(day = as.Date(Time_group))
 ```
 
+Here we are ! You can still download the data here :
+```{r}
+load("data_QCC_indicator3_complete_reliable_15min_to_6h.RData")
+```
+
 
 # 2. Aggregate by day
 
@@ -200,7 +205,7 @@ posture_changes_byday_6h <- qcc.groups(
 
 # 3. Xbar chart
 
-Here we don't have the NA data between 14/07 & 05/08 : the table only contains dates that have data. So calibration phase = from 05/07 to 14/07 (lines 1 to 10 in the table) & test phase = from 05/08 to 08/08 (lines 11 to 14 in the table). There is 1 more column than it should be (53 instead of 52 for 15min aggregation for example), but it's only because of the 21h interval : it shouldn't change anything.
+Here we don't have the NA data between 14/07 & 05/08 : the table only contains dates that have data. So calibration phase = from 05/07 to 14/07 (lines 1 to 10 in the table) & test phase = from 03/08 to 08/08, without 04/08 (missing) =lines 11 to 15 in the table. There is 1 more column than it should be (53 instead of 52 for 15min aggregation for example), but it's only because of the 21h interval : it shouldn't change anything.
 
 ```{r}
 # Charts
@@ -208,34 +213,37 @@ Here we don't have the NA data between 14/07 & 05/08 : the table only contains d
   #timesteps = 15min, 1point = 1day
 qcc(data = posture_changes_byday_15min[1:10,],     #first 10 days = calibration
     type = "xbar",                                #chart type
-    newdata = posture_changes_byday_15min[11:14,]) #last 4 days = test
+    newdata = posture_changes_byday_15min[11:15,]) #last 4 days = test
 
   #timesteps = 30min, 1point = 1day
 qcc(data = posture_changes_byday_30min[1:10,],     #first 10 days = calibration
     type = "xbar",                                #chart type
-    newdata = posture_changes_byday_30min[11:14,]) #last 4 days = test
+    newdata = posture_changes_byday_30min[11:15,]) #last 4 days = test
 
   #timesteps = 1h, 1point = 1day
 qcc(data = posture_changes_byday_1h[1:10,],     #first 10 days = calibration
     type = "xbar",                                #chart type
-    newdata = posture_changes_byday_1h[11:14,]) #last 4 days = test
+    newdata = posture_changes_byday_1h[11:15,]) #last 4 days = test
 
   #timesteps = 2h, 1point = 1day
 qcc(data = posture_changes_byday_2h[1:10,],     #first 10 days = calibration
     type = "xbar",                                #chart type
-    newdata = posture_changes_byday_2h[11:14,]) #last 4 days = test
+    newdata = posture_changes_byday_2h[11:15,]) #last 4 days = test
 
   #timesteps = 4h, 1point = 1day
 qcc(data = posture_changes_byday_4h[1:10,],     #first 10 days = calibration
     type = "xbar",                                #chart type
-    newdata = posture_changes_byday_4h[11:14,]) #last 4 days = test
+    newdata = posture_changes_byday_4h[11:15,]) #last 4 days = test
 
   #timesteps = 6h, 1point = 1day
 qcc(data = posture_changes_byday_6h[1:10,],     #first 10 days = calibration
     type = "xbar",                                #chart type
-    newdata = posture_changes_byday_6h[11:14,]) #last 4 days = test
+    newdata = posture_changes_byday_6h[11:15,]) #last 4 days = test
 ```
 => We do have an alert during the symptomatic phase, good thing. But afterwards the indicator is very normal. However, we do have an alert just before the death, so even if it's not soon enough to do someting to prevent it, it's good to see that we can see the problem when it occurs.
+
+
+
 
 
 

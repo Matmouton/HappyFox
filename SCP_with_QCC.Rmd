@@ -89,14 +89,246 @@ obj <- qcc(diameter[1:30,], type="xbar",nsigmas = 1)
 
 ## Avec un autre jdd
 
-Là en plus ça a mis un point orange là où y'avait une valeur proche du seuil supérieur, jsp trop pourquoi parce que ça le faisait pas avant mais bon.
-
 ```{r}
-obj <- qcc(diameter[1:30,], type="xbar",newdata=diameter[31:40,])
+load("data_SCP_with_QCC.RData")   #data from Shewhart_indicator_3.Rmd
 ```
 
-On peut normalement personnaliser les graphiques, par exemple on peut enlever les stats, pas montrer tout le graphe, mettre des normes différentes et du coup ça fait des couleurs... Mais moi j'ai pas réussi. Peut-être l'article qui est daté (il utilise une fonction qccGroups qui existe pas par exemple). Lien au cas où : <https://luca-scr.github.io/qcc/reference/qccGroups.html>
+```{r}
+# Créer un objet QCC
+q <- qcc(data = posture_changes_byday_15min[1:10,],     
+    type = "xbar",                                
+    newdata = posture_changes_byday_15min[11:15,])
 
-Enfin bon, petite overview des graphiques possibles et intéressants en qcc :
+q$statistics #valeurs des points pour la période de calibration
+q$newstats   #valeurs des points pour la période de test
+q$limits     #valeurs UCL et LCL
 
-# Graphiques intéressants en QCC
+# Avoir la taille des échantillons chaque jour
+q$sizes     #période de calibration
+q$newsizes  #période de test
+
+# Avoir la valeur des points et la moyenne
+stats.xbar(data = posture_changes_byday_15min[1:10,]) # center = 20.26108
+
+# Avoir l'écart-type
+sd.xbar(data = posture_changes_byday_15min[1:10,], 
+        std.dev = "RMSDF") #default
+
+#UWAVE-SD : 23.61101
+#MVLUE-SD : 23.96539
+#RMSDF : 24.34841
+
+# Avoir les valeurs UCL et LCL (2ème méthode)
+limits.xbar(center = stats.xbar(data = posture_changes_byday_15min[1:10,])$center,
+            std.dev = sd.xbar(data = posture_changes_byday_15min[1:10,], std.dev = "RMSDF"),
+            sizes = q$sizes,
+            conf = q$nsigmas) 
+
+# Avoir les points oranges et rouges
+q$violations
+
+#$beyond.limits = points rouges
+#$violating.runs = points oranges
+
+# Pareil
+shewhart.rules(q,
+               limits = q$limits,
+               run.length = qcc.options("run.length")) #default = 7, max value of a run before to signal an OOC point
+
+
+# Avoir les points rouges
+beyond.limits(q,
+              limits = q$limits)
+
+# Avoir les points oranges 
+violating.runs(q,
+               run.length = 7) #7 = default
+
+# Connaître toutes les options par défaut de QCC
+qcc.options()
+
+# Changer les options par défaut QCC
+default <- qcc.options()             #sauvegarder les options par défaut
+qcc.options(run.length = 4)
+
+qcc(data = posture_changes_byday_15min[1:10,],     
+    type = "xbar",                                
+    newdata = posture_changes_byday_15min[11:15,],
+    nsigmas = 3)
+
+qcc.options(default)                  #rétablir les options par défaut
+
+```
+
+## Personnalisation des seuils & règles d'out of control (OOC)
+
+On a peu d'options de personnalisation pour les règles d'OOC :
+
+-   On peut choisir `exp.R.unscaled` pour donner les valeurs attendues du rapport R/sigma pour une distribution normale. Utile pour calculer les facteurs tq d2 dans les tableaux de contrôle de qualité ⇒ agit sur le calcul des limites
+
+-   On peut choisir `se.R.unscaled` pour donner les erreurs standards du rapport R/sigma. Utile pour estimer la variabilité de la plage de données, correspond au facteur d3 dans les tableaux de contrôle de qualité ⇒ agit sur le calcul des limites
+
+-   On peut choisir `run.length` pour donner le nombre maximum de points se trouvant du même côté de la moyenne avant qu’on considère que c’est inquiétant
+
+=\> Pour le reste, si on veut rajouter des règles pour mettre les points en orange par ex (ou en jaune pour des règles 2ndaires), il faut les créer nous-mêmes.
+
+**Articles utiles :**
+
+Pas mal d'infos sur QCC : <https://cran.r-project.org/web/packages/qcc/qcc.pdf>
+
+Règles souvent utilisées pour Shewhart : <https://analyse-it.com/docs/user-guide/process-control/shewhart-control-chart-rules> et <https://luca-scr.github.io/qcc/reference/rules.html>
+
+Comprendre l'argument run.length : <https://stackoverflow.com/questions/61882255/how-does-it-works-the-argument-run-length-of-the-fuction-qcc-options>
+
+Attention pour un xbar chart par défaut l'écart-type est calculé avec la méthode "UWAVE-R" mais si y'a ne serait-ce qu'une donnée NA pour toute une plage de temps on passe automatiquement sur la méthode RMSDF : <https://documentation.sas.com/doc/fr/pgmsascdc/v_065/qcug/qcug_shewhart_sect353.htm>
+
+## Personnalisation graphique & ggplot2
+
+On a aussi quelques options de **personnalisation graphique**, faire `?qcc.options` pour les voir. Possible aussi d'aller voir sur ce site mais pour moi ça a pas marché (obsolète ?) : <https://luca-scr.github.io/qcc/reference/qccGroups.html>
+
+Sinon, faire en sorte que les plots s'affichent directement en ggplot2 pour pouvoir les modifier, télécharger le fichier qcc.plot.R ici : <https://github.com/tomhopper/qcc_ggplot>
+
+-\> Mettre ce fichier dans le dossier de codes R où on travaille, et faire `source("qcc.plot.R")`. Maintenant quand on fait un graphe qcc il est en ggplot2 et on peut le modifier ! Les plots qcc sont remis par défaut à chaque redémarrage de R.
+
+Pour faire plusieurs plots en un, utiliser le package ggpubR : <https://www.rdocumentation.org/packages/ggpubr/versions/0.6.1>
+
+```{r}
+source(file = "qcc.plot.R") #changer le style des graphiques QCC par défaut
+```
+
+```{r}
+myplot <- qcc(data = posture_changes_byday_15min[1:10,],     
+    type = "xbar",                                
+    newdata = posture_changes_byday_15min[11:15,],
+    nsigmas = 3, 
+    digits = 4,  #only 4 "digits" (for example 17,62 is considered 4 digits wtf)
+    title = "Xbar chart for indicator 3 : posture changes by day",  #title
+    font.size = 14,  #size of the title + the axes
+    cex = 3,         #size of the dots
+    new.plot = TRUE) #useless for me, creates a new graph (for multi-pannels charts)
+
+```
+
+Mais on peut pas modifier plus que ça. Plutôt essayer de le construire directement dans ggplot2 :
+
+```{r}
+# Prepare data 
+q <- qcc(data = posture_changes_byday_15min[1:10,],     
+    type = "xbar",                                
+    newdata = posture_changes_byday_15min[11:15,])
+
+qcc_data <- data.frame(
+  Date = seq(1,(length(q$statistics) + length(q$newstats)), 1),
+  Value = rep(NA,15),
+  UCL = q$limits[, 2],
+  LCL = q$limits[, 1],
+  Center = q$center
+)
+
+qcc_data$Value[1:10] <- q$statistics
+qcc_data$Value[11:15] = q$newstats
+
+qcc_data$Date[1:10] <- rownames(q$data)
+qcc_data$Date[11:15] <- rownames(q$newdata)
+
+qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
+
+
+# Plot
+ggplot(qcc_data, aes(x = Date, y = Value)) +
+  geom_point(size = 2) +              #dots
+  geom_line(color = "lightblue") +   #lines
+  
+  # Messed up UCL & LCL
+  # geom_hline(aes(yintercept = UCL), color = "red", linetype = "dashed") +
+  # geom_hline(aes(yintercept = LCL), color = "red", linetype = "dashed")
+  
+  geom_hline(aes(yintercept = Center), color = "black", linetype = "solid") +
+  
+  # Titles
+  labs( title = "Xbar chart for indicator 3 : posture changes by day",  #add subtitle
+        x = "Date",
+        y = "Value") +
+  
+  theme_minimal()
+```
+
+```{r}
+#test gptouze
+
+library(ggplot2)
+library(qcc)
+
+# Création de l'objet qcc
+q <- qcc(
+  data = posture_changes_byday_15min[1:10, ],
+  type = "xbar",
+  newdata = posture_changes_byday_15min[11:15, ]
+)
+
+# Préparation des données pour ggplot
+qcc_data <- data.frame(
+  Date = c(rownames(q$data), rownames(q$newdata)),
+  Value = c(q$statistics, q$newstats),
+  UCL = c(q$limits[, 2], q$limits[, 2]),
+  LCL = c(q$limits[, 1], q$limits[, 1]),
+  Center = rep(q$center, length(c(q$statistics, q$newstats)))
+)
+
+# S'assurer que Date est un facteur ordonné
+qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
+
+# Faire une variable TRUE/FALSE si on est hors de contrôle ou pas
+qcc_data$OutOfControl <- with(qcc_data, Value > UCL | Value < LCL)
+
+# TODO : modifier ma variable true/false pour que ça soit : under control (black), secondary rule violated (yellow), primary rule violated (orange), out of control (red)
+
+
+# Tracé du graphique
+ggplot(qcc_data, aes(x = Date)) +
+    # Lines
+  geom_hline(aes(yintercept = Center[1]), color = "red", linetype = "solid") +
+  geom_line(aes(y = Value, group = 1), color = "black") +
+  geom_line(aes(y = UCL, group = 1), color = "blue", linetype = "dashed") +
+  geom_line(aes(y = LCL, group = 1), color = "blue", linetype = "dashed") +
+    # Dots
+  geom_point(aes(y = Value, color = OutOfControl), size = 2) +
+    # Legend
+  scale_color_manual(values = c("FALSE" = "black", "TRUE" = "red")) +
+    # Labels
+  labs(
+    title = "Xbar chart for indicator 3 : posture changes by day",
+    subtitle = "Every 15min, for fox 4313",
+    x = "Date",
+    y = "Amount of posture changes",
+    color = "Out of control data"
+  ) +
+  theme_minimal() +
+    # Rotate axis labels (dates)
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+# Ajouter une colonne pour identifier les points hors limites
+qcc_data$OutOfControl <- with(qcc_data, Value > UCL | Value < LCL)
+
+# Tracé du graphique avec couleur conditionnelle
+ggplot(qcc_data, aes(x = Date)) +
+  geom_point(aes(y = Value, color = OutOfControl), size = 2) +
+  geom_line(aes(y = Value, group = 1), color = "lightblue") +
+  geom_line(aes(y = UCL, group = 1), color = "red", linetype = "dashed") +
+  geom_line(aes(y = LCL, group = 1), color = "red", linetype = "dashed") +
+  geom_hline(aes(yintercept = Center[1]), color = "black", linetype = "solid") +
+  scale_color_manual(values = c("FALSE" = "blue", "TRUE" = "red")) +
+  labs(
+    title = "Xbar chart for indicator 3 : posture changes by day",
+    subtitle = "Contrôle qualité sur les 15 premiers jours",
+    x = "Date",
+    y = "Value",
+    color = "Hors limites"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
