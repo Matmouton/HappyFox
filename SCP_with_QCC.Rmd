@@ -17,6 +17,7 @@ output:
 #install.packages("qcc")
 library(qcc)
 library(ggplot2)
+library(slider)
 ```
 
 ## R chart vs xbar chart {.tabset}
@@ -213,48 +214,6 @@ myplot <- qcc(data = posture_changes_byday_15min[1:10,],
 Mais on peut pas modifier plus que ça. Plutôt essayer de le construire directement dans ggplot2 :
 
 ```{r}
-# Prepare data 
-q <- qcc(data = posture_changes_byday_15min[1:10,],     
-    type = "xbar",                                
-    newdata = posture_changes_byday_15min[11:15,])
-
-qcc_data <- data.frame(
-  Date = seq(1,(length(q$statistics) + length(q$newstats)), 1),
-  Value = rep(NA,15),
-  UCL = q$limits[, 2],
-  LCL = q$limits[, 1],
-  Center = q$center
-)
-
-qcc_data$Value[1:10] <- q$statistics
-qcc_data$Value[11:15] = q$newstats
-
-qcc_data$Date[1:10] <- rownames(q$data)
-qcc_data$Date[11:15] <- rownames(q$newdata)
-
-qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
-
-
-# Plot
-ggplot(qcc_data, aes(x = Date, y = Value)) +
-  geom_point(size = 2) +              #dots
-  geom_line(color = "lightblue") +   #lines
-  
-  # Messed up UCL & LCL
-  # geom_hline(aes(yintercept = UCL), color = "red", linetype = "dashed") +
-  # geom_hline(aes(yintercept = LCL), color = "red", linetype = "dashed")
-  
-  geom_hline(aes(yintercept = Center), color = "black", linetype = "solid") +
-  
-  # Titles
-  labs( title = "Xbar chart for indicator 3 : posture changes by day",  #add subtitle
-        x = "Date",
-        y = "Value") +
-  
-  theme_minimal()
-```
-
-```{r}
 # Data preparation for ggplot2
 
   # Create QCC object
@@ -268,38 +227,122 @@ qcc_data <- data.frame(
   Value = rep(NA,15),
   UCL = q$limits[, 2],
   LCL = q$limits[, 1],
-  Center = q$center)
+  Nb_values = rep(NA,15))
 
   # Adapt dataframe
-qcc_data$Value[1:10] <- q$statistics
+qcc_data$Value[1:10] <- q$statistics     #fill Value variable
 qcc_data$Value[11:15] = q$newstats
 
-qcc_data$Date[1:10] <- rownames(q$data)
+qcc_data$Date[1:10] <- rownames(q$data)  #fill Date variable
 qcc_data$Date[11:15] <- rownames(q$newdata)
 
-qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
+qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date) #Date as factor
 
-  # Make sure date is a sorted factor
-qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
+qcc_data$Nb_values[1:10] <- q$sizes      #fill Nb_values variable
+qcc_data$Nb_values[11:15] <- q$newsizes
+
+  # Add variable of 1 SD (the value depends on the amount of NA during this day)
+qcc_data$SD <- q$std.dev/sqrt(qcc_data$Nb_values) #get 2sd & 3sd by multiplying
 
   # Make a TRUE/FALSE variable if OOC or not
-qcc_data$OutOfControl <- with(qcc_data, Value > UCL | Value < LCL)
+qcc_data$Out_3sd <- with(qcc_data, Value > UCL | Value < LCL)
+qcc_data$Out_2sd <- with(qcc_data, Value > q$center+2*SD | Value < q$center-2*SD)
+qcc_data$Out_1sd <- with(qcc_data, Value > q$center+SD | Value < q$center-SD)
 
-# TODO : modifier ma variable true/false pour que ça soit : under control (black), secondary rule violated (yellow), primary rule violated (orange), out of control (red)
+  # Add conditions for rule3 (4/5 following points > 1sigma from the center)
+
+      # Check if each point is at <1sd distance from mean + check if up/down
+qcc_data <- qcc_data %>%
+  mutate(more_1sd_distance = case_when(
+    Value > q$center + SD ~ 1,  #more than 1sd distance from mean, positive side
+    Value < q$center - SD ~ -1, #more than 1sd distance from mean, negative side
+    TRUE ~ 0                  #within [mean +/- 1sd]
+  )) %>%
+      # Check if 4/5 following points are >1sd distance from mean on the same side
+  mutate(Rule3 = slide_int(more_1sd_distance, ~{
+    pos <- sum(.x == 1)       #sum the >1 sd positive side
+    neg <- sum(.x == -1)      #sum the >1 sd negative side
+    if(pos >= 4 | neg >= 4) TRUE else FALSE  #T if 4 points >1 sd on the same side
+  }, .before = 4,             #we watch the 4 previous points (+ the current point)
+  .complete = TRUE))          #do nothing (= NA) if there are not 4 previous points
 
 
+  # Add conditions for rule4 (6 following points are increasing/ decreasing : trend)
+
+    # Check if each point is an increase or a decrease compared to the previous one
+qcc_data <- qcc_data %>% 
+  mutate(increase_decrease = case_when(
+    Value > lag(Value) ~ 1,  #it's an increase
+    Value < lag(Value) ~ -1, #it's a decrease
+    Value == lag(Value) ~ 0, #it's the same value
+    TRUE ~ 0                 #there is no previous
+  )) %>% 
+  mutate(Rule4 = slide_int(increase_decrease, ~{
+    inc <- sum(.x == 1)      #sum the increases
+    dec <- sum(.x == -1)     #sum the decreases
+    if( inc >= 6 | dec >= 6) TRUE else FALSE  #T if more than 6 neighbours inc/dec
+  }, .before = 5,            #watch 5 previous points (+ the current point)
+  .complete = TRUE ))        #do nothing (= NA) if there are not 5 previous points
+
+
+  #Add conditions for Rule5 (7 following points up/down the mean)
+
+    # Check for each point if it's up/ down the mean
+qcc_data <- qcc_data %>%
+  mutate(up_down_mean = case_when(
+    Value > q$center ~ 1,  #up to the mean
+    Value < q$center ~ -1, #down the mean
+    TRUE ~ 0             #it's the mean
+  )) %>%
+      # Check if 7 following points are on the same side from the mean
+  mutate(Rule5 = slide_int(up_down_mean, ~{
+    up <- sum(.x == 1)       #sum the upside points
+    down <- sum(.x == -1)    #sum the downside points
+    if(up >= 7 | down >= 7) TRUE else FALSE  #T if 7 points on the same side
+  }, .before = 6,             #we watch the 6 previous points (+ the current point)
+  .complete = TRUE))          #do nothing (= NA) if there are not 6 previous points
+
+
+  # Add the 4 rules to a variable indicating if a rule is violated and which one
+
+qcc_data <- qcc_data %>% 
+  mutate(OutOfControl = case_when(
+    
+    # The 4 rules I want on my chart
+    # from less to most important so that most important rule is the last remembered
+    Rule5 > 0 ~ "Rule 5",
+    Rule4 > 0 ~ "Rule 4",
+    Rule3 > 0 ~ "Rule 3",
+    Out_2sd == TRUE & (lag(Out_2sd) == T | lag(lag(Out_2sd == T))) ~ "Rule 2",
+    Out_3sd == TRUE ~ "Rule 1",
+    TRUE ~ "In control"))
+```
+
+```{r}
 # Plot the graph
 
 ggplot(qcc_data, aes(x = Date)) +
     # Lines
-  geom_hline(aes(yintercept = Center[1]), color = "red", linetype = "solid") +
+  geom_hline(aes(yintercept = Center[1]), color = "red", linetype = "solid") + #Mean
   geom_line(aes(y = Value, group = 1), color = "black") +
-  geom_line(aes(y = UCL, group = 1), color = "blue", linetype = "dashed") +
-  geom_line(aes(y = LCL, group = 1), color = "blue", linetype = "dashed") +
+  geom_line(aes(y = UCL, group = 1), color = "blue", linetype = "solid") + #UCL
+  geom_line(aes(y = LCL, group = 1), color = "blue", linetype = "solid") + #LCL
+      #2SD
+  geom_line(aes(y = Center[1] + 2*SD,
+                group = 1), color = "blue", linetype = "dashed" ) +  #+2 sd
+  geom_line(aes(y = Center[1] - 2*SD,
+                group = 1), color = "blue", linetype = "dashed" ) +  #-2 sd
     # Dots
   geom_point(aes(y = Value, color = OutOfControl), size = 2) +
     # Legend
-  scale_color_manual(values = c("FALSE" = "black", "TRUE" = "red")) +
+  scale_color_manual(values = c(
+    "Rule 1" = "red",
+    "Rule 2" = "orange",
+    "Rule 3" = "orange",
+    "Rule 4" = "gold",
+    "Rule 5" = "gold",
+    "In control" = "black"
+  )) +
     # Labels
   labs(
     title = "Xbar chart for indicator 3 : posture changes by day",
@@ -312,4 +355,203 @@ ggplot(qcc_data, aes(x = Date)) +
     # Rotate axis labels (dates)
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+```
+
+## Automatisation
+
+```{r}
+# Automatized data preparation for ggplot2
+
+data_prep_xbarchart_ggplot <- function(data_calibration,
+                                 data_test){
+  
+    # Create variables
+  n_calib <- nrow(data_calibration)
+  n_total <- nrow(data_calibration) + nrow(data_test)
+  
+    # Create QCC object
+  q <- qcc(data = data_calibration,     
+      type = "xbar",                                
+      newdata = data_test, plot = FALSE)
+  
+    # Dataframe with needed information
+  qcc_data <- data.frame(
+    Date = seq(1,(length(q$statistics) + length(q$newstats)), 1),
+    Value = rep(NA, n_total), #vector of NA, same length as total observations
+    UCL = q$limits[, 2],      #get UCL from QCC
+    LCL = q$limits[, 1],      #get LCL from QCC
+    Nb_values = rep(NA, n_total))  #vector of NA, same length as total observations
+  
+    # Adapt dataframe
+  qcc_data$Value[1:n_calib] <- q$statistics     #fill Value variable
+  qcc_data$Value[(n_calib+1):n_total] = q$newstats
+  qcc_data$Date[1:n_calib] <- rownames(q$data)  #fill Date variable
+  qcc_data$Date[(n_calib+1):n_total] <- rownames(q$newdata)
+
+  qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date) #Date as factor
+
+  qcc_data$Nb_values[1:n_calib] <- q$sizes      #fill Nb_values variable
+  qcc_data$Nb_values[(n_calib+1):n_total] <- q$newsizes
+
+    # Add variable of 1 SD (the value depends on the amount of NA during this day)
+  qcc_data$SD <- q$std.dev/sqrt(qcc_data$Nb_values) #get 2sd & 3sd by multiplying
+
+    # Make a TRUE/FALSE variable if OOC or not
+  qcc_data$Out_3sd <- with(qcc_data, Value > UCL | Value < LCL)
+  qcc_data$Out_2sd <- with(qcc_data, Value > q$center+2*SD | Value < q$center-2*SD)
+  qcc_data$Out_1sd <- with(qcc_data, Value > q$center+SD | Value < q$center-SD)
+
+  
+    # Add conditions for rule3 (4/5 following points > 1sigma from the center)
+  
+        # Check if each point is at <1sd distance from mean + check if up/down
+  qcc_data <- qcc_data %>%
+    mutate(more_1sd_distance = case_when(
+      Value > q$center + SD ~ 1,  #more than 1sd distance from mean, positive side
+      Value < q$center - SD ~ -1, #more than 1sd distance from mean, negative side
+      TRUE ~ 0                  #within [mean +/- 1sd]
+    )) %>%
+        # Check if 4/5 following points are >1sd distance from mean on the same side
+    mutate(Rule3 = slide_int(more_1sd_distance, ~{
+      pos <- sum(.x == 1)       #sum the >1 sd positive side
+      neg <- sum(.x == -1)      #sum the >1 sd negative side
+      if(pos >= 4 | neg >= 4) TRUE else FALSE  #T if 4 points >1 sd on the same side
+    }, .before = 4,             #we watch the 4 previous points (+ the current point)
+    .complete = TRUE))          #do nothing (= NA) if there are not 4 previous points
+  
+  
+    # Add conditions for rule4 (6 following points are increasing/ decreasing : trend)
+  
+      # Check if each point is an increase or a decrease compared to the previous one
+  qcc_data <- qcc_data %>% 
+    mutate(increase_decrease = case_when(
+      Value > lag(Value) ~ 1,  #it's an increase
+      Value < lag(Value) ~ -1, #it's a decrease
+      Value == lag(Value) ~ 0, #it's the same value
+      TRUE ~ 0                 #there is no previous
+    )) %>% 
+    mutate(Rule4 = slide_int(increase_decrease, ~{
+      inc <- sum(.x == 1)      #sum the increases
+      dec <- sum(.x == -1)     #sum the decreases
+      if( inc >= 6 | dec >= 6) TRUE else FALSE  #T if more than 6 neighbours inc/dec
+    }, .before = 5,            #watch 5 previous points (+ the current point)
+    .complete = TRUE ))        #do nothing (= NA) if there are not 5 previous points
+
+
+    #Add conditions for Rule5 (7 following points up/down the mean)
+  
+      # Check for each point if it's up/ down the mean
+  qcc_data <- qcc_data %>%
+    mutate(up_down_mean = case_when(
+      Value > q$center ~ 1,  #up to the mean
+      Value < q$center ~ -1, #down the mean
+      TRUE ~ 0             #it's the mean
+    )) %>%
+        # Check if 7 following points are on the same side from the mean
+    mutate(Rule5 = slide_int(up_down_mean, ~{
+      up <- sum(.x == 1)       #sum the upside points
+      down <- sum(.x == -1)    #sum the downside points
+      if(up >= 7 | down >= 7) TRUE else FALSE  #T if 7 points on the same side
+    }, .before = 6,             #we watch the 6 previous points (+ the current point)
+    .complete = TRUE))          #do nothing (= NA) if there are not 6 previous points
+
+
+    # Add the 4 rules to a variable indicating if a rule is violated and which one
+  
+  qcc_data <- qcc_data %>% 
+    mutate(OutOfControl = case_when(
+      
+      # The 4 rules I want on my chart
+      # from less to most important so that most important rule is the last remembered
+      Rule5 > 0 ~ "Rule 5",
+      Rule4 > 0 ~ "Rule 4",
+      Rule3 > 0 ~ "Rule 3",
+      Out_2sd == TRUE & (lag(Out_2sd) == T | lag(lag(Out_2sd == T))) ~ "Rule 2",
+      Out_3sd == TRUE ~ "Rule 1",
+      TRUE ~ "In control"))
+  
+  output <- list(qcc_data, q$center)
+  
+    # Return data
+  return(output)
+  
+}
+
+#Test
+# data_and_center <- data_prep_xbarchart_ggplot(data_calibration = posture_changes_byday_15min[1:10,],
+#                            data_test = posture_changes_byday_15min[11:15,])
+
+
+
+
+```
+
+```{r}
+plot_xbarchart_ggplot <- function(data_calibration,
+                                  data_test,
+                                  title,
+                                  subtitle,
+                                  indicator_name
+                                  ){
+  
+  # Get the data & the center
+  data_and_center <- data_prep_xbarchart_ggplot(data_calibration = data_calibration,
+                                                data_test = data_test) #prepare data
+  qcc_data <- data_and_center[[1]] #get the data
+  center <- data_and_center[[2]]   #get the mean value for calibration period
+  
+  # Plot the graph
+  
+  ggplot(qcc_data, aes(x = Date)) +
+      # Lines
+    geom_hline(aes(yintercept = center), color = "red", linetype = "solid") + #Mean
+    geom_line(aes(y = Value, group = 1), color = "black") +
+    geom_line(aes(y = UCL, group = 1), color = "blue", linetype = "solid") + #UCL
+    geom_line(aes(y = LCL, group = 1), color = "blue", linetype = "solid") + #LCL
+        #2SD
+    geom_line(aes(y = center + 2*SD,
+                  group = 1), color = "blue", linetype = "dashed" ) +  #+2 sd
+    geom_line(aes(y = center - 2*SD,
+                  group = 1), color = "blue", linetype = "dashed" ) +  #-2 sd
+      # Dots
+    geom_point(aes(y = Value, color = OutOfControl), size = 2) +
+      # Legend
+    scale_color_manual(values = c(
+      "Rule 1" = "red",
+      "Rule 2" = "orange",
+      "Rule 3" = "orange",
+      "Rule 4" = "gold",
+      "Rule 5" = "gold",
+      "In control" = "black"
+    )) +
+      # Labels
+    labs(
+      title = title,
+      subtitle = subtitle,
+      x = "Date",
+      y = indicator_name,
+      color = "Out of control data"
+    ) +
+    theme_minimal() +
+      # Rotate axis labels (dates)
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+```
+
+And finally, let's plot the graph !
+
+```{r}
+# Test for 15min timestep
+plot_xbarchart_ggplot(data_calibration = posture_changes_byday_15min[1:10,],
+                      data_test = posture_changes_byday_15min[11:15,],
+                      title = "Xbar chart for indicator 3 : posture changes by day",
+                      subtitle = "Every 15min, for fox 4313",
+                      indicator_name = "Amount of posture changes")
+
+# Test for 4h timestep
+plot_xbarchart_ggplot(data_calibration = posture_changes_byday_4h[1:10,],
+                      data_test = posture_changes_byday_4h[11:15,],
+                      title = "Xbar chart for indicator 3 : posture changes by day",
+                      subtitle = "Every 4h, for fox 4313",
+                      indicator_name = "Amount of posture changes")
 ```
