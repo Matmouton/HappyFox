@@ -16,6 +16,7 @@ output:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #install.packages("qcc")
 library(qcc)
+library(ggplot2)
 ```
 
 ## R chart vs xbar chart {.tabset}
@@ -254,37 +255,41 @@ ggplot(qcc_data, aes(x = Date, y = Value)) +
 ```
 
 ```{r}
-#test gptouze
+# Data preparation for ggplot2
 
-library(ggplot2)
-library(qcc)
+  # Create QCC object
+q <- qcc(data = posture_changes_byday_15min[1:10,],     
+    type = "xbar",                                
+    newdata = posture_changes_byday_15min[11:15,])
 
-# Création de l'objet qcc
-q <- qcc(
-  data = posture_changes_byday_15min[1:10, ],
-  type = "xbar",
-  newdata = posture_changes_byday_15min[11:15, ]
-)
-
-# Préparation des données pour ggplot
+  # Dataframe with needed information
 qcc_data <- data.frame(
-  Date = c(rownames(q$data), rownames(q$newdata)),
-  Value = c(q$statistics, q$newstats),
-  UCL = c(q$limits[, 2], q$limits[, 2]),
-  LCL = c(q$limits[, 1], q$limits[, 1]),
-  Center = rep(q$center, length(c(q$statistics, q$newstats)))
-)
+  Date = seq(1,(length(q$statistics) + length(q$newstats)), 1),
+  Value = rep(NA,15),
+  UCL = q$limits[, 2],
+  LCL = q$limits[, 1],
+  Center = q$center)
 
-# S'assurer que Date est un facteur ordonné
+  # Adapt dataframe
+qcc_data$Value[1:10] <- q$statistics
+qcc_data$Value[11:15] = q$newstats
+
+qcc_data$Date[1:10] <- rownames(q$data)
+qcc_data$Date[11:15] <- rownames(q$newdata)
+
 qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
 
-# Faire une variable TRUE/FALSE si on est hors de contrôle ou pas
+  # Make sure date is a sorted factor
+qcc_data$Date <- factor(qcc_data$Date, levels = qcc_data$Date)
+
+  # Make a TRUE/FALSE variable if OOC or not
 qcc_data$OutOfControl <- with(qcc_data, Value > UCL | Value < LCL)
 
 # TODO : modifier ma variable true/false pour que ça soit : under control (black), secondary rule violated (yellow), primary rule violated (orange), out of control (red)
 
 
-# Tracé du graphique
+# Plot the graph
+
 ggplot(qcc_data, aes(x = Date)) +
     # Lines
   geom_hline(aes(yintercept = Center[1]), color = "red", linetype = "solid") +
@@ -305,30 +310,6 @@ ggplot(qcc_data, aes(x = Date)) +
   ) +
   theme_minimal() +
     # Rotate axis labels (dates)
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-
-```{r}
-# Ajouter une colonne pour identifier les points hors limites
-qcc_data$OutOfControl <- with(qcc_data, Value > UCL | Value < LCL)
-
-# Tracé du graphique avec couleur conditionnelle
-ggplot(qcc_data, aes(x = Date)) +
-  geom_point(aes(y = Value, color = OutOfControl), size = 2) +
-  geom_line(aes(y = Value, group = 1), color = "lightblue") +
-  geom_line(aes(y = UCL, group = 1), color = "red", linetype = "dashed") +
-  geom_line(aes(y = LCL, group = 1), color = "red", linetype = "dashed") +
-  geom_hline(aes(yintercept = Center[1]), color = "black", linetype = "solid") +
-  scale_color_manual(values = c("FALSE" = "blue", "TRUE" = "red")) +
-  labs(
-    title = "Xbar chart for indicator 3 : posture changes by day",
-    subtitle = "Contrôle qualité sur les 15 premiers jours",
-    x = "Date",
-    y = "Value",
-    color = "Hors limites"
-  ) +
-  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
