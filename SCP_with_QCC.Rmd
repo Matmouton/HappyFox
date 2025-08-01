@@ -11,13 +11,14 @@ output:
     highlight: zenburn    #changer le thème des chunks
 ---
 
-# Firsts steps with QCC
+# -\> Shewhart
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #install.packages("qcc")
 library(qcc)
 library(ggplot2)
 library(slider)
+library(dplyr)
 ```
 
 ## R chart vs xbar chart {.tabset}
@@ -92,7 +93,7 @@ obj <- qcc(diameter[1:30,], type="xbar",nsigmas = 1)
 ## Avec un autre jdd
 
 ```{r}
-load("data_SCP_with_QCC.RData")   #data from Shewhart_indicator_3.Rmd
+load("data_SCP_with_QCC_indicator3.RData")   #data from Shewhart_indicator_3.Rmd
 ```
 
 ```{r}
@@ -323,14 +324,14 @@ qcc_data <- qcc_data %>%
 
 ggplot(qcc_data, aes(x = Date)) +
     # Lines
-  geom_hline(aes(yintercept = Center[1]), color = "red", linetype = "solid") + #Mean
+  geom_hline(aes(yintercept = q$center), color = "red", linetype = "solid") + #Mean
   geom_line(aes(y = Value, group = 1), color = "black") +
   geom_line(aes(y = UCL, group = 1), color = "blue", linetype = "solid") + #UCL
   geom_line(aes(y = LCL, group = 1), color = "blue", linetype = "solid") + #LCL
       #2SD
-  geom_line(aes(y = Center[1] + 2*SD,
+  geom_line(aes(y = q$center + 2*SD,
                 group = 1), color = "blue", linetype = "dashed" ) +  #+2 sd
-  geom_line(aes(y = Center[1] - 2*SD,
+  geom_line(aes(y = q$center - 2*SD,
                 group = 1), color = "blue", linetype = "dashed" ) +  #-2 sd
     # Dots
   geom_point(aes(y = Value, color = OutOfControl), size = 2) +
@@ -517,11 +518,11 @@ plot_xbarchart_ggplot <- function(data_calibration,
     geom_point(aes(y = Value, color = OutOfControl), size = 2) +
       # Legend
     scale_color_manual(values = c(
-      "Rule 1" = "red",
-      "Rule 2" = "orange",
+      "Rule 1" = "#D23428",
+      "Rule 2" = "#FC4E2A",
       "Rule 3" = "orange",
       "Rule 4" = "gold",
-      "Rule 5" = "gold",
+      "Rule 5" = "yellow2",
       "In control" = "black"
     )) +
       # Labels
@@ -541,6 +542,8 @@ plot_xbarchart_ggplot <- function(data_calibration,
 And finally, let's plot the graph !
 
 ```{r}
+load("data_SCP_with_QCC_indicator3.RData")
+
 # Test for 15min timestep
 plot_xbarchart_ggplot(data_calibration = posture_changes_byday_15min[1:10,],
                       data_test = posture_changes_byday_15min[11:15,],
@@ -548,10 +551,90 @@ plot_xbarchart_ggplot(data_calibration = posture_changes_byday_15min[1:10,],
                       subtitle = "Every 15min, for fox 4313",
                       indicator_name = "Amount of posture changes")
 
-# Test for 4h timestep
-plot_xbarchart_ggplot(data_calibration = posture_changes_byday_4h[1:10,],
-                      data_test = posture_changes_byday_4h[11:15,],
+# Test for 1h timestep
+plot_xbarchart_ggplot(data_calibration = posture_changes_byday_1h[1:10,],
+                      data_test = posture_changes_byday_1h[11:15,],
                       title = "Xbar chart for indicator 3 : posture changes by day",
-                      subtitle = "Every 4h, for fox 4313",
+                      subtitle = "Every hour, for fox 4313",
                       indicator_name = "Amount of posture changes")
+
+# Test with other datasets
+
+
+  # Pistonrings
+data("pistonrings")
+
+diameter <- qcc.groups(data = pistonrings$diameter,
+                       sample = pistonrings$sample)
+
+plot_xbarchart_ggplot(data_calibration = diameter[1:25,],
+                      data_test = diameter[26:40,],
+                      title = "Xbar chart for data Pistonrings",
+                      subtitle = "",
+                      indicator_name = "Diameter of the piston rings")
+
+
+  # Indicator 2 (activity score)
+load("data_SCP_with_QCC_indicator2.RData")
+
+plot_xbarchart_ggplot(data_calibration = activity_score_byday_1h[1:10,],
+                      data_test = activity_score_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 2 : activity score",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Activity score")
+
+  # Indicator 1.3 (standing_sitting)
+load("data_SCP_with_QCC_indicator1.3.RData")
+
+plot_xbarchart_ggplot(data_calibration = sitting_standing_byday_1h[1:10,],
+                      data_test = sitting_standing_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 1.3 : sitting & standing",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Amount of sitting or standing postures")
+
+  # Indicator 1.1 (each posture separately)
+load("data_SCP_with_QCC_indicator1.1_1hONLY.RData")
+
+    # Lying
+plot_xbarchart_ggplot(data_calibration = lying_byday_1h[1:10,],
+                      data_test = lying_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 1.1 : Lying",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Amount of lying postures")
+
+    # Sitting
+plot_xbarchart_ggplot(data_calibration = sitting_byday_1h[1:10,],
+                      data_test = sitting_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 1.1 : Sitting",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Amount of sitting postures")
+
+    # Standing
+plot_xbarchart_ggplot(data_calibration = standing_byday_1h[1:10,],
+                      data_test = standing_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 1.1 : Standing",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Amount of standing postures")
+
+    # Not_visible
+plot_xbarchart_ggplot(data_calibration = not_visible_byday_1h[1:10,],
+                      data_test = not_visible_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 1.1 : Not visible",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Amount of moments with not visible fox")
+
+  #Pb with not_visible, data : 
+data_prep_xbarchart_ggplot(data_calibration = not_visible_byday_1h[1:10,],
+                                                data_test = not_visible_byday_1h[c(30, 32:35),]) 
+
+```
+
+# -\> EWMA
+
+```{r}
+load("data_SCP_with_QCC_indicator1.1.RData")   #data from Shewhart_indicator_3.Rmd
+```
+
+```{r}
+
 ```

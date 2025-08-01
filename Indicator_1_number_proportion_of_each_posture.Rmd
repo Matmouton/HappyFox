@@ -26,7 +26,7 @@ library(patchwork)
 ```
 
 ```{r}
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
 ```
 
 # Indicator 1.1 : Number & proportion of each posture by time unit
@@ -200,14 +200,14 @@ areas_1h <- data.frame(
 # Test for 900 seconds (15 minutes)
 
 #interval_seconds = the timestep you want in seconds. Here : 15min*60 = 900 seconds.
-frequency_position_15min_05_to_14_07_2022 <-
-  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+frequency_position_15min_05_07_to_08_08_2022 <-
+  frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, #data
                      interval_seconds = 900, #15min
                      existing_data_percent = 10)  #at least 10% of not NA data 
 ```
 
 ```{r}
-frequency_position_15min_05_to_14_07_2022_PIVOT <- pivot_data(data = frequency_position_15min_05_to_14_07_2022,
+frequency_position_15min_05_07_to_08_08_2022_PIVOT <- pivot_data(data = frequency_position_15min_05_07_to_08_08_2022,
                    variables_to_drop = end_time,
                    variables_to_merge = c(lying, standing, sitting, not_visible),
                    str_name_merged_labels = "Posture",
@@ -216,7 +216,7 @@ frequency_position_15min_05_to_14_07_2022_PIVOT <- pivot_data(data = frequency_p
 
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_15min_05_to_14_07_2022_PIVOT,
+ggplot(data = frequency_position_15min_05_07_to_08_08_2022_PIVOT,
        aes(fill = Posture, y = Count, x = start_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
@@ -234,22 +234,22 @@ ggplot(data = frequency_position_15min_05_to_14_07_2022_PIVOT,
 
 
 ```{r}
-frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT <- filter_8h_21h(frequency_position_15min_05_to_14_07_2022_PIVOT, start_time)
+frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT <- filter_8h_21h(frequency_position_15min_05_07_to_08_08_2022_PIVOT, start_time)
 
-rm(frequency_position_15min_05_to_14_07_2022_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_15min_05_07_to_08_08_2022_PIVOT)  #remove data with the 21h-8h gap
 
 ```
 
 ```{r}
-frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT, nbrep = 4)
+frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT, nbrep = 4)
 
 #remove useless data : no compressed time
-rm(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT)
+rm(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT)
 ```
 
 ```{r}
 # Chart for count
-ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time,
+ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time,
        aes(fill = Posture, y = Count, x = compressed_time)) +         #start_time as x variable
   geom_bar(position = "stack", stat = "identity") +              #stacked bars, no %
   ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
@@ -267,7 +267,7 @@ ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_
 # Same chart but with 1 posture at a time
 
   #lying
-ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "lying"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
@@ -278,7 +278,7 @@ ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_
                     values = "chartreuse3")
 
   #sitting
-ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "sitting"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
@@ -289,7 +289,7 @@ ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_
                     values = "orange")
 
   #standing
-ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "standing"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
@@ -300,7 +300,7 @@ ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_
                     values = "tomato")
 
   #not visible
-ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "not_visible"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
@@ -319,7 +319,7 @@ ggplot(data = frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_
 ```{r}
 # Test
 
-frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time<- add_proportion(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time,
+frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time<- add_proportion(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time,
                       count_variable = Count,
                       period_duration = 900)  #15 mintues by time period = 900 seconds
 
@@ -443,7 +443,7 @@ Plots :
 
 
   # Counts
-ggplot(frequency_position_15min_8h_21h_05_to_14_07_2022_PIVOT_compressed_time,
+ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time,
        
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
@@ -587,37 +587,41 @@ Or re-create it as following :
 
 ```{r}
 # Load the data
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.Rdata")
 
 # Compute the frequency of each posture
-frequency_position_05_to_14_07_2022_15min <-
-  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+frequency_position_05_07_to_08_08_2022_15min <-
+  frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, #data
                      interval_seconds = 900, #15min
                      existing_data_percent = 95)  #max 5% of NA data
 
 
 # Sum the standing & sitting occurences
-frequency_position_05_to_14_07_2022_StandingSitting_15min <- frequency_position_05_to_14_07_2022_15min %>% 
+frequency_position_05_07_to_08_08_2022_StandingSitting_15min <- frequency_position_05_07_to_08_08_2022_15min %>% 
   mutate(sitting_standing = sum(sitting, standing),
          lying_not_visible = sum(lying, not_visible)) #maybe useless but maybe not
 
 # Pivot the data
-frequency_position_05_to_14_07_2022_StandingSitting_15min_PIVOT <- pivot_data(data = frequency_position_05_to_14_07_2022_StandingSitting_15min,
+frequency_position_05_07_to_08_08_2022_StandingSitting_15min_PIVOT <- pivot_data(data = frequency_position_05_07_to_08_08_2022_StandingSitting_15min,
                    variables_to_drop = c(end_time, lying, sitting, standing, not_visible),
                    variables_to_merge = c(sitting_standing, lying_not_visible),
                    str_name_merged_labels = "Aggregated_postures",
                    str_name_merged_values = "Count")
 
 # Keep only the 8h-21h part
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT <- filter_8h_21h(frequency_position_05_to_14_07_2022_StandingSitting_15min_PIVOT, start_time)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT <- filter_8h_21h(frequency_position_05_07_to_08_08_2022_StandingSitting_15min_PIVOT, start_time)
 # Remove useless
-rm(frequency_position_05_to_14_07_2022_StandingSitting_15min_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_05_07_to_08_08_2022_StandingSitting_15min_PIVOT)  #remove data with the 21h-8h gap
+
+# Remove period without data
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT <- frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT %>% 
+  filter(start_time < "2022-07-15 00:00:00" | start_time > "2022-08-02 20:00:00"  )
 
 # Add a compressed_time variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT, nbrep = 2)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT, nbrep = 2)
 
 # Add a proportion variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time,
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time,
                       count_variable = Count,
                       period_duration = 900)  #15 mintues by time period = 900 seconds
 
@@ -629,7 +633,7 @@ frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compresse
 # Plots 
 
   # Counts
-ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time,
+ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time,
        
        aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
@@ -652,7 +656,7 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_co
 
 
   # Frequencies
-ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time,
+ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time,
        
        aes(x = compressed_time, y = proportion)) +
   geom_line(aes(color=
@@ -676,7 +680,7 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_co
 
   # Only sitting_standing indicator (Frequencies)
 
-ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_compressed_time %>% 
+ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time %>% 
          filter(Aggregated_postures == "sitting_standing"),
        
        aes(x = compressed_time, y = proportion)) +
@@ -701,39 +705,43 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_15min_PIVOT_co
 
 ```{r}
 # Load the data
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.Rdata")
 
 # Compute the frequency of each posture
-frequency_position_05_to_14_07_2022_30min <-
-  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+frequency_position_05_07_to_08_08_2022_30min <-
+  frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, #data
                      interval_seconds = 1800, #30min
                      existing_data_percent = 95)  #max 5% of NA data
 
 
 # Sum the standing & sitting occurences
-frequency_position_05_to_14_07_2022_StandingSitting_30min <- frequency_position_05_to_14_07_2022_30min %>% 
+frequency_position_05_07_to_08_08_2022_StandingSitting_30min <- frequency_position_05_07_to_08_08_2022_30min %>% 
   mutate(sitting_standing = sum(sitting, standing),
          lying_not_visible = sum(lying, not_visible)) #maybe useless but maybe not
 
 # Pivot the data
-frequency_position_05_to_14_07_2022_StandingSitting_30min_PIVOT <- pivot_data(data = frequency_position_05_to_14_07_2022_StandingSitting_30min,
+frequency_position_05_07_to_08_08_2022_StandingSitting_30min_PIVOT <- pivot_data(data = frequency_position_05_07_to_08_08_2022_StandingSitting_30min,
                    variables_to_drop = c(end_time, lying, sitting, standing, not_visible),
                    variables_to_merge = c(sitting_standing, lying_not_visible),
                    str_name_merged_labels = "Aggregated_postures",
                    str_name_merged_values = "Count")
 
 # Keep only the 8h-21h part
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT <- filter_8h_21h(frequency_position_05_to_14_07_2022_StandingSitting_30min_PIVOT, start_time)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT <- filter_8h_21h(frequency_position_05_07_to_08_08_2022_StandingSitting_30min_PIVOT, start_time)
 # Remove useless
-rm(frequency_position_05_to_14_07_2022_StandingSitting_30min_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_05_07_to_08_08_2022_StandingSitting_30min_PIVOT)  #remove data with the 21h-8h gap
+
+# Remove period without data
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT <- frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT %>% 
+  filter(start_time < "2022-07-15 00:00:00" | start_time > "2022-08-02 20:00:00"  )
 
 # Add a compressed_time variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT, nbrep = 2)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT, nbrep = 2)
 
 # Add a proportion variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_compressed_time,
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT_compressed_time,
                       count_variable = Count,
-                      period_duration = 900)  #15 mintues by time period = 900 seconds
+                      period_duration = 1800)  #30 mintues by time period = 1800 seconds
 
 
 ```
@@ -743,7 +751,7 @@ frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_compresse
 
   # Only sitting_standing indicator (Frequencies)
 
-ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_compressed_time %>% 
+ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_30min_PIVOT_compressed_time %>% 
          filter(Aggregated_postures == "sitting_standing"),
        
        aes(x = compressed_time, y = proportion)) +
@@ -770,39 +778,43 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_30min_PIVOT_co
 
 ```{r}
 # Load the data
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
 
 # Compute the frequency of each posture
-frequency_position_05_to_14_07_2022_1h <-
-  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+frequency_position_05_07_to_08_08_2022_1h <-
+  frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, #data
                      interval_seconds = 3600, #1h
                      existing_data_percent = 50)  #max 50% of NA data
 
 
 # Sum the standing & sitting occurences
-frequency_position_05_to_14_07_2022_StandingSitting_1h <- frequency_position_05_to_14_07_2022_1h %>% 
+frequency_position_05_07_to_08_08_2022_StandingSitting_1h <- frequency_position_05_07_to_08_08_2022_1h %>% 
   mutate(sitting_standing = sum(sitting, standing),
          lying_not_visible = sum(lying, not_visible)) #maybe useless but maybe not
 
 # Pivot the data
-frequency_position_05_to_14_07_2022_StandingSitting_1h_PIVOT <- pivot_data(data = frequency_position_05_to_14_07_2022_StandingSitting_1h,
+frequency_position_05_07_to_08_08_2022_StandingSitting_1h_PIVOT <- pivot_data(data = frequency_position_05_07_to_08_08_2022_StandingSitting_1h,
                    variables_to_drop = c(end_time, lying, sitting, standing, not_visible),
                    variables_to_merge = c(sitting_standing, lying_not_visible),
                    str_name_merged_labels = "Aggregated_postures",
                    str_name_merged_values = "Count")
 
 # Keep only the 8h-21h part
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT <- filter_8h_21h(frequency_position_05_to_14_07_2022_StandingSitting_1h_PIVOT, start_time)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT <- filter_8h_21h(frequency_position_05_07_to_08_08_2022_StandingSitting_1h_PIVOT, start_time)
 # Remove useless
-rm(frequency_position_05_to_14_07_2022_StandingSitting_1h_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_05_07_to_08_08_2022_StandingSitting_1h_PIVOT)  #remove data with the 21h-8h gap
+
+# Remove period without data
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT <- frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT %>% 
+  filter(start_time < "2022-07-15 00:00:00" | start_time > "2022-08-02 20:00:00"  )
 
 # Add a compressed_time variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT, nbrep = 2)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT, nbrep = 2)
 
 # Add a proportion variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compressed_time,
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT_compressed_time,
                       count_variable = Count,
-                      period_duration = 900)  #15 mintues by time period = 900 seconds
+                      period_duration = 3600)  #1h = 3600sec
 
 ```
 
@@ -811,7 +823,7 @@ frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compressed_t
 
   # Only sitting_standing indicator (Frequencies)
 
-ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compressed_time %>% 
+ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_1h_PIVOT_compressed_time %>% 
          filter(Aggregated_postures == "sitting_standing"),
        
        aes(x = compressed_time, y = proportion)) +
@@ -838,39 +850,43 @@ ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_1h_PIVOT_compr
 
 ```{r}
 # Load the data
-load("reliable_data_8h_21h_05_to_14_07_2022.Rdata")
+load("reliable_data_8h_21h_05_07_to_08_08_2022.Rdata")
 
 # Compute the frequency of each posture
-frequency_position_05_to_14_07_2022_2h <-
-  frequency_position(data = reliable_data_8h_21h_05_to_14_07_2022, #data
+frequency_position_05_07_to_08_08_2022_2h <-
+  frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, #data
                      interval_seconds = 7200, #2h
                      existing_data_percent = 50)  #max 50% of NA data
 
 
 # Sum the standing & sitting occurences
-frequency_position_05_to_14_07_2022_StandingSitting_2h <- frequency_position_05_to_14_07_2022_2h %>% 
+frequency_position_05_07_to_08_08_2022_StandingSitting_2h <- frequency_position_05_07_to_08_08_2022_2h %>% 
   mutate(sitting_standing = sum(sitting, standing),
          lying_not_visible = sum(lying, not_visible)) #maybe useless but maybe not
 
 # Pivot the data
-frequency_position_05_to_14_07_2022_StandingSitting_2h_PIVOT <- pivot_data(data = frequency_position_05_to_14_07_2022_StandingSitting_2h,
+frequency_position_05_07_to_08_08_2022_StandingSitting_2h_PIVOT <- pivot_data(data = frequency_position_05_07_to_08_08_2022_StandingSitting_2h,
                    variables_to_drop = c(end_time, lying, sitting, standing, not_visible),
                    variables_to_merge = c(sitting_standing, lying_not_visible),
                    str_name_merged_labels = "Aggregated_postures",
                    str_name_merged_values = "Count")
 
 # Keep only the 8h-21h part
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT <- filter_8h_21h(frequency_position_05_to_14_07_2022_StandingSitting_2h_PIVOT, start_time)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT <- filter_8h_21h(frequency_position_05_07_to_08_08_2022_StandingSitting_2h_PIVOT, start_time)
 # Remove useless
-rm(frequency_position_05_to_14_07_2022_StandingSitting_2h_PIVOT)  #remove data with the 21h-8h gap
+rm(frequency_position_05_07_to_08_08_2022_StandingSitting_2h_PIVOT)  #remove data with the 21h-8h gap
+
+# Remove period without data
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT <- frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT %>% 
+  filter(start_time < "2022-07-15 08:00:00" | start_time > "2022-08-02 21:00:00"  )
 
 # Add a compressed_time variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT, nbrep = 2)
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT, nbrep = 2)
 
 # Add a proportion variable
-frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time,
+frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT_compressed_time<- add_proportion(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT_compressed_time,
                       count_variable = Count,
-                      period_duration = 900)  #15 mintues by time period = 900 seconds
+                      period_duration = 7200)  #2h = 7200sec
 
 ```
 
@@ -879,7 +895,7 @@ frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_t
 
   # Only sitting_standing indicator (Frequencies)
 
-ggplot(frequency_position_8h_21h_05_to_14_07_2022_StandingSitting_2h_PIVOT_compressed_time %>% 
+ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_2h_PIVOT_compressed_time %>% 
          filter(Aggregated_postures == "sitting_standing"),
        
        aes(x = compressed_time, y = proportion)) +
