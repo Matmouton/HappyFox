@@ -575,13 +575,7 @@ ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %>%
 
 # Indicator 1.3 : Standing & sitting vs lying & not visible
 
-Load data at : 
-```{r}
-load("data_indicator1.3_reliable_15min_to_6h.Rdata")
-```
-
-
-Or re-create it as following : 
+How to get the data : 
 
 ## time = 15min
 
