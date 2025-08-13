@@ -223,7 +223,7 @@ ggplot(data = frequency_position_15min_05_07_to_08_08_2022_PIVOT,
   xlab("Time of the day") +
   ylab("Amount of seconds spent in this posture") +                              
   scale_fill_manual(breaks = c("lying", "sitting", "standing", "not_visible"), #re-order legend
-                    values = c("lying" = "lightgreen", #change legend colors
+                    values = c("lying" = "chartreuse3", #change legend colors
                                "sitting" = "orange",
                                "standing" = "tomato",
                                "not_visible" = "lightgrey"))

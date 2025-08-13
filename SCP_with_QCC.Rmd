@@ -401,27 +401,28 @@ data_prep_xbarchart_ggplot <- function(data_calibration,
   qcc_data$Out_3sd <- with(qcc_data, Value > UCL | Value < LCL)
   qcc_data$Out_2sd <- with(qcc_data, Value > q$center+2*SD | Value < q$center-2*SD)
   qcc_data$Out_1sd <- with(qcc_data, Value > q$center+SD | Value < q$center-SD)
-
   
-    # Add conditions for rule3 (4/5 following points > 1sigma from the center)
+  
+    # Add conditions for rule2 (2/3 following points > 2sigma from the center)
   
         # Check if each point is at <1sd distance from mean + check if up/down
   qcc_data <- qcc_data %>%
-    mutate(more_1sd_distance = case_when(
-      Value > q$center + SD ~ 1,  #more than 1sd distance from mean, positive side
-      Value < q$center - SD ~ -1, #more than 1sd distance from mean, negative side
-      TRUE ~ 0                  #within [mean +/- 1sd]
+    mutate(more_2sd_distance = case_when(
+      Value > q$center + 2*SD ~ 1,  #more than 2sd distance from mean, positive side
+      Value < q$center - 2*SD ~ -1, #more than 2sd distance from mean, negative side
+      TRUE ~ 0                  #within [mean +/- 2sd]
     )) %>%
-        # Check if 4/5 following points are >1sd distance from mean on the same side
-    mutate(Rule3 = slide_int(more_1sd_distance, ~{
-      pos <- sum(.x == 1)       #sum the >1 sd positive side
-      neg <- sum(.x == -1)      #sum the >1 sd negative side
-      if(pos >= 4 | neg >= 4) TRUE else FALSE  #T if 4 points >1 sd on the same side
-    }, .before = 4,             #we watch the 4 previous points (+ the current point)
-    .complete = TRUE))          #do nothing (= NA) if there are not 4 previous points
+        # Check if 2/3 following points are >2sd distance from mean on the same side
+    mutate(Rule2 = slide_int(more_2sd_distance, ~{
+      pos <- sum(.x == 1)       #sum the >2 sd positive side
+      neg <- sum(.x == -1)      #sum the >2 sd negative side
+      if(pos >= 2 | neg >= 2) TRUE else FALSE  #T if 2 points >2 sd on the same side
+    }, .before = 2,             #we watch the 2 previous points (+ the current point)
+    .complete = TRUE))          #do nothing (= NA) if there are not 2 previous points
+
   
+    # Add conditions for rule3 (6 following points are increasing/ decreasing : trend)
   
-    # Add conditions for rule4 (6 following points are increasing/ decreasing : trend)
   
       # Check if each point is an increase or a decrease compared to the previous one
   qcc_data <- qcc_data %>% 
@@ -431,12 +432,32 @@ data_prep_xbarchart_ggplot <- function(data_calibration,
       Value == lag(Value) ~ 0, #it's the same value
       TRUE ~ 0                 #there is no previous
     )) %>% 
-    mutate(Rule4 = slide_int(increase_decrease, ~{
+    mutate(Rule3 = slide_int(increase_decrease, ~{
       inc <- sum(.x == 1)      #sum the increases
       dec <- sum(.x == -1)     #sum the decreases
       if( inc >= 6 | dec >= 6) TRUE else FALSE  #T if more than 6 neighbours inc/dec
     }, .before = 5,            #watch 5 previous points (+ the current point)
     .complete = TRUE ))        #do nothing (= NA) if there are not 5 previous points
+  
+
+  
+    # Add conditions for rule4 (4/5 following points > 1sigma from the center)
+  
+        # Check if each point is at <1sd distance from mean + check if up/down
+  qcc_data <- qcc_data %>%
+    mutate(more_1sd_distance = case_when(
+      Value > q$center + SD ~ 1,  #more than 1sd distance from mean, positive side
+      Value < q$center - SD ~ -1, #more than 1sd distance from mean, negative side
+      TRUE ~ 0                  #within [mean +/- 1sd]
+    )) %>%
+        # Check if 4/5 following points are >1sd distance from mean on the same side
+    mutate(Rule4 = slide_int(more_1sd_distance, ~{
+      pos <- sum(.x == 1)       #sum the >1 sd positive side
+      neg <- sum(.x == -1)      #sum the >1 sd negative side
+      if(pos >= 4 | neg >= 4) TRUE else FALSE  #T if 4 points >1 sd on the same side
+    }, .before = 4,             #we watch the 4 previous points (+ the current point)
+    .complete = TRUE))          #do nothing (= NA) if there are not 4 previous points
+  
 
 
     #Add conditions for Rule5 (7 following points up/down the mean)
@@ -463,12 +484,12 @@ data_prep_xbarchart_ggplot <- function(data_calibration,
     mutate(OutOfControl = case_when(
       
       # The 4 rules I want on my chart
-      # from less to most important so that most important rule is the last remembered
-      Rule5 > 0 ~ "Rule 5",
-      Rule4 > 0 ~ "Rule 4",
-      Rule3 > 0 ~ "Rule 3",
-      Out_2sd == TRUE & (lag(Out_2sd) == T | lag(lag(Out_2sd == T))) ~ "Rule 2",
+      # from most to less important so that most important rules have the priority
       Out_3sd == TRUE ~ "Rule 1",
+      Rule2 > 0 ~ "Rule 2",
+      Rule3 > 0 ~ "Rule 3",
+      Rule4 > 0 ~ "Rule 4",
+      Rule5 > 0 ~ "Rule 5",
       TRUE ~ "In control"))
   
   output <- list(qcc_data, q$center)
@@ -505,6 +526,8 @@ plot_xbarchart_ggplot <- function(data_calibration,
   
   ggplot(qcc_data, aes(x = Date)) +
       # Lines
+    geom_vline(xintercept=10.5, linetype='dashed', color='darkgrey', size=0.8) +  #missing data
+    geom_vline(xintercept=11.5, linetype='dashed', color='darkgrey', size=0.8) +  #missing data
     geom_hline(aes(yintercept = center), color = "red", linetype = "solid") + #Mean
     geom_line(aes(y = Value, group = 1), color = "black") +
     geom_line(aes(y = UCL, group = 1), color = "blue", linetype = "solid") + #UCL
@@ -535,7 +558,8 @@ plot_xbarchart_ggplot <- function(data_calibration,
     ) +
     theme_minimal() +
       # Rotate axis labels (dates)
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  
 }
 ```
 
@@ -636,5 +660,6 @@ load("data_SCP_with_QCC_indicator1.1.RData")   #data from Shewhart_indicator_3.R
 ```
 
 ```{r}
-
+q1 <- qcc(diameter[1:25,], type = "xbar",           newdata = diameter[26:40,],           rules = 1:4)
+plot(q1)
 ```

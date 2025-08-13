@@ -559,7 +559,6 @@ load("data_8h_21h_04_07_to_08_08_2022.Rdata")
 data_8h_21h_05_07_to_08_08_2022 <- data_8h_21h_04_07_to_08_08_2022 %>% 
   filter(date != "2022-07-04") %>%  #remove first day
   filter(Date_Time < "2022-07-08 9:06:57" | Date_Time > "2022-07-08 10:14:09") #remove inoculation time
-  
 ```
 
 # 8. Remove uncertain data

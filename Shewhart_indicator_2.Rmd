@@ -79,6 +79,7 @@ amount_activity <- function(data, interval_seconds) {
       # Compute the number of not NA values
       no_na_count = length(valid_values),
       # Compute the activity_proportion score depending on not NA values
+        # To do later : add a filter so that if too many NAs the proportion is not computed ? 
       activity_proportion = ifelse(no_na_count > 0, total_activity / no_na_count, NA)
     ) %>%
     select(-valid_values, -no_na_count) # Remove temporary columns
