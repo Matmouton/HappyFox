@@ -528,8 +528,82 @@ grid.arrange(plot1, plot2, ncol=2)
 
 ### Statistical test
 
-```{r}
+We compute a two-sample Kolmogorov-Smirnov test to determine if the amount of
+every posture during a timestep of 15min follows the same distribution. Results
+: same distributions (for each), because p-value \> 0,05 = no differences.
 
+```{r}
+# lying
+all_data <- (frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>%
+  filter(Posture == "lying") %>% 
+  select(Count))[[1]]
+
+reliable_data <- (reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+  filter(Posture == "lying") %>% 
+  select(Count))[[1]]
+
+ks.test(all_data, reliable_data)
+
+# sitting
+all_data <- (frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>%
+  filter(Posture == "sitting") %>% 
+  select(Count))[[1]]
+
+reliable_data <- (reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+  filter(Posture == "sitting") %>% 
+  select(Count))[[1]]
+
+ks.test(all_data, reliable_data)
+
+
+# standing
+all_data <- (frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>%
+  filter(Posture == "standing") %>% 
+  select(Count))[[1]]
+
+reliable_data <- (reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+  filter(Posture == "standing") %>% 
+  select(Count))[[1]]
+
+ks.test(all_data, reliable_data)
+
+# not visible
+all_data <- (frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+  filter(Posture == "not_visible") %>% 
+  select(Count))[[1]]
+
+reliable_data <- (reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+  filter(Posture == "not_visible") %>% 
+  select(Count))[[1]]
+
+ks.test(all_data, reliable_data)
+
+```
+
+Illustration for posture not_visible :
+
+```{r}
+hist((frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+       filter(Posture == "not_visible") %>% #when 3 predictions made
+       select(Count)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Count for posture not_visible",
+     xlab = "Count",
+     ylab = "Number of occurences",
+     col = "orange",
+     freq = TRUE,
+     breaks = 20)
+
+hist((reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
+       filter(Posture == "not_visible") %>% #when 3 predictions made
+       select(Count)                     #get the confidence
+      )[[1]],                                 #only 1st object of the output
+     main = "Count for posture not_visible",
+     xlab = "Count",
+     ylab = "Number of occurences",
+     col = "gold",
+     freq = TRUE,
+     breaks = 20)
 ```
 
 ## 2. Indicator 1 : same distribution
