@@ -428,11 +428,13 @@ add_proportion <- function(data,
 ### All data :
 
 ```{r}
-load("data_8h_21h_05_07_to_08_08_2022.Rdata")
+load("data_8h_21h_04_07_to_08_08_2022.Rdata")
+data_8h_21h_05_07_to_08_08_2022 <- data_8h_21h_04_07_to_08_08_2022 %>% 
+  filter(date != "2022-07-04")
 
 # Test for 1h
 
-frequency_position_05_07_to_08_08_2022 <- frequency_position(data = data_8h_21h_05_07_to_08_08_2022, interval_seconds = 3600, existing_data_percent = 50)
+frequency_position_05_07_to_08_08_2022 <- frequency_position(data = data_8h_21h_05_07_to_08_08_2022, interval_seconds = 900, existing_data_percent = 95)
 
 
 frequency_position_05_07_to_08_08_2022_PIVOT <- frequency_position_05_07_to_08_08_2022[,-2] %>% #drop the end_time column
@@ -457,7 +459,7 @@ rm(frequency_position_05_07_to_08_08_2022_PIVOT)  #remove data with the 21h-8h g
 
 # Test
 
-frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT)
+frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT, nbrep = 4) #4 postures
 
 
 
@@ -480,7 +482,7 @@ rm(frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT)
 load("reliable_data_8h_21h_05_07_to_08_08_2022.RData")
 
 #Calculate frequency position
-reliable_frequency_position_05_07_to_08_08_2022 <- frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, interval_seconds = 3600, existing_data_percent = 50)
+reliable_frequency_position_05_07_to_08_08_2022 <- frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, interval_seconds = 900, existing_data_percent = 95)
 
 #Pivot data
 reliable_frequency_position_05_07_to_08_08_2022_PIVOT <- reliable_frequency_position_05_07_to_08_08_2022[,-2] %>% #drop the end_time column
@@ -496,7 +498,7 @@ reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT <- filter_8h_21h(re
 rm(reliable_frequency_position_05_07_to_08_08_2022_PIVOT)  #remove data with the 21h-8h gap
 
 #Add compressed time variable
-reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT)
+reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT, nbrep = 4) #4 postures
 
 #remove useless data : no compressed time
 rm(reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT)
@@ -511,17 +513,23 @@ library(gridExtra)
 plot1 <- ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
   geom_boxplot() +
   xlab("Posture") +
-  ylab("Nombre d'occurences toutes les 15 minutes") +
+  ylab("Amount of occurences every 15 minutes") +
   theme(legend.position = "right")
 
 # Without unreliable predictions
 plot2 <- ggplot(reliable_frequency_position_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time, aes(x = Posture, y = Count, fill = Posture)) +
   geom_boxplot() +
   xlab("Posture") +
-  ylab("Nombre d'occurences toutes les 15 minutes") +
+  ylab("Amount of occurences every 15 minutes") +
   theme(legend.position = "right")
 
 grid.arrange(plot1, plot2, ncol=2)
+```
+
+### Statistical test
+
+```{r}
+
 ```
 
 ## 2. Indicator 1 : same distribution
