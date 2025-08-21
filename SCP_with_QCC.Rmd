@@ -580,6 +580,7 @@ timestep = 2hours for indicator 3
 ```{r}
   # Indicator 1.1 (each posture separately)
 load("data_SCP_with_QCC_indicator1.1_BEST_TIMESTEP_ONLY.RData")
+load("data_SCP_with_QCC_indicator1.1_1hONLY.RData")
 
     # Lying
 plot_xbarchart_ggplot(data_calibration = lying_byday_1h[1:10,],
@@ -588,7 +589,14 @@ plot_xbarchart_ggplot(data_calibration = lying_byday_1h[1:10,],
                       subtitle = "Every hour, for fox 4313",
                       indicator_name = "Amount of lying postures")
 
-    # Sitting
+    # Sitting 1 hour
+plot_xbarchart_ggplot(data_calibration = sitting_byday_1h[1:10,],
+                      data_test = sitting_byday_1h[c(30, 32:35),],
+                      title = "Xbar chart for indicator 1.1 : Sitting",
+                      subtitle = "Every hour, for fox 4313",
+                      indicator_name = "Amount of sitting postures")
+
+    # Sitting 30min
 plot_xbarchart_ggplot(data_calibration = sitting_byday_30min[1:10,],
                       data_test = sitting_byday_30min[c(30, 32:35),],
                       title = "Xbar chart for indicator 1.1 : Sitting",

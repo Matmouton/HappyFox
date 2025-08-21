@@ -203,7 +203,7 @@ areas_1h <- data.frame(
 frequency_position_15min_05_07_to_08_08_2022 <-
   frequency_position(data = reliable_data_8h_21h_05_07_to_08_08_2022, #data
                      interval_seconds = 900, #15min
-                     existing_data_percent = 10)  #at least 10% of not NA data 
+                     existing_data_percent = 95)  #max 5% of  NA data 
 ```
 
 ```{r}
@@ -241,6 +241,12 @@ rm(frequency_position_15min_05_07_to_08_08_2022_PIVOT)  #remove data with the 21
 ```
 
 ```{r}
+# remove inexistant data
+  frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT <- frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT %>% 
+    filter(start_time < "2022-07-15 00:00:00" | start_time >= "2022-08-03 00:00:00")
+
+
+
 frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time <- add_compressed_time_variable_PIVOT_data(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT, nbrep = 4)
 
 #remove useless data : no compressed time
@@ -271,8 +277,8 @@ ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compress
          filter(Posture == "lying"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
-  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
-  xlab("Time of the day") +
+  ggtitle("Amount of seconds spent in a posture for Fox 4313", subtitle = "From 05/07 to 08/08, year 2022, every 15 minutes") +   #title
+  xlab("Time between 8h and 21h each day") +
   ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "lying",
                     values = "chartreuse3")
@@ -282,8 +288,8 @@ ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compress
          filter(Posture == "sitting"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
-  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
-  xlab("Time of the day") +
+  ggtitle("Amount of seconds spent in a posture for Fox 4313", subtitle = "From 05/07 to 08/08, year 2022, every 15 minutes") +   #title
+  xlab("Time between 8h and 21h each day") +
   ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "sitting",
                     values = "orange")
@@ -293,8 +299,8 @@ ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compress
          filter(Posture == "standing"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
-  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
-  xlab("Time of the day") +
+   ggtitle("Amount of seconds spent in a posture for Fox 4313", subtitle = "From 05/07 to 08/08, year 2022, every 15 minutes") +   #title
+  xlab("Time between 8h and 21h each day") +
   ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "standing",
                     values = "tomato")
@@ -304,8 +310,8 @@ ggplot(data = frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compress
          filter(Posture == "not_visible"),
        aes(x = compressed_time, y = Count, fill = Posture)) +
   geom_bar(stat = "identity") +
-  ggtitle("Fox4313's posture every 15min between days 04/07/2022 and 14/07/2022") +   #title
-  xlab("Time of the day") +
+  ggtitle("Amount of seconds spent in a posture for Fox 4313", subtitle = "From 05/07 to 08/08, year 2022, every 15 minutes") +   #title
+  xlab("Time between 8h and 21h each day") +
   ylab("Amount of seconds spent in this posture") +   
   scale_fill_manual(breaks = "not_visible",
                     values = "darkgrey")
@@ -352,96 +358,10 @@ areas_15min <- data.frame(
 
 ```
 
-```{r}
-# Automatization but NOT WORKING (because pivot data, see in indicator 2 how it's done) 
-
-
-# # Function
-# 
-# get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
-#   # S'assurer que le vecteur de temps est au format POSIXct
-#   times_vector_xmin <- as.POSIXct(times_vector_xmin)
-#   times_vector_xmax <- as.POSIXct(times_vector_xmax)
-# 
-#   # Initialiser le vecteur de résultats
-#   result_min <- vector("numeric", length(times_vector_xmin))
-#   result_max <- vector("numeric", length(times_vector_xmax))
-# 
-#   # Pour chaque temps, trouver la ligne correspondante
-#   for (i in seq_along(times_vector_xmin)) {
-#     time_min <- times_vector_xmin[i]
-#     matched_row_min <- data %>%
-#       filter(start_time <= time_min & end_time >= time_min)
-# 
-#     # Si une ligne correspond, extraire compressed_time
-#     if (nrow(matched_row_min) > 0) {
-#       result_min[i] <- matched_row_min$compressed_time[1]
-#     } else {
-#       result_min[i] <- NA  # Aucun match trouvé
-#     }
-#   }
-# 
-#   # Pour chaque temps, trouver la ligne correspondante
-#   for (i in seq_along(times_vector_xmax)) {
-#     time_max <- times_vector_xmax[i]
-#     matched_row_max <- data %>%
-#       filter(start_time <= time_max & end_time >= time_max)
-# 
-#     # Si une ligne correspond, extraire compressed_time
-#     if (nrow(matched_row_max) > 0) {
-#       result_max[i] <- matched_row_max$compressed_time[1]
-#     } else {
-#       result_max[i] <- NA  # Aucun match trouvé
-#     }
-#   }  
-#   
-#   df_areas <- data.frame(xmin = result_min, xmax = result_max, fill = fill)
-#   
-#   return(df_areas)
-# }
-# 
-# 
-# 
-# # Get areas
-# 
-#   areas <- get_areas_color(data = frequency_position_04_to_12_07_2022,
-#                             times_vector_xmin =
-#                               c("2022-07-04 08:00:00", #No data
-#                                 "2022-07-04 18:57:00",
-#                                 "2022-07-05 18:57:00",
-#                                 "2022-07-04 10:47:00", #Inactive
-#                                 "2022-07-04 13:17:00",
-#                                 "2022-07-05 08:13:00",
-#                                 "2022-07-06 08:50:00",
-#                                 "2022-07-04 17:07:00", #Active
-#                                 "2022-07-05 09:13:00",
-#                                 "2022-07-06 09:50:00",
-#                                 "2022-07-04 11:56:00"),#Out for implant
-#                             times_vector_xmax = 
-#                               c("2022-07-04 10:47:00", #No data
-#                                 "2022-07-05 08:13:00",
-#                                 "2022-07-06 08:50:00",
-#                                 "2022-07-04 11:56:00", #Inactive
-#                                 "2022-07-04 15:08:00",
-#                                 "2022-07-05 09:13:00",
-#                                 "2022-07-06 09:50:00",
-#                                 "2022-07-04 18:57:00", #Active
-#                                 "2022-07-05 10:22:00",
-#                                 "2022-07-06 12:31:00",
-#                                 "2022-07-04 13:17:00"),#Out for implant
-#                             fill =
-#                               c("No data", "No data", "No data",
-#                                 "Inactive", "Inactive", "Inactive", "Inactive",
-#                                 "Active", "Active", "Active",
-#                                 "Out for implant"))
-```
-
 
 Plots :
 
 ```{r}
-
-
   # Counts
 ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time,
        
@@ -450,9 +370,6 @@ ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
-  
-  # geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-  #           inherit.aes = FALSE, alpha = 0.2) +
   
   scale_color_manual(name = "Posture",
                      labels = c("lying", "sitting", "standing", "not_visible"),
@@ -492,83 +409,83 @@ ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time,
 ```
 # Indicator 1.2 : Individual plots
 
-We only want frequencies in this indicator
+We only want counts in this indicator
 
 ```{r}
 # Frequencies
 
   # Lying
-ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "lying"),
-       aes(x = compressed_time, y = proportion)) +
+       aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
-  geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-            inherit.aes = FALSE, alpha = 0.2) +
+  # geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+  #           inherit.aes = FALSE, alpha = 0.2) +
   scale_color_manual(name = "Posture",
                      labels = "lying",
                      values = c("lying" = "chartreuse3"))+
-  scale_x_continuous(name = "Time between 8h and 21h each day",
-                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  # scale_x_continuous(name = "Time between 8h and 21h each day",
+  #                    breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Amount of seconds spent in this posture") +
   ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 14 of July 2022, every hour") 
 
 
   # Sitting
-ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "sitting"),
-       aes(x = compressed_time, y = proportion)) +
+       aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
-  geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-            inherit.aes = FALSE, alpha = 0.2) +
+  # geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+  #           inherit.aes = FALSE, alpha = 0.2) +
   scale_color_manual(name = "Posture",
                      labels = "sitting",
                      values = c("sitting" = "orange"))+
-  scale_x_continuous(name = "Time between 8h and 21h each day",
-                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  # scale_x_continuous(name = "Time between 8h and 21h each day",
+  #                    breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Amount of seconds spent in this posture") +
   ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 14 of July 2022, every hour") 
 
 
   # Standing
-ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "standing"),
-       aes(x = compressed_time, y = proportion)) +
+       aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
-  geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-            inherit.aes = FALSE, alpha = 0.2) +
+  # geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+  #           inherit.aes = FALSE, alpha = 0.2) +
   scale_color_manual(name = "Posture",
                      labels = "standing",
                      values = c("standing" = "tomato"))+
-  scale_x_continuous(name = "Time between 8h and 21h each day",
-                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  # scale_x_continuous(name = "Time between 8h and 21h each day",
+  #                    breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Amount of seconds spent in this posture") +
   ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 14 of July 2022, every hour") 
 
 
   # Not visible
-ggplot(frequency_position_8h_21h_04_to_14_07_2022_PIVOT_compressed_time %>% 
+ggplot(frequency_position_15min_8h_21h_05_07_to_08_08_2022_PIVOT_compressed_time %>% 
          filter(Posture == "not_visible"),
-       aes(x = compressed_time, y = proportion)) +
+       aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Posture,
                          #re-order the labels
                          levels = c("lying", "sitting", "standing", "not_visible")))) +
-  geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-            inherit.aes = FALSE, alpha = 0.2) +
+  # geom_rect(data = areas_1h, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+  #           inherit.aes = FALSE, alpha = 0.2) +
   scale_color_manual(name = "Posture",
                      labels = "not_visible",
                      values = c("not_visible" = "darkgrey"))+
-  scale_x_continuous(name = "Time between 8h and 21h each day",
-                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  # scale_x_continuous(name = "Time between 8h and 21h each day",
+  #                    breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
   ylab("Amount of seconds spent in this posture") +
   ggtitle("Postures of fox fox 4313", subtitle = "From 4 to 14 of July 2022, every hour") 
 ```
@@ -672,12 +589,12 @@ ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT
 
 
 
-  # Only sitting_standing indicator (Frequencies)
+  # Only sitting_standing indicator (Counts)
 
 ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT_compressed_time %>% 
          filter(Aggregated_postures == "sitting_standing"),
        
-       aes(x = compressed_time, y = proportion)) +
+       aes(x = compressed_time, y = Count)) +
   geom_line(aes(color=
                   factor(Aggregated_postures,
                          #re-order the labels
@@ -689,10 +606,11 @@ ggplot(frequency_position_8h_21h_05_07_to_08_08_2022_StandingSitting_15min_PIVOT
   scale_color_manual(name = "Posture",
                      labels = c( "sitting_standing"),
                      values = c("sitting_standing" = "black"))+
-  scale_x_continuous(name = "Time between 8h and 21h each day",
-                     breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
-  ylab("Time proportion spent in each posture") +
-  ggtitle("Postures of fox fox 4313", subtitle = "From 5 to 14 of July 2022, every 15min, max 5% NA data")
+  # scale_x_continuous(name = "Time between 8h and 21h each day",
+  #                    breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500)) +
+  ylab("Time proportion spent sitting or standing") +
+  xlab("Time between 8h and 21h each day") +
+  ggtitle("Postures of fox fox 4313", subtitle = "From 05/07 to 08/08, year 2022, every 15min")
 
 ```
 ## time = 30min

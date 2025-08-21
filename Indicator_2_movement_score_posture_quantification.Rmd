@@ -161,13 +161,13 @@ plot_activity_with_areas <- function(data, nb_min, areas,
     
     # Uncomment to get the areas
     
-    geom_rect(data = areas,
-              aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-              inherit.aes = FALSE, alpha = 0.2) +
+    # geom_rect(data = areas,
+    #           aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
+    #           inherit.aes = FALSE, alpha = 0.2) +
     geom_line() +
     ylab(y_lab) +
-    scale_x_continuous(name = x_lab,
-                       breaks = seq(from = 0, to = nrow(data), by = 10)) +
+    # scale_x_continuous(name = x_lab,
+    #                    breaks = seq(from = 0, to = nrow(data), by = 10)) +
     ggtitle(title,
             subtitle = paste(subtitle, "every", nb_min, "minutes."))
 }
@@ -196,42 +196,46 @@ from_data_to_plot <- function(data_8h_21h,
   amount_activity_8h_21h <- filter_8h_21h(
     data = amount_activity_data,
     time_column = interval_start)
+  
+# remove inexistant data
+  amount_activity_8h_21h <- amount_activity_8h_21h %>% 
+    filter(interval_start < "2022-07-15 00:00:00" | interval_start >= "2022-08-03 00:00:00")
 
 
   # Compressed time variable to skip parts between 21h and 8h
   amount_activity_x_minutes_8h_21h_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h)
 
-  areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
-                            times_vector_xmin =
-                              c("2022-07-04 08:00:00", #No data
-                                "2022-07-04 18:57:00",
-                                "2022-07-05 18:57:00",
-                                "2022-07-04 10:47:00", #Inactive
-                                "2022-07-04 13:17:00",
-                                "2022-07-05 08:13:00",
-                                "2022-07-06 08:50:00",
-                                "2022-07-04 17:07:00", #Active
-                                "2022-07-05 09:13:00",
-                                "2022-07-06 09:50:00",
-                                "2022-07-04 11:56:00"),#Out for implant
-                            times_vector_xmax = 
-                              c("2022-07-04 10:47:00", #No data
-                                "2022-07-05 08:13:00",
-                                "2022-07-06 08:50:00",
-                                "2022-07-04 11:56:00", #Inactive
-                                "2022-07-04 15:08:00",
-                                "2022-07-05 09:13:00",
-                                "2022-07-06 09:50:00",
-                                "2022-07-04 18:57:00", #Active
-                                "2022-07-05 10:22:00",
-                                "2022-07-06 12:31:00",
-                                "2022-07-04 13:17:00"),#Out for implant
-                            fill =
-                              c("No data", "No data", "No data",
-                                "Inactive", "Inactive", "Inactive", "Inactive",
-                                "Active", "Active", "Active",
-                                "Out for implant"))
-  
+  # areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
+  #                           times_vector_xmin =
+  #                             c("2022-07-04 08:00:00", #No data
+  #                               "2022-07-04 18:57:00",
+  #                               "2022-07-05 18:57:00",
+  #                               "2022-07-04 10:47:00", #Inactive
+  #                               "2022-07-04 13:17:00",
+  #                               "2022-07-05 08:13:00",
+  #                               "2022-07-06 08:50:00",
+  #                               "2022-07-04 17:07:00", #Active
+  #                               "2022-07-05 09:13:00",
+  #                               "2022-07-06 09:50:00",
+  #                               "2022-07-04 11:56:00"),#Out for implant
+  #                           times_vector_xmax = 
+  #                             c("2022-07-04 10:47:00", #No data
+  #                               "2022-07-05 08:13:00",
+  #                               "2022-07-06 08:50:00",
+  #                               "2022-07-04 11:56:00", #Inactive
+  #                               "2022-07-04 15:08:00",
+  #                               "2022-07-05 09:13:00",
+  #                               "2022-07-06 09:50:00",
+  #                               "2022-07-04 18:57:00", #Active
+  #                               "2022-07-05 10:22:00",
+  #                               "2022-07-06 12:31:00",
+  #                               "2022-07-04 13:17:00"),#Out for implant
+  #                           fill =
+  #                             c("No data", "No data", "No data",
+  #                               "Inactive", "Inactive", "Inactive", "Inactive",
+  #                               "Active", "Active", "Active",
+  #                               "Out for implant"))
+  # 
   plot <- plot_activity_with_areas(
     amount_activity_x_minutes_8h_21h_compressed_time,
     nb_min = interval_seconds/60,
@@ -247,19 +251,12 @@ from_data_to_plot <- function(data_8h_21h,
 ```
 
 ```{r}
-from_data_to_plot(data_8h_21h = data_8h_21h_04_to_14_07_2022,
-                  interval_seconds = 3600,
-                  title = "Posture's score of fox 4313",
-                  subtitle = "With all data, from 04/07/2022 to 14/07/2022",
-                  x_lab = "Cumulative time of the day (only between 8h and 21h)",
+from_data_to_plot(data_8h_21h = reliable_data_8h_21h_05_07_to_08_08_2022,
+                  interval_seconds = 900,
+                  title = "Activity score for fox 4313",
+                  subtitle = "From 05/07 to 08/08, year 2022",
+                  x_lab = "Time between 8h and 21h each day",
                   y_lab = "Movement score by summing posture indices")
 ```
-```{r}
-nrow(data_8h_21h_04_to_14_07_2022 %>% 
-  filter((Date_Time > "2022-07-05 08:13:00" & Date_Time < "2022-07-05 08:28:33" | 
-           Date_Time > "2022-07-05 08:36:23" & Date_Time < "2022-07-05 09:13:00") &
-           name == "not visible")) %>% 
-    arrange(class_id)
 
-```
 
