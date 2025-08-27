@@ -107,75 +107,19 @@ add_compressed_time_variable <- function(data) {
 ```
 
 ```{r}
-get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
-  # S'assurer que le vecteur de temps est au format POSIXct
-  times_vector_xmin <- as.POSIXct(times_vector_xmin)
-  times_vector_xmax <- as.POSIXct(times_vector_xmax)
-
-  # Initialiser le vecteur de résultats
-  result_min <- vector("numeric", length(times_vector_xmin))
-  result_max <- vector("numeric", length(times_vector_xmax))
-
-  # Pour chaque temps, trouver la ligne correspondante
-  for (i in seq_along(times_vector_xmin)) {
-    time_min <- times_vector_xmin[i]
-    matched_row_min <- data %>%
-      filter(interval_start <= time_min & interval_end >= time_min)
-
-    # Si une ligne correspond, extraire compressed_time
-    if (nrow(matched_row_min) > 0) {
-      result_min[i] <- matched_row_min$compressed_time[1]
-    } else {
-      result_min[i] <- NA  # Aucun match trouvé
-    }
-  }
-
-  # Pour chaque temps, trouver la ligne correspondante
-  for (i in seq_along(times_vector_xmax)) {
-    time_max <- times_vector_xmax[i]
-    matched_row_max <- data %>%
-      filter(interval_start <= time_max & interval_end >= time_max)
-
-    # Si une ligne correspond, extraire compressed_time
-    if (nrow(matched_row_max) > 0) {
-      result_max[i] <- matched_row_max$compressed_time[1]
-    } else {
-      result_max[i] <- NA  # Aucun match trouvé
-    }
-  }
-
-  df_areas <- data.frame(xmin = result_min, xmax = result_max, fill = fill)
-
-  return(df_areas)
-}
-
-```
-
-```{r}
 plot_activity_with_areas <- function(data, nb_min, areas,
                                      title, subtitle,
                                      x_lab, y_lab) {
 
   # Create the plot
   ggplot(data, aes(x = compressed_time, y = activity_proportion)) +
-    
-    # Uncomment to get the areas
-    
-    # geom_rect(data = areas,
-    #           aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-    #           inherit.aes = FALSE, alpha = 0.2) +
     geom_line() +
     ylab(y_lab) +
-    # scale_x_continuous(name = x_lab,
-    #                    breaks = seq(from = 0, to = nrow(data), by = 10)) +
     ggtitle(title,
             subtitle = paste(subtitle, "every", nb_min, "minutes."))
 }
 
 ```
-
-On a un gros trou au milieu au niveau de la quantité d'activité : c'est
-cohérent, parce que le renard était sous anesthésie.
 
 Do everything in 1 chunk from data to plot :
 ```{r}
@@ -196,46 +140,15 @@ from_data_to_plot <- function(data_8h_21h,
   amount_activity_8h_21h <- filter_8h_21h(
     data = amount_activity_data,
     time_column = interval_start)
-  
+
 # remove inexistant data
-  amount_activity_8h_21h <- amount_activity_8h_21h %>% 
+  amount_activity_8h_21h <- amount_activity_8h_21h %>%
     filter(interval_start < "2022-07-15 00:00:00" | interval_start >= "2022-08-03 00:00:00")
 
 
   # Compressed time variable to skip parts between 21h and 8h
   amount_activity_x_minutes_8h_21h_compressed_time <- add_compressed_time_variable(amount_activity_8h_21h)
 
-  # areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
-  #                           times_vector_xmin =
-  #                             c("2022-07-04 08:00:00", #No data
-  #                               "2022-07-04 18:57:00",
-  #                               "2022-07-05 18:57:00",
-  #                               "2022-07-04 10:47:00", #Inactive
-  #                               "2022-07-04 13:17:00",
-  #                               "2022-07-05 08:13:00",
-  #                               "2022-07-06 08:50:00",
-  #                               "2022-07-04 17:07:00", #Active
-  #                               "2022-07-05 09:13:00",
-  #                               "2022-07-06 09:50:00",
-  #                               "2022-07-04 11:56:00"),#Out for implant
-  #                           times_vector_xmax = 
-  #                             c("2022-07-04 10:47:00", #No data
-  #                               "2022-07-05 08:13:00",
-  #                               "2022-07-06 08:50:00",
-  #                               "2022-07-04 11:56:00", #Inactive
-  #                               "2022-07-04 15:08:00",
-  #                               "2022-07-05 09:13:00",
-  #                               "2022-07-06 09:50:00",
-  #                               "2022-07-04 18:57:00", #Active
-  #                               "2022-07-05 10:22:00",
-  #                               "2022-07-06 12:31:00",
-  #                               "2022-07-04 13:17:00"),#Out for implant
-  #                           fill =
-  #                             c("No data", "No data", "No data",
-  #                               "Inactive", "Inactive", "Inactive", "Inactive",
-  #                               "Active", "Active", "Active",
-  #                               "Out for implant"))
-  # 
   plot <- plot_activity_with_areas(
     amount_activity_x_minutes_8h_21h_compressed_time,
     nb_min = interval_seconds/60,
