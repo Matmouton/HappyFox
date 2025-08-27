@@ -143,128 +143,16 @@ add_compressed_time_variable <- function(data) {
 amount_changes_15min_data_8h_21h_05_07_to_08_08_2022_compressed_time <- add_compressed_time_variable(amount_changes_15min_data_8h_21h_05_07_to_08_08_2022)
 ```
 
-```{r}
-
-  # Areas to color
-
-#blue : no data available (corrupted videos)
-#purple : out of the cage to put him the implant
-#red : active
-#green : inactive
-
-areas <- data.frame(
-  xmin = c(0, 43, 96,
-           11, 21, 53, 109,
-           36, 57, 113,
-           15),
-  xmax = c(11, 53, 109,
-           15, 28, 57, 113,
-           43, 62, 124,
-           21),
-  fill = c("No data", "No data", "No data",
-           "Inactive", "Inactive", "Inactive", "Inactive",
-           "Active", "Active", "Active",
-           "Out for implant")
-)
-
-
-```
-
-```{r}
-# Better way to color areas but not working yet :
-# 
-# get_areas_color <- function(data, times_vector_xmin, times_vector_xmax, fill) {
-#   # S'assurer que le vecteur de temps est au format POSIXct
-#   times_vector_xmin <- as.POSIXct(times_vector_xmin)
-#   times_vector_xmax <- as.POSIXct(times_vector_xmax)
-# 
-#   # Initialiser le vecteur de résultats
-#   result_min <- vector("numeric", length(times_vector_xmin))
-#   result_max <- vector("numeric", length(times_vector_xmax))
-# 
-#   # Pour chaque temps, trouver la ligne correspondante
-#   for (i in seq_along(times_vector_xmin)) {
-#     time_min <- times_vector_xmin[i]
-#     matched_row_min <- data %>%
-#       filter(interval_start <= time_min & interval_end >= time_min)
-# 
-#     # Si une ligne correspond, extraire compressed_time
-#     if (nrow(matched_row_min) > 0) {
-#       result_min[i] <- matched_row_min$compressed_time[1]
-#     } else {
-#       result_min[i] <- NA  # Aucun match trouvé
-#     }
-#   }
-# 
-#   # Pour chaque temps, trouver la ligne correspondante
-#   for (i in seq_along(times_vector_xmax)) {
-#     time_max <- times_vector_xmax[i]
-#     matched_row_max <- data %>%
-#       filter(interval_start <= time_max & interval_end >= time_max)
-# 
-#     # Si une ligne correspond, extraire compressed_time
-#     if (nrow(matched_row_max) > 0) {
-#       result_max[i] <- matched_row_max$compressed_time[1]
-#     } else {
-#       result_max[i] <- NA  # Aucun match trouvé
-#     }
-#   }  
-#   
-#   df_areas <- data.frame(xmin = result_min, xmax = result_max, fill = fill)
-#   
-#   return(df_areas)
-# }
-# 
-# 
-# #Get areas colors
-# 
-# 
-# areas <- get_areas_color(data = amount_activity_x_minutes_8h_21h_compressed_time,
-#                             times_vector_xmin =
-#                               c("2022-07-04 08:00:00", #No data
-#                                 "2022-07-04 18:57:00",
-#                                 "2022-07-05 18:57:00",
-#                                 "2022-07-04 10:47:00", #Inactive
-#                                 "2022-07-04 13:17:00",
-#                                 "2022-07-05 08:13:00",
-#                                 "2022-07-06 08:50:00",
-#                                 "2022-07-04 17:07:00", #Active
-#                                 "2022-07-05 09:13:00",
-#                                 "2022-07-06 09:50:00",
-#                                 "2022-07-04 11:56:00"),#Out for implant
-#                             times_vector_xmax = 
-#                               c("2022-07-04 10:47:00", #No data
-#                                 "2022-07-05 08:13:00",
-#                                 "2022-07-06 08:50:00",
-#                                 "2022-07-04 11:56:00", #Inactive
-#                                 "2022-07-04 15:08:00",
-#                                 "2022-07-05 09:13:00",
-#                                 "2022-07-06 09:50:00",
-#                                 "2022-07-04 18:57:00", #Active
-#                                 "2022-07-05 10:22:00",
-#                                 "2022-07-06 12:31:00",
-#                                 "2022-07-04 13:17:00"),#Out for implant
-#                             fill =
-#                               c("No data", "No data", "No data",
-#                                 "Inactive", "Inactive", "Inactive", "Inactive",
-#                                 "Active", "Active", "Active",
-#                                 "Out for implant"))
-```
 
 ```{r}
   # Plot
 ggplot(amount_changes_15min_data_8h_21h_05_07_to_08_08_2022_compressed_time,
        aes(x = compressed_time, y = Nb_changes)) +
-  
-  # geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-  #           inherit.aes = FALSE, alpha = 0.2) +
   
   geom_line() +
   xlab("Time between 8h and 21h each day") +
   ylab("Amount of posture changes") +
-  ggtitle("Posture changes for fox 4313", subtitle = "From 05/07 to 08/08 2022, every 15 minutes") #+
-  # scale_x_continuous(name = "Time between 8h and 21h each day",
-  #                    breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150))
+  ggtitle("Posture changes for fox 4313", subtitle = "From 05/07 to 08/08 2022, every 15 minutes") 
 ```
 
 ```{r}
@@ -273,24 +161,11 @@ ggplot(amount_changes_15min_data_8h_21h_05_07_to_08_08_2022_compressed_time,
 
 ggplot(amount_changes_15min_data_8h_21h_05_07_to_08_08_2022_compressed_time,
        aes(x = compressed_time, y = Nb_changes)) +
-  
-  geom_rect(data = areas, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = fill),
-            inherit.aes = FALSE, alpha = 0.2) +
+
   
   geom_line() +
   #xlab("Temps entre 8h et 21h chaque jour") +
   ylab("Nombre de changements de position") +
-  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") +
-  scale_x_continuous(name = "Temps entre 8h et 21h chaque jour",
-                     breaks = c(0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150))
+  ggtitle("Changements de position du renard 4313", subtitle = "Du 4 au 6 juillet 2022, toutes les 15 minutes") 
 ```
 
-
-Spike between 28&36 : because the fox is waking up from anesthesia & he's trying
-to get up, but it doesn't work well. So a lot of alternates between lying &
-sitting.
-
-```{r}
-test2 <- data_8h_21h_04_to_06_07_2022[data_8h_21h_04_to_06_07_2022$Date_Time > as.POSIXct("2022-07-04 11:50:00")
-                             & data_8h_21h_04_to_06_07_2022$Date_Time < as.POSIXct("2022-07-04 12:05:00") ,  ]
-```
