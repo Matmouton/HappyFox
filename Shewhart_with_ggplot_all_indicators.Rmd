@@ -667,11 +667,4 @@ plot_xbarchart_ggplot(data_calibration = posture_changes_byday_2h[1:10,],
 
 # -\> EWMA
 
-```{r}
-load("data_SCP_with_QCC_indicator1.1.RData")   #data from Shewhart_indicator_3.Rmd
-```
-
-```{r}
-q1 <- qcc(diameter[1:25,], type = "xbar",           newdata = diameter[26:40,],           rules = 1:4)
-plot(q1)
-```
+Not done yet hehe
